@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-20
+# Last modified: 2004-12-21
 #
 
 use strict;
@@ -493,8 +493,14 @@ sub exec_upload($$)
   my $file_phys = $physical."/".$filename;
   my $file_virt = $virtual.$filename;
 
-  return error($config->{'errors'}->{'in_use'},$virtual,{FILE => $file_virt})      if($data->{'uselist'}->in_use($file_virt));
-  return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt}) if(-e $file_phys && not $cgi->param('overwrite'));
+  return error($config->{'errors'}->{'in_use'},$virtual,{FILE => $file_virt}) if($data->{'uselist'}->in_use($file_virt));
+
+  if(-e $file_phys)
+  {
+   return error($config->{'errors'}->{'dir_replace'},$virtual)                         if(-d $file_phys);
+   return error($config->{'errors'}->{'exist_no_write'},$virtual,{FILE => $file_virt}) unless(-w $file_phys);
+   return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt})    unless($cgi->param('overwrite'));
+  }
 
   my $ascii     = $cgi->param('ascii');
   my $handle    = $cgi->upload('uploaded_file');
@@ -551,13 +557,11 @@ sub exec_copy($$)
 
   if(-e $new_physical)
   {
-   return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual})   if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'dir_replace'},$new_dir)                           if(-d $new_physical);
+   return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual}) unless(-w $new_physical);
 
-   if(-d $new_physical)
-   {
-    return error($config->{'errors'}->{'dir_replace'},$new_dir);
-   }
-   elsif(not $data->{'cgi'}->param('confirmed'))
+   if(not $data->{'cgi'}->param('confirmed'))
    {
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'confirm_replace'});
@@ -628,13 +632,11 @@ sub exec_rename($$)
 
   if(-e $new_physical)
   {
-   return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual})   if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'dir_replace'},$new_dir)                           if(-d $new_physical);
+   return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual}) unless(-w $new_physical);
 
-   if(-d $new_physical)
-   {
-    return error($config->{'errors'}->{'dir_replace'},$new_dir);
-   }
-   elsif(not $data->{'cgi'}->param('confirmed'))
+   if(not $data->{'cgi'}->param('confirmed'))
    {
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'confirm_replace'});

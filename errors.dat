@@ -15,6 +15,7 @@ dir_replace    = You are not allowed to replace a directory.
 edit_failed    = Saving of file '{FILE}' failed. The file could be damaged, please check its integrity.
 editdir        = You cannot edit directories.
 exist_edited   = The target file '{FILE}' already exists and is edited by someone else.
+exist_no_write = The target file '{FILE}' already exists and you have not enough permissions to replace it.
 file_exists    = A file or directory called '{FILE}' already exists.
 file_in_use    = The file '{FILE}' is currently edited by someone else.
 file_too_large = The file you want to view or edit is too large (max. {SIZE}&nbsp;Bytes).
