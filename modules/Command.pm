@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-12-21
+# Last modified: 2003-12-22
 #
 
 use strict;
@@ -566,7 +566,7 @@ sub exec_workwithdir($$)
 <form action="$script">
 <input type="hidden" name="command" value="rename">
 <input type="hidden" name="file" value="$virtual">
-<p>Move/Rename directory '$virtual' to:<br>$dir <input type="text" name="newfile" size="50"> <input type="submit" value="Move/Rename!"></p>
+<p>Move/Rename directory '$virtual' to:<br>$dir <input type="text" name="newfile" size="30"> <input type="submit" value="Move/Rename!"></p>
 </form>
 
 <hr>
@@ -741,8 +741,46 @@ sub exec_remove($$)
  return exec_rmdir($data,$config) if(-d $physical);
  return error_in_use($virtual)    if($data->{'uselist'}->in_use($virtual));
 
- unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.",upper_path($virtual));
- return devedit_reload({command => 'show', file => upper_path($virtual)});
+ if($data->{'cgi'}->param('confirmed'))
+ {
+  unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.",upper_path($virtual));
+  return devedit_reload({command => 'show', file => upper_path($virtual)});
+ }
+ else
+ {
+  my $dir = encode_entities(upper_path($virtual));
+  my $output;
+
+  $output  = htmlhead("Remove file ".encode_entities($virtual));
+  $output .= equal_url($config->{'httproot'},$virtual);
+
+  $virtual = encode_entities($virtual);
+
+  $output .= dir_link($virtual);
+
+  $output .= <<"END";
+<p>Do you really want to remove the file '$virtual'?</p>
+
+<form action="$script" method="get">
+<input type="hidden" name="command" value="remove">
+<input type="hidden" name="file" value="$virtual">
+<input type="hidden" name="confirmed" value="1">
+
+<p><input type="submit" value="Yes"></p>
+</form>
+
+<form action="$script" method="get">
+<input type="hidden" name="command" value="show">
+<input type="hidden" name="file" value="$dir">
+
+<p><input type="submit" value="No"></p>
+</form>
+END
+
+  $output .= htmlfoot;
+
+  return \$output;
+ }
 }
 
 # exec_rmdir()
@@ -772,7 +810,7 @@ sub exec_rmdir($$)
   my $dir = encode_entities(upper_path($virtual));
   my $output;
 
-  $output  = htmlhead("Remove directory $virtual");
+  $output  = htmlhead("Remove directory ".encode_entities($virtual));
   $output .= equal_url($config->{'httproot'},$virtual);
 
   $virtual = encode_entities($virtual);
