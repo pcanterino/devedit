@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-23
+# Last modified: 2004-03-01
 #
 
 use strict;
@@ -33,6 +33,7 @@ my %dispatch = ('show'       => \&exec_show,
                 'endedit'    => \&exec_endedit,
                 'mkdir'      => \&exec_mkdir,
                 'mkfile'     => \&exec_mkfile,
+                'upload'     => \&exec_upload,
                 'copy'       => \&exec_copy,
                 'rename'     => \&exec_rename,
                 'remove'     => \&exec_remove,
@@ -380,6 +381,68 @@ sub exec_mkdir($$)
 
  mkdir($new_physical,0777) or return error($config->{'err_mkdir_failed'},$dir,{DIR => $new_virtual});
  return devedit_reload({command => 'show', file => $dir});
+}
+
+# exec_upload()
+#
+# Upload a file
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_upload($$)
+{
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = $data->{'virtual'};
+ my $cgi            = $data->{'cgi'};
+
+ if(my $uploaded_file = $cgi->param('uploaded_file'))
+ {
+  # Process file upload
+
+  my $filename  = file_name($uploaded_file);
+  my $file_phys = $physical."/".$filename;
+  my $file_virt = $virtual."".$filename;
+
+  return error($config->{'err_file_exists'},$virtual,{FILE => $file_virt}) if(-e $file_phys);
+
+  my $ascii     = $cgi->param('ascii');
+  my $handle    = $cgi->upload('uploaded_file');
+
+  local *FILE;
+
+  open(FILE,">$file_phys") or return error($config->{'err_mkfile_failed'},$virtual,{FILE => $file_virt});
+  binmode(FILE) unless($ascii);
+
+  my $data;
+
+  while(read($handle,$data,1024))
+  {
+   $data =~ s/\015\012|\012|\015/\n/g if($ascii);
+   print FILE $data;
+  }
+
+  close(FILE);
+
+  return devedit_reload({command => "show", file => $virtual});
+ }
+ else
+ {
+  my $tpl = new Template;
+  $tpl->read_file($config->{'tpl_upload'});
+
+  $tpl->fillin("DIR",$virtual);
+  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin("SCRIPT",$script);
+
+  my $output = header(-type => "text/html");
+  $output   .= $tpl->get_template;
+
+  return \$output;
+ }
 }
 
 # exec_copy()

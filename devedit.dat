@@ -21,6 +21,7 @@ tpl_viewfile        = templates/viewfile.htm
 tpl_editfile        = templates/editfile.htm
 tpl_copyfile        = templates/copyfile.htm
 tpl_renamefile      = templates/renamefile.htm
+tpl_upload          = templates/upload.htm
 tpl_confirm_rmfile  = templates/confirm_rmfile.htm
 tpl_confirm_rmdir   = templates/confirm_rmdir.htm
 tpl_confirm_unlock  = templates/confirm_unlock.htm
