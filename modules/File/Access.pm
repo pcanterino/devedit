@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-06
+# Last modified: 2004-07-21
 #
 
 use strict;
@@ -50,7 +50,7 @@ sub dir_read($)
 
  # Sort the entries
 
- @entries = sort(@entries);
+ @entries = sort {uc($a) cmp uc($b)} @entries;
 
  my @files;
  my @dirs;
