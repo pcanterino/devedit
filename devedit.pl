@@ -69,14 +69,7 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
  # ... check if the directory exists ...
 
- unless(-d clean_path($config->{'fileroot'}.'/'.$dir))
- {
-  abort($config->{'errors'}->{'dir_not_exist'},'/');
- }
-
- # (don't know, why this test has to be done separately)
-
- if(-l clean_path($config->{'fileroot'}.'/'.$dir))
+ unless(-d clean_path($config->{'fileroot'}.'/'.$dir) && not -l clean_path($config->{'fileroot'}.'/'.$dir))
  {
   abort($config->{'errors'}->{'dir_not_exist'},'/');
  }
