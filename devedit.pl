@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-14
+# Last modified: 2005-02-19
 #
 
 use strict;
@@ -37,7 +37,7 @@ error_template($config->{'templates'}->{'error'}); # Yes, I'm lazy...
 
 # Check if the root directory exists
 
-abort($config->{'errors'}->{'no_root_dir'}) unless(-d $config->{'fileroot'});
+abort($config->{'errors'}->{'no_root_dir'}) unless(-d $config->{'fileroot'} && not -l $config->{'fileroot'});
 
 # Check if we are able to access the root directory
 
