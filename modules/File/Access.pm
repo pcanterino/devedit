@@ -7,14 +7,16 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-10-26
+# Last modified: 2004-12-17
 #
 
 use strict;
 
-use vars qw(@EXPORT);
+use vars qw(@EXPORT
+            $has_flock);
 
-use Fcntl;
+use Fcntl qw(:DEFAULT
+             :flock);
 
 ### Export ###
 
@@ -22,9 +24,20 @@ use base qw(Exporter);
 
 @EXPORT = qw(dir_read
              file_create
+             file_lock
              file_read
              file_save
-             file_unlock);
+             file_unlock
+
+             LOCK_SH
+             LOCK_EX
+             LOCK_UN
+             LOCK_NB);
+
+# Check if flock() is available
+# I found this piece of code somewhere in the internet
+
+$has_flock = eval { local $SIG{'__DIE__'}; flock(STDOUT,0); 1 };
 
 # dir_read()
 #
@@ -98,6 +111,25 @@ sub file_create($)
  return 1;
 }
 
+# file_lock()
+#
+# System independent wrapper function for flock()
+# On systems where flock() is not available, this function
+# always returns true.
+#
+# Params: 1. Filehandle
+#         2. Locking mode
+#
+# Return: Status code (Boolean)
+
+sub file_lock(*$)
+{
+ my ($handle,$mode) = @_;
+
+ return 1 unless($has_flock);
+ return flock($handle,$mode);
+}
+
 # file_read()
 #
 # Read out a file completely
@@ -112,7 +144,11 @@ sub file_read($)
  local *FILE;
 
  sysopen(FILE,$file,O_RDONLY) or return;
+ file_lock(FILE,LOCK_SH)      or do { close(FILE); return };
+
  read(FILE, my $content, -s $file);
+
+ file_lock(FILE,LOCK_UN)      or do { close(FILE); return };
  close(FILE)                  or return;
 
  return \$content;
@@ -124,16 +160,23 @@ sub file_read($)
 #
 # Params: 1. File
 #         2. File content as Scalar Reference
+#         3. true  => open in binary mode
+#            false => open in normal mode (default)
 #
 # Return: Status code (Boolean)
 
-sub file_save($$)
+sub file_save($$;$)
 {
- my ($file,$content) = @_;
+ my ($file,$content,$binary) = @_;
  local *FILE;
 
  sysopen(FILE,$file,O_WRONLY | O_CREAT | O_TRUNC) or return;
+ file_lock(FILE,LOCK_EX)                          or do { close(FILE); return };
+ binmode(FILE) if($binary);
+
  print FILE $$content                             or do { close(FILE); return };
+
+ file_lock(FILE,LOCK_UN)                          or do { close(FILE); return };
  close(FILE)                                      or return;
 
  return 1;

@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-16
+# Last modified: 2004-12-17
 #
 
 use strict;
@@ -499,18 +499,11 @@ sub exec_upload($$)
   my $ascii     = $cgi->param('ascii');
   my $handle    = $cgi->upload('uploaded_file');
 
-  local *FILE;
-
-  open(FILE,">".$file_phys) or return error($config->{'errors'}->{'mkfile_failed'},$virtual,{FILE => $file_virt});
-  binmode(FILE) unless($ascii);
-
   # Read transferred file and write it to disk
 
   read($handle, my $data, -s $handle);
   $data =~ s/\015\012|\012|\015/\n/g if($ascii); # Replace line separators if transferring in ASCII mode
-  print FILE $data;
-
-  close(FILE);
+  file_save($file_phys,\$data,not $ascii) or return error($config->{'errors'}->{'mkfile_failed'},$virtual,{FILE => $file_virt});
 
   return devedit_reload({command => "show", file => $virtual});
  }
