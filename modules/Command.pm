@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-30
+# Last modified: 2003-11-10
 #
 
 use strict;
@@ -120,19 +120,47 @@ sub exec_show($$$)
    $output .= $stat[7];
    $output .= "  ";
    $output .= strftime($config->{'timeformat'},localtime($stat[9]));
-   $output .= ($in_use) ? " (IN USE) " : (not -T $phys_path) ? " (BINARY) " : " " x 10;
+   $output .= " " x 10;
    $output .= encode_entities($file);
    $output .= " " x ($max_name_len - length($file))."\t  (";
 
-   $output .= (-r $phys_path && -T $phys_path)
-              ? "<a href=\"$script?command=show&file=$virt_path\">View</a>"
-              : '<span style="color:#C0C0C0">View</span>';
+   # Link "View"
+
+   if(-r $phys_path && -T $phys_path)
+   {
+    $output .= "<a href=\"$script?command=show&file=$virt_path\">View</a>";
+   }
+   else
+   {
+    $output .= '<span style="color:#C0C0C0" title="';
+
+    $output .= (not -r $phys_path) ? "Not readable" :
+               (-B     $phys_path) ? "Binary file"  : "";
+
+    $output .= '">View</span>';
+   }
 
    $output .= " | ";
 
-   $output .= (-w $phys_path && -r $phys_path && -T $phys_path && not $in_use)
-              ? "<a href=\"$script?command=beginedit&file=$virt_path\">Edit</a>"
-              : '<span style="color:#C0C0C0">Edit</span>';
+   # Link "Edit"
+
+   if(-w $phys_path && -r $phys_path && -T $phys_path && not $in_use)
+   {
+    $output .= "<a href=\"$script?command=beginedit&file=$virt_path\">Edit</a>";
+   }
+   else
+   {
+    $output .= '<span style="color:#C0C0C0" title="';
+
+    $output .= (not -r $phys_path) ? "Not readable" :
+               (not -w $phys_path) ? "Read only"    :
+               (-B     $phys_path) ? "Binary file"  :
+               ($in_use)           ? "In use"       : "";
+
+    $output .= '">Edit</span>';
+   }
+
+   # Link "Do other stuff"
 
    $output .= " | <a href=\"$script?command=workwithfile&file=$virt_path\">Do other stuff</a>)\n";
   }
