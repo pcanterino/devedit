@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-12-18
+# Last modified: 2003-12-21
 #
 
 use strict;
@@ -566,7 +566,7 @@ sub exec_workwithdir($$)
 <form action="$script">
 <input type="hidden" name="command" value="rename">
 <input type="hidden" name="file" value="$virtual">
-<p>Move/Rename directory '$virtual' to: $dir <input type="text" name="newfile" size="50"> <input type="submit" value="Move/Rename!"></p>
+<p>Move/Rename directory '$virtual' to:<br>$dir <input type="text" name="newfile" size="50"> <input type="submit" value="Move/Rename!"></p>
 </form>
 
 <hr>
@@ -679,7 +679,44 @@ sub exec_rename($$)
 
  if(-e $new_physical)
  {
-  return error("A file or directory called '$new_virtual' already exists and this editor is currently not able to ask to overwrite the existing file or directory.",upper_path($virtual));
+  if(-d $new_physical)
+  {
+   return error("A directory called '$new_virtual' already exists. You cannot replace a directory!",upper_path($virtual));
+  }
+  elsif(not $data->{'cgi'}->param('confirmed'))
+  {
+   $dir = encode_entities($dir);
+
+   my $output = htmlhead("Replace existing file");
+   $output   .= <<"END";
+<p>A file called '$new_virtual' already exists. Do you want to replace it?</p>
+
+<form action="$script" method="get">
+<input type="hidden" name="command" value="rename">
+<input type="hidden" name="file" value="$virtual">
+<input type="hidden" name="newfile" value="$new_virtual">
+<input type="hidden" name="confirmed" value="1">
+
+<p><input type="submit" value="Yes"></p>
+</form>
+
+<form action="$script" method="get">
+<input type="hidden" name="command" value="show">
+<input type="hidden" name="file" value="$dir">
+
+<p><input type="submit" value="No"></p>
+</form>
+END
+
+   $output .= htmlfoot;
+
+   return \$output;
+  }
+ }
+
+ if($data->{'uselist'}->in_use($data->{'new_virtual'}))
+ {
+  return error("The target file '$new_virtual' already exists and it is edited by someone else.",$dir);
  }
 
  rename($physical,$new_physical) or return error("Could not move/rename '".encode_entities($virtual)."' to '$new_virtual'.",upper_path($virtual));
