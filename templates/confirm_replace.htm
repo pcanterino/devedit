@@ -10,12 +10,13 @@
 
 <h1>Replace exisiting file</h1>
 
-<p>A file called '{FILE}' already exists. Do you want to replace it?</p>
+<p>A file called '{NEW_FILE}' already exists. Do you want to replace it?</p>
 
-<form action="{SCRIPT}" method="get">
+<form action="{SCRIPT}" method="post">
 <input type="hidden" name="command" value="{COMMAND}">
 <input type="hidden" name="file" value="{FILE}">
-<input type="hidden" name="newfile" value="{NEW_FILE}">
+<input type="hidden" name="newfile" value="{NEW_FILENAME}">
+<input type="hidden" name="curdir" value="{NEW_DIR}">
 <input type="hidden" name="confirmed" value="1">
 
 <p><input type="submit" value="Yes"></p>

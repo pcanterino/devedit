@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-06
+# Last modified: 2004-02-20
 #
 
 use strict;
@@ -79,14 +79,15 @@ sub exec_show($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
- my $output;
+
+ my $tpl = new Template;
 
  if(-d $physical)
  {
   # Create directory listing
 
   my $direntries = dir_read($physical);
-  return error("Reading of directory $virtual failed.",upper_path($virtual)) unless($direntries);
+  return error($config->{'dir_read_failed'},upper_path($virtual),{DIR => '$virtual'}) unless($direntries);
 
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
@@ -157,22 +158,19 @@ sub exec_show($$)
    $dirlist .= $ftpl->get_template;
   }
 
-  my $tpl = new Template;
+
   $tpl->read_file($config->{'tpl_dirlist'});
 
   $tpl->fillin("DIRLIST",$dirlist);
   $tpl->fillin("DIR",$virtual);
   $tpl->fillin("SCRIPT",$script);
   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-
-  $output  = header(-type => "text/html");
-  $output .= $tpl->get_template;
  }
  else
  {
   # View a file
 
-  return error("You have not enough permissions to view this file.",upper_path($virtual)) unless(-r $physical);
+  return error($config->{'err_noview'},upper_path($virtual)) unless(-r $physical);
 
   # Check on binary files
   # We have to do it in this way, or empty files
@@ -190,7 +188,6 @@ sub exec_show($$)
 
    my $content = file_read($physical);
 
-   my $tpl = new Template;
    $tpl->read_file($config->{'tpl_viewfile'});
 
    $tpl->fillin("FILE",$virtual);
@@ -198,11 +195,11 @@ sub exec_show($$)
    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
    $tpl->fillin("SCRIPT",$script);
    $tpl->fillin("CONTENT",encode_entities($$content));
-
-   $output  = header(-type => "text/html");
-   $output .= $tpl->get_template;
   }
  }
+
+ my $output  = header(-type => "text/html");
+ $output    .= $tpl->get_template;
 
  return \$output;
 }
@@ -296,7 +293,7 @@ sub exec_endedit($$)
  my $content        = $data->{'cgi'}->param('filecontent');
 
  return error($config->{'err_editdir'},upper_path($virtual)) if(-d $physical);
- return error($config->{'err_noedit'},upper_path($virtual)) unless(-r $physical && -w $physical);
+ return error($config->{'err_noedit'}, upper_path($virtual)) unless(-r $physical && -w $physical);
 
  # Normalize newlines
 
@@ -391,45 +388,66 @@ sub exec_copy($$)
  my $physical       = $data->{'physical'};
  my $virtual        = encode_entities($data->{'virtual'});
  my $new_physical   = $data->{'new_physical'};
- my $new_virtual    = $data->{'new_virtual'};
- my $dir            = upper_path($new_virtual);
- $new_virtual       = encode_entities($new_virtual);
 
- return error("This editor is not able to copy directories.") if(-d $physical);
- return error("You have not enough permissions to copy this file.") unless(-r $physical);
+ return error($config->{'err_dircopy'}) if(-d $physical);
+ return error($config->{'err_nocopy'})  unless(-r $physical);
 
- if(-e $new_physical)
+ if($new_physical)
  {
-  if(-d $new_physical)
+  my $new_virtual = $data->{'new_virtual'};
+  my $dir         = upper_path($new_virtual);
+  $new_virtual    = encode_entities($new_virtual);
+
+  if(-e $new_physical)
   {
-   return error("A directory called '$new_virtual' already exists. You cannot replace a directory by a file!",$dir);
+   if(-d $new_physical)
+   {
+    return error("A directory called '$new_virtual' already exists. You cannot replace a directory by a file!",$dir);
+   }
+   elsif(not $data->{'cgi'}->param('confirmed'))
+   {
+    my $tpl = new Template;
+    $tpl->read_file($config->{'tpl_confirm_replace'});
+
+    $tpl->fillin("FILE",$virtual);
+    $tpl->fillin("NEW_FILE",$new_virtual);
+    $tpl->fillin("NEW_FILENAME",file_name($new_virtual));
+    $tpl->fillin("NEW_DIR",$dir);
+    $tpl->fillin("DIR",upper_path($virtual));
+    $tpl->fillin("COMMAND","copy");
+    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin("SCRIPT",$script);
+
+    my $output = header(-type => "text/html");
+    $output   .= $tpl->get_template;
+
+    return \$output;
+   }
   }
-  elsif(not $data->{'cgi'}->param('confirmed'))
+
+  if($data->{'uselist'}->in_use($data->{'new_virtual'}))
   {
-   my $tpl = new Template;
-   $tpl->read_file($config->{'tpl_confirm_replace'});
-
-   $tpl->fillin("FILE",$virtual);
-   $tpl->fillin("NEW_FILE",$new_virtual);
-   $tpl->fillin("DIR",upper_path($virtual));
-   $tpl->fillin("COMMAND","copy");
-   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-   $tpl->fillin("SCRIPT",$script);
-
-   my $output = header(-type => "text/html");
-   $output   .= $tpl->get_template;
-
-   return \$output;
+   return error("The target file '$new_virtual' already exists and it is edited by someone else.",$dir);
   }
+
+  copy($physical,$new_physical) or return error("Could not copy '$virtual' to '$new_virtual'",upper_path($virtual));
+  return devedit_reload({command => 'show', file => $dir});
  }
-
- if($data->{'uselist'}->in_use($data->{'new_virtual'}))
+ else
  {
-  return error("The target file '$new_virtual' already exists and it is edited by someone else.",$dir);
- }
+  my $tpl = new Template;
+  $tpl->read_file($config->{'tpl_copyfile'});
 
- copy($physical,$new_physical) or return error("Could not copy '$virtual' to '$new_virtual'",upper_path($virtual));
- return devedit_reload({command => 'show', file => $dir});
+  $tpl->fillin("FILE",$virtual);
+  $tpl->fillin("DIR",upper_path($virtual));
+  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin("SCRIPT",$script);
+
+  my $output = header(-type => "text/html");
+  $output   .= $tpl->get_template;
+
+  return \$output;
+ }
 }
 
 # exec_rename()
@@ -453,38 +471,62 @@ sub exec_rename($$)
 
  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
 
- if(-e $new_physical)
+ if($new_physical)
  {
-  if(-d $new_physical)
+  my $new_virtual = $data->{'new_virtual'};
+  my $dir         = upper_path($new_virtual);
+  $new_virtual    = encode_entities($new_virtual);
+
+  if(-e $new_physical)
   {
-   return error("A directory called '$new_virtual' already exists. You cannot replace a directory!",upper_path($virtual));
+   if(-d $new_physical)
+   {
+    return error("A directory called '$new_virtual' already exists. You cannot replace a directory by a file!",$dir);
+   }
+   elsif(not $data->{'cgi'}->param('confirmed'))
+   {
+    my $tpl = new Template;
+    $tpl->read_file($config->{'tpl_confirm_replace'});
+
+    $tpl->fillin("FILE",$virtual);
+    $tpl->fillin("NEW_FILE",$new_virtual);
+    $tpl->fillin("NEW_FILENAME",file_name($new_virtual));
+    $tpl->fillin("NEW_DIR",$dir);
+    $tpl->fillin("DIR",upper_path($virtual));
+    $tpl->fillin("COMMAND","rename");
+    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin("SCRIPT",$script);
+
+    my $output = header(-type => "text/html");
+    $output   .= $tpl->get_template;
+
+    return \$output;
+   }
   }
-  elsif(not $data->{'cgi'}->param('confirmed'))
+
+  if($data->{'uselist'}->in_use($data->{'new_virtual'}))
   {
-   my $tpl = new Template;
-   $tpl->read_file($config->{'tpl_confirm_replace'});
-
-   $tpl->fillin("FILE",$virtual);
-   $tpl->fillin("NEW_FILE",$new_virtual);
-   $tpl->fillin("DIR",upper_path($virtual));
-   $tpl->fillin("COMMAND","rename");
-   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-   $tpl->fillin("SCRIPT",$script);
-
-   my $output = header(-type => "text/html");
-   $output   .= $tpl->get_template;
-
-   return \$output;
+   return error("The target file '$new_virtual' already exists and it is edited by someone else.",$dir);
   }
+
+  rename($physical,$new_physical) or return error("Could not move/rename '$virtual' to '$new_virtual'",upper_path($virtual));
+  return devedit_reload({command => 'show', file => $dir});
  }
-
- if($data->{'uselist'}->in_use($data->{'new_virtual'}))
+ else
  {
-  return error("The target file '$new_virtual' already exists and it is edited by someone else.",$dir);
- }
+  my $tpl = new Template;
+  $tpl->read_file($config->{'tpl_renamefile'});
 
- rename($physical,$new_physical) or return error("Could not move/rename '".encode_entities($virtual)."' to '$new_virtual'.",upper_path($virtual));
- return devedit_reload({command => 'show', file => $dir});
+  $tpl->fillin("FILE",$virtual);
+  $tpl->fillin("DIR",upper_path($virtual));
+  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin("SCRIPT",$script);
+
+  my $output = header(-type => "text/html");
+  $output   .= $tpl->get_template;
+
+  return \$output;
+ }
 }
 
 # exec_remove()

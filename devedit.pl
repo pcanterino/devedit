@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-06
+# Last modified: 2004-02-20
 #
 
 use strict;
@@ -65,7 +65,7 @@ if($newfile ne '')
 
  unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
  {
-  abort($config->{'err_creat_ar'});
+  abort($config->{'err_create_ar'});
  }
 
  # Create the physical and the virtual path
