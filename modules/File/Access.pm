@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-13
+# Last modified: 2003-11-04
 #
 
 use strict;
@@ -125,14 +125,11 @@ sub file_read($)
 sub file_save($$)
 {
  my ($file,$content) = @_;
- my $temp            = $file.".temp";
  local *FILE;
 
- open(FILE,">",$temp) or return;
+ open(FILE,">",$file) or return;
  print FILE $$content or do { close(FILE); return };
  close(FILE)          or return;
-
- rename($temp,$file)  or return;
 
  return 1;
 }
