@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-03
+# Last modified: 2004-02-24
 #
 
 use strict;
@@ -143,14 +143,13 @@ sub equal_url($$)
  $root =~ s!/$!!;
  $path =~ s!^/!!;
  $url  =  $root."/".$path;
- #$url  =  encode_entities($url);
 
  return $url;
 }
 
 # file_name()
 #
-# Returns the last path of a path
+# Return the last path of a path
 #
 # Params: Path
 #
@@ -172,7 +171,7 @@ sub file_name($)
 
 # upper_path()
 #
-# Cut the last part of a path away
+# Cut away the last part of a path
 #
 # Params: Path
 #
