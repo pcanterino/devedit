@@ -31,7 +31,7 @@ use base qw(Exporter);
 #
 # Change the group of files or directories
 #
-# Params: 1. Group name
+# Params: 1. Group name or group ID
 #         2. List of files
 #
 # Return: Number of files group successfully changed
@@ -94,7 +94,11 @@ sub dir_read($)
 
 # file_create()
 #
-# Create a file
+# Create a file, but only if it doesn't already exist
+#
+# (I wanted to use O_EXCL for this, but `perldoc -f sysopen`
+# doesn't say that it is available on every system - so I
+# created this workaround using O_RDONLY and O_CREAT)
 #
 # Params: File to create
 #

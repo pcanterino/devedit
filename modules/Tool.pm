@@ -209,7 +209,7 @@ sub file_name($)
 #
 # Params: File mode number
 #
-# Return: Humand readable mode string
+# Return: Human readable mode string
 
 sub mode_string($)
 {

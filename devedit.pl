@@ -80,7 +80,7 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
  $new_virtual .= $file;
 }
 
-# This check has to be performed first, or abs_path() will be confused
+# This check has to be performed first or abs_path() will be confused
 
 if(-e clean_path($config->{'fileroot'}."/".$file))
 {
