@@ -6,7 +6,7 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-28
+# Last modified: 2004-11-24
 #
 
 use strict;
@@ -53,7 +53,7 @@ sub parse_config($)
  my $file = shift;
  local *CF;
 
- open(CF,"<$file") or croak("Open $file: $!");
+ open(CF,"<".$file) or croak("Open $file: $!");
  read(CF, my $data, -s $file);
  close(CF);
 

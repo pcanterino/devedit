@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-11-24
+# Last modified: 2004-11-25
 #
 
 use strict;
@@ -171,7 +171,6 @@ sub exec_show($$)
    $ftpl->parse_if_block("readonly",not -w $phys_path);
 
    $ftpl->parse_if_block("viewable",-r $phys_path && -T $phys_path && not ($config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'}));
-
    $ftpl->parse_if_block("editable",-r $phys_path && -w $phys_path && -T $phys_path && not ($config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'}) && not $in_use);
 
    $ftpl->parse_if_block("in_use",$in_use);
@@ -211,9 +210,7 @@ sub exec_show($$)
   {
    # Text file
 
-   my $size = -s $physical;
-
-   if($config->{'max_file_size'} && $size > $config->{'max_file_size'})
+   if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'})
    {
     return error($config->{'errors'}->{'file_too_large'},$upper_path,{SIZE => $config->{'max_file_size'}})
    }
@@ -229,7 +226,7 @@ sub exec_show($$)
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
     $tpl->fillin("SCRIPT",$script);
 
-    $tpl->parse_if_block("editable",-r $physical && -w $physical && -T $physical && not ($config->{'max_file_size'} && $size > $config->{'max_file_size'}) && $uselist->unused($virtual));
+    $tpl->parse_if_block("editable",-w $physical && $uselist->unused($virtual));
 
     $tpl->fillin("CONTENT",encode_entities($$content));
    }
@@ -273,7 +270,7 @@ sub exec_beginedit($$)
  }
  else
  {
-  if($config->{'max_file_size'} && (-s $physical) > $config->{'max_file_size'})
+  if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'})
   {
    return error($config->{'errors'}->{'file_too_large'},$dir,{SIZE => $config->{'max_file_size'}})
   }
@@ -489,7 +486,7 @@ sub exec_upload($$)
 
   my $filename  = file_name($uploaded_file);
   my $file_phys = $physical."/".$filename;
-  my $file_virt = $virtual."".$filename;
+  my $file_virt = $virtual.$filename;
 
   return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt}) if(-e $file_phys && not $cgi->param('overwrite'));
 
@@ -498,7 +495,7 @@ sub exec_upload($$)
 
   local *FILE;
 
-  open(FILE,">$file_phys") or return error($config->{'errors'}->{'mkfile_failed'},$virtual,{FILE => $file_virt});
+  open(FILE,">".$file_phys) or return error($config->{'errors'}->{'mkfile_failed'},$virtual,{FILE => $file_virt});
   binmode(FILE) unless($ascii);
 
   # Read transferred file and write it to disk
@@ -543,8 +540,8 @@ sub exec_copy($$)
  my $virtual        = encode_entities($data->{'virtual'});
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'errors'}->{'dircopy'}) if(-d $physical);
- return error($config->{'errors'}->{'nocopy'})  unless(-r $physical);
+ return error($config->{'errors'}->{'dircopy'},upper_path($virtual)) if(-d $physical);
+ return error($config->{'errors'}->{'nocopy'},upper_path($virtual))  unless(-r $physical);
 
  if($new_physical)
  {
