@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-06
+# Last modified: 2005-01-07
 #
 
 use strict;
@@ -61,9 +61,32 @@ sub check_path($$)
  # We extract the last part of the path and create the absolute path
 
  my $first = upper_path($path);
- my $last  = file_name($path);
+ $first    = abs_path($first);
 
- $first = abs_path($first);
+ my $last  = file_name($path);
+ $last     = '' if($last eq '.');
+
+ if($last eq '..')
+ {
+  $first = upper_path($first);
+  $last  = '';
+ }
+ elsif($^O eq 'MSWin32' && $last =~ m!^\.\.\.+$!)
+ {
+  # Windows allows to go upwards in a path using things like
+  # "..." and "...." and so on
+
+  for(my $x=0;$x<length($last)-1;$x++)
+  {
+   unless($first =~ m!^[a-z]{1}:(/|\\)$!i)
+   {
+    $first = upper_path($first);
+   }
+  }
+
+  $last = '';
+ }
+
  $path  = $first.'/'.$last;
 
  $first = File::Spec->canonpath($first);
@@ -72,7 +95,6 @@ sub check_path($$)
  # Check if the path is above the root directory
 
  return if(index($path,$root) != 0);
- return if($first eq $root && ($last eq '..' || ($^O eq 'MSWin32' && $last =~ m!^\.\.+$!)));
 
  # Create short path name
 
