@@ -37,11 +37,11 @@
 <td>{DIR} <input type="text" name="newfile"> <input type="submit" value="Create!"></td>
 </form>
 </tr>
-
+{IF dir_writeable}
 <tr>
 <td colspan="2"><a href="{SCRIPT}?command=upload&amp;file={DIR}">Upload a file</a></td>
 </tr>
-</table>
+{ENDIF}</table>
 
 <hr>
 
