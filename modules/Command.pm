@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-30
+# Last modified: 2004-10-31
 #
 
 use strict;
@@ -910,8 +910,6 @@ sub exec_about($$)
   # Dev-Editor is running on a system which allows users and groups
   # So we display the user and the group of our process
 
-  require POSIX;
-
   my $uid = POSIX::getuid;
   my $gid = POSIX::getgid;
 
@@ -926,6 +924,10 @@ sub exec_about($$)
 
   $tpl->fillin("USER",getpwuid($uid));
   $tpl->fillin("GROUP",getgrgid($gid));
+
+  # Process umask
+
+  $tpl->fillin("UMASK",sprintf("%04o",umask));
  }
  else
  {
