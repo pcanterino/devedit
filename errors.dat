@@ -2,6 +2,7 @@
 
 above_root     = Accessing files and directories above the virtual root directory is forbidden.
 binary         = This editor is not able to view/edit binary files.
+chprop_root    = You are not allowed to change the properties of the root directory.
 cmd_unknown    = Unknown command: '{COMMAND}'
 copy_failed    = Could not copy '{FILE}' to '{NEW_FILE}'.
 create_ar      = You aren't allowed to create files and directories above the virtual root directory.

@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-03
+# Last modified: 2004-12-06
 #
 
 use strict;
@@ -778,72 +778,81 @@ sub exec_chprop($$)
  {
   # System supports user and groups
 
-  if(-o $physical)
+  if($virtual ne "/")
   {
-   # We own this file
+   # Not the root directory
 
-   if($mode || $group)
+   if(-o $physical)
    {
-    if($mode)
+    # We own this file
+
+    if($mode || $group)
     {
-     # Change the mode
+     if($mode)
+     {
+      # Change the mode
 
-     chmod(oct($mode),$physical);
-    }
+      chmod(oct($mode),$physical);
+     }
 
-    if($group)
-    {
-     # Change the group using the `chgrp` system command
+     if($group)
+     {
+      # Change the group using the `chgrp` system command
 
-     return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_entities($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
-     system("chgrp",$group,$physical);
-    }
+      return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_entities($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
+      system("chgrp",$group,$physical);
+     }
 
-    return devedit_reload({command => 'show', file => $dir});
-   }
-   else
-   {
-    # Display the form
-
-    my @stat = stat($physical);
-    my $mode = $stat[2];
-    my $gid  = $stat[5];
-
-    my $tpl = new Template;
-    $tpl->read_file($config->{'templates'}->{'chprop'});
-
-    # Insert file properties into the template
-
-    $tpl->fillin("MODE_OCTAL",substr(sprintf("%04o",$mode),-4));
-    $tpl->fillin("MODE_STRING",mode_string($mode));
-    $tpl->fillin("GID",$gid);
-
-    if(my $group = getgrgid($gid))
-    {
-     $tpl->fillin("GROUP",encode_entities($group));
-     $tpl->parse_if_block("group_detected",1);
+     return devedit_reload({command => 'show', file => $dir});
     }
     else
     {
-     $tpl->parse_if_block("group_detected",0);
+     # Display the form
+
+     my @stat = stat($physical);
+     my $mode = $stat[2];
+     my $gid  = $stat[5];
+
+     my $tpl = new Template;
+     $tpl->read_file($config->{'templates'}->{'chprop'});
+
+     # Insert file properties into the template
+
+     $tpl->fillin("MODE_OCTAL",substr(sprintf("%04o",$mode),-4));
+     $tpl->fillin("MODE_STRING",mode_string($mode));
+     $tpl->fillin("GID",$gid);
+
+     if(my $group = getgrgid($gid))
+     {
+      $tpl->fillin("GROUP",encode_entities($group));
+      $tpl->parse_if_block("group_detected",1);
+     }
+     else
+     {
+      $tpl->parse_if_block("group_detected",0);
+     }
+
+     # Insert other information
+
+     $tpl->fillin("FILE",$virtual);
+     $tpl->fillin("DIR",$dir);
+     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+     $tpl->fillin("SCRIPT",$script);
+
+     my $output = header(-type => "text/html");
+     $output   .= $tpl->get_template;
+
+     return \$output;
     }
-
-    # Insert other information
-
-    $tpl->fillin("FILE",$virtual);
-    $tpl->fillin("DIR",$dir);
-    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-    $tpl->fillin("SCRIPT",$script);
-
-    my $output = header(-type => "text/html");
-    $output   .= $tpl->get_template;
-
-    return \$output;
+   }
+   else
+   {
+    return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual});
    }
   }
   else
   {
-   return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual});
+   return error($config->{'errors'}->{'chprop_root'},"/");
   }
  }
  else
