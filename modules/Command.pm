@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-20
+# Last modified: 2003-10-27
 #
 
 use strict;
@@ -412,9 +412,11 @@ sub exec_workwithfile($$)
 
  $output .= "<p>Someone else is currently editing this file. So not all features are available.</p>\n\n" unless($unused);
 
- # Copying of the file as always allowed
+ # Copying of the file as always allowed if we have read access
 
- $output .= <<END;
+ if(-r $physical)
+ {
+  $output .= <<END;
 <hr>
 
 <h2>Copy</h2>
@@ -428,6 +430,7 @@ sub exec_workwithfile($$)
 <hr>
 
 END
+ }
 
  if($unused)
  {
@@ -498,6 +501,7 @@ sub exec_copy($$)
  $new_virtual       = encode_entities($new_virtual);
 
  return error("This editor is not able to copy directories.") if(-d $physical);
+ return error("You have not enough permissions to copy this file.") unless(-r $physical);
 
  if(-e $new_physical)
  {
