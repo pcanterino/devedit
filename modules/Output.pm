@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-11-26
+# Last modified: 2004-12-17
 #
 
 use strict;
@@ -14,8 +14,6 @@ use strict;
 use vars qw(@EXPORT);
 
 use CGI qw(header);
-use Tool;
-
 use HTML::Entities;
 use Template;
 
