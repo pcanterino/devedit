@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-20-2003
+# Last modified: 09-26-2003
 #
 
 use strict;
@@ -107,9 +107,9 @@ sub file_read($)
  my $file = shift;
  local *FILE;
 
- open(FILE,"<",$file);
+ open(FILE,"<",$file) or return;
  read(FILE, my $content, -s $file);
- close(FILE);
+ close(FILE)          or return;
 
  return \$content;
 }
@@ -121,7 +121,7 @@ sub file_read($)
 # Params: 1. File
 #         2. File content as Scalar Reference
 #
-# Return: Status Code (Boolean)
+# Return: Status code (Boolean)
 
 sub file_save($$)
 {
@@ -130,10 +130,10 @@ sub file_save($$)
  local *FILE;
 
  open(FILE,">",$temp) or return;
- print FILE $$content;
- close(FILE) or return;
+ print FILE $$content or do { close(FILE); return };
+ close(FILE)          or return;
 
- rename($temp,$file) or return;
+ rename($temp,$file)  or return;
 
  return 1;
 }
