@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-03-15
+# Last modified: 2004-04-25
 #
 
 use strict;
@@ -61,7 +61,7 @@ sub exec_command($$$)
 {
  my ($command,$data,$config) = @_;
 
- return error($config->{'err_cmd_unknown'},'/',{COMMAND => $command}) unless($dispatch{$command});
+ return error($config->{'errors'}->{'cmd_unknown'},'/',{COMMAND => $command}) unless($dispatch{$command});
 
  my $output = &{$dispatch{$command}}($data,$config);
  return $output;
@@ -104,7 +104,7 @@ sub exec_show($$)
    my @stat  = stat($physical."/..");
 
    my $udtpl = new Template;
-   $udtpl->read_file($config->{'tpl_dirlist_up'});
+   $udtpl->read_file($config->{'templates'}->{'dirlist_up'});
 
    $udtpl->fillin("UPPER_DIR",encode_entities(upper_path($virtual)));
    $udtpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
@@ -120,7 +120,7 @@ sub exec_show($$)
    my $virt_path = encode_entities($virtual.$dir."/");
 
    my $dtpl = new Template;
-   $dtpl->read_file($config->{'tpl_dirlist_dir'});
+   $dtpl->read_file($config->{'templates'}->{'dirlist_dir'});
 
    $dtpl->fillin("DIR",$virt_path);
    $dtpl->fillin("DIR_NAME",$dir);
@@ -141,7 +141,7 @@ sub exec_show($$)
    my $in_use    = $data->{'uselist'}->in_use($virtual.$file);
 
    my $ftpl = new Template;
-   $ftpl->read_file($config->{'tpl_dirlist_file'});
+   $ftpl->read_file($config->{'templates'}->{'dirlist_file'});
 
    $ftpl->fillin("FILE",$virt_path);
    $ftpl->fillin("FILE_NAME",$file);
@@ -162,7 +162,7 @@ sub exec_show($$)
    $dirlist .= $ftpl->get_template;
   }
 
-  $tpl->read_file($config->{'tpl_dirlist'});
+  $tpl->read_file($config->{'templates'}->{'dirlist'});
 
   $tpl->fillin("DIRLIST",$dirlist);
   $tpl->fillin("DIR",$virtual);
@@ -173,7 +173,7 @@ sub exec_show($$)
  {
   # View a file
 
-  return error($config->{'err_noview'},upper_path($virtual)) unless(-r $physical);
+  return error($config->{'errors'}->{'noview'},upper_path($virtual)) unless(-r $physical);
 
   # Check on binary files
   # We have to do it in this way, or empty files
@@ -183,7 +183,7 @@ sub exec_show($$)
   {
    # Binary file
 
-   return error($config->{'err_binary'},upper_path($virtual));
+   return error($config->{'errors'}->{'binary'},upper_path($virtual));
   }
   else
   {
@@ -192,7 +192,7 @@ sub exec_show($$)
    my $content =  file_read($physical);
    $$content   =~ s/\015\012|\012|\015/\n/g;
 
-   $tpl->read_file($config->{'tpl_viewfile'});
+   $tpl->read_file($config->{'templates'}->{'viewfile'});
 
    $tpl->fillin("FILE",$virtual);
    $tpl->fillin("DIR",upper_path($virtual));
@@ -224,9 +224,9 @@ sub exec_beginedit($$)
  my $virtual        = $data->{'virtual'};
  my $uselist        = $data->{'uselist'};
 
- return error($config->{'err_editdir'},upper_path($virtual))                   if(-d $physical);
- return error($config->{'err_in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
- return error($config->{'err_noedit'},upper_path($virtual))                    unless(-r $physical && -w $physical);
+ return error($config->{'errors'}->{'editdir'},upper_path($virtual))                   if(-d $physical);
+ return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
+ return error($config->{'errors'}->{'noedit'},upper_path($virtual))                    unless(-r $physical && -w $physical);
 
  # Check on binary files
 
@@ -234,7 +234,7 @@ sub exec_beginedit($$)
  {
   # Binary file
 
-  return error($config->{'err_binary'},upper_path($virtual));
+  return error($config->{'errors'}->{'binary'},upper_path($virtual));
  }
  else
  {
@@ -247,7 +247,7 @@ sub exec_beginedit($$)
   $$content   =~ s/\015\012|\012|\015/\n/g;
 
   my $tpl = new Template;
-  $tpl->read_file($config->{'tpl_editfile'});
+  $tpl->read_file($config->{'templates'}->{'editfile'});
 
   $tpl->fillin("FILE",$virtual);
   $tpl->fillin("DIR",upper_path($virtual));
@@ -317,11 +317,11 @@ sub exec_endedit($$)
 
   # Check if someone else is editing the new file
 
-  return error($config->{'err_in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
+  return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
  }
 
- return error($config->{'err_editdir'},upper_path($virtual)) if(-d $physical);
- return error($config->{'err_noedit'}, upper_path($virtual)) unless(-r $physical && -w $physical);
+ return error($config->{'errors'}->{'editdir'},upper_path($virtual)) if(-d $physical);
+ return error($config->{'errors'}->{'noedit'}, upper_path($virtual)) unless(-r $physical && -w $physical);
 
  if(file_save($physical,\$content))
  {
@@ -336,7 +336,7 @@ sub exec_endedit($$)
  }
  else
  {
-  return error($config->{'err_edit_failed'},upper_path($virtual),{FILE => $virtual});
+  return error($config->{'errors'}->{'edit_failed'},upper_path($virtual),{FILE => $virtual});
  }
 }
 
@@ -357,9 +357,9 @@ sub exec_mkfile($$)
  my $dir            = upper_path($new_virtual);
  $new_virtual       = encode_entities($new_virtual);
 
- return error($config->{'err_file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
+ return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
 
- file_create($new_physical) or return error($config->{'err_mkfile_failed'},$dir,{FILE => $new_virtual});
+ file_create($new_physical) or return error($config->{'errors'}->{'mkfile_failed'},$dir,{FILE => $new_virtual});
  return devedit_reload({command => 'show', file => $dir});
 }
 
@@ -380,9 +380,9 @@ sub exec_mkdir($$)
  my $dir            = upper_path($new_virtual);
  $new_virtual       = encode_entities($new_virtual);
 
- return error($config->{'err_file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
+ return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
 
- mkdir($new_physical,0777) or return error($config->{'err_mkdir_failed'},$dir,{DIR => $new_virtual});
+ mkdir($new_physical,0777) or return error($config->{'errors'}->{'mkdir_failed'},$dir,{DIR => $new_virtual});
  return devedit_reload({command => 'show', file => $dir});
 }
 
@@ -410,14 +410,14 @@ sub exec_upload($$)
   my $file_phys = $physical."/".$filename;
   my $file_virt = $virtual."".$filename;
 
-  return error($config->{'err_file_exists'},$virtual,{FILE => $file_virt}) if(-e $file_phys);
+  return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt}) if(-e $file_phys);
 
   my $ascii     = $cgi->param('ascii');
   my $handle    = $cgi->upload('uploaded_file');
 
   local *FILE;
 
-  open(FILE,">$file_phys") or return error($config->{'err_mkfile_failed'},$virtual,{FILE => $file_virt});
+  open(FILE,">$file_phys") or return error($config->{'errors'}->{'mkfile_failed'},$virtual,{FILE => $file_virt});
   binmode(FILE) unless($ascii);
 
   my $data;
@@ -435,7 +435,7 @@ sub exec_upload($$)
  else
  {
   my $tpl = new Template;
-  $tpl->read_file($config->{'tpl_upload'});
+  $tpl->read_file($config->{'templates'}->{'upload'});
 
   $tpl->fillin("DIR",$virtual);
   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
@@ -464,7 +464,7 @@ sub exec_copy($$)
  my $virtual        = encode_entities($data->{'virtual'});
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'err_nocopy'}) unless(-r $physical);
+ return error($config->{'errors'}->{'nocopy'}) unless(-r $physical);
 
  if($new_physical)
  {
@@ -474,16 +474,16 @@ sub exec_copy($$)
 
   if(-e $new_physical)
   {
-   return error($config->{'err_exist_edited'},$dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'exist_edited'},$dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
 
    if(-d $new_physical)
    {
-    return error($config->{'err_dircopy'});
+    return error($config->{'errors'}->{'dircopy'});
    }
    elsif(not $data->{'cgi'}->param('confirmed'))
    {
     my $tpl = new Template;
-    $tpl->read_file($config->{'tpl_confirm_replace'});
+    $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
     $tpl->fillin("FILE",$virtual);
     $tpl->fillin("NEW_FILE",$new_virtual);
@@ -502,13 +502,13 @@ sub exec_copy($$)
    }
   }
 
-  copy($physical,$new_physical) or return error($config->{'err_copy_failed'},upper_path($virtual),{FILE => $virtual, NEW_FILE => $new_virtual});
+  copy($physical,$new_physical) or return error($config->{'errors'}->{'copy_failed'},upper_path($virtual),{FILE => $virtual, NEW_FILE => $new_virtual});
   return devedit_reload({command => 'show', file => $dir});
  }
  else
  {
   my $tpl = new Template;
-  $tpl->read_file($config->{'tpl_copyfile'});
+  $tpl->read_file($config->{'templates'}->{'copyfile'});
 
   $tpl->fillin("FILE",$virtual);
   $tpl->fillin("DIR",upper_path($virtual));
@@ -538,7 +538,7 @@ sub exec_rename($$)
  my $virtual        = $data->{'virtual'};
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'err_in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
+ return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
  if($new_physical)
  {
@@ -548,16 +548,16 @@ sub exec_rename($$)
 
   if(-e $new_physical)
   {
-   return error($config->{'err_exist_edited'},$dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'exist_edited'},$dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
 
    if(-d $new_physical)
    {
-    return error($config->{'err_dircopy'});
+    return error($config->{'errors'}->{'dircopy'});
    }
    elsif(not $data->{'cgi'}->param('confirmed'))
    {
     my $tpl = new Template;
-    $tpl->read_file($config->{'tpl_confirm_replace'});
+    $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
     $tpl->fillin("FILE",$virtual);
     $tpl->fillin("NEW_FILE",$new_virtual);
@@ -576,13 +576,13 @@ sub exec_rename($$)
    }
   }
 
-  rename($physical,$new_physical) or return error($config->{'err_rename_failed'},upper_path($virtual),{FILE => $virtual, NEW_FILE => $new_virtual});
+  rename($physical,$new_physical) or return error($config->{'errors'}->{'rename_failed'},upper_path($virtual),{FILE => $virtual, NEW_FILE => $new_virtual});
   return devedit_reload({command => 'show', file => $dir});
  }
  else
  {
   my $tpl = new Template;
-  $tpl->read_file($config->{'tpl_renamefile'});
+  $tpl->read_file($config->{'templates'}->{'renamefile'});
 
   $tpl->fillin("FILE",$virtual);
   $tpl->fillin("DIR",upper_path($virtual));
@@ -623,7 +623,7 @@ sub exec_remove($$)
   else
   {
    my $tpl = new Template;
-   $tpl->read_file($config->{'tpl_confirm_rmdir'});
+   $tpl->read_file($config->{'templates'}->{'confirm_rmdir'});
 
    $tpl->fillin("DIR",$virtual);
    $tpl->fillin("UPPER_DIR",upper_path($virtual));
@@ -640,17 +640,17 @@ sub exec_remove($$)
  {
   # Remove a file
 
-  return error($config->{'err_in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
+  return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
   if($data->{'cgi'}->param('confirmed'))
   {
-   unlink($physical) or return error($config->{'err_delete_failed'},upper_path($virtual),{FILE => $virtual});
+   unlink($physical) or return error($config->{'errors'}->{'delete_failed'},upper_path($virtual),{FILE => $virtual});
    return devedit_reload({command => 'show', file => upper_path($virtual)});
   }
   else
   {
    my $tpl = new Template;
-   $tpl->read_file($config->{'tpl_confirm_rmfile'});
+   $tpl->read_file($config->{'templates'}->{'confirm_rmfile'});
 
    $tpl->fillin("FILE",$virtual);
    $tpl->fillin("DIR",upper_path($virtual));
@@ -688,7 +688,7 @@ sub exec_unlock($$)
  else
  {
   my $tpl = new Template;
-  $tpl->read_file($config->{'tpl_confirm_unlock'});
+  $tpl->read_file($config->{'templates'}->{'confirm_unlock'});
 
   $tpl->fillin("FILE",$virtual);
   $tpl->fillin("DIR",upper_path($virtual));
@@ -716,7 +716,7 @@ sub exec_about($$)
  my ($data,$config) = @_;
 
  my $tpl = new Template;
- $tpl->read_file($config->{'tpl_about'});
+ $tpl->read_file($config->{'templates'}->{'about'});
 
  $tpl->fillin("SCRIPT",$script);
 

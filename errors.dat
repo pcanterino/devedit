@@ -1,0 +1,27 @@
+# This file contains the error messages of Dev-Editor
+
+binary        = This editor is not able to view/edit binary files.
+editdir       = You cannot edit directories.
+noedit        = You have not enough permissions to edit this file.
+file_in_use   = The file '{FILE}' is currently edited by someone else.
+edit_failed   = Saving of file '{FILE}' failed. The file could be damaged, please check its integrity.
+delete_failed = Could not delete file '{FILE}'.
+dir_read_fail = Reading of directory '{DIR}' failed.
+mkfile_failed = Could not create file '{FILE}'.
+mkdir_failed  = Could not create directory '{DIR}'.
+copy_failed   = Could not copy '{FILE}' to '{NEW_FILE}'.
+rename_failed = Could not move/rename '{FILE}' to '{NEW_FILE}'.
+above_root    = Accessing files and directories above the virtual root directory is forbidden.
+create_ar     = You aren't allowed to create files and directories above the virtual root directory.
+file_exists   = A file or directory called '{FILE}' already exists.
+exist_edited  = The target file '{FILE}' already exists and is edited by someone else.
+in_use        = The file '{FILE}' is currently edited by someone else.
+noview        = You have not enough permissions to view this file.
+nocopy        = You have not enough permissions to copy this file.
+dircopy       = This editor is not able to copy directories.
+cmd_unknown   = Unknown command: {COMMAND}
+lock_failed   = Locking of '{USELIST}' failed. Try it again in a moment. If the problem persists, ask someone to recreate the lock file ('{LOCK_FILE}').
+not_exist     = File/directory does not exist.
+dir_not_exist = The directory where you want to create this file or directory doesn't exist.
+
+# End of configuration file

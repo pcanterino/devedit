@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-03-06
+# Last modified: 2004-04-25
 #
 
 use strict;
@@ -30,7 +30,7 @@ use constant CONFIGFILE => 'devedit.dat';
 # Read the configuration file
 
 my $config = read_config(CONFIGFILE);
-error_template($config->{'tpl_error'}); # Yes, I'm lazy...
+error_template($config->{'templates'}->{'error'}); # Yes, I'm lazy...
 
 # Read the most important form data
 
@@ -61,14 +61,14 @@ if($newfile ne '')
 
  unless(-d clean_path($config->{'fileroot'}."/".$dir))
  {
-  abort($config->{'err_dir_not_exist'});
+  abort($config->{'errors'}->{'dir_not_exist'});
  }
 
  # ... and check if the path is above the root directory
 
  unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
  {
-  abort($config->{'err_create_ar'});
+  abort($config->{'errors'}->{'create_ar'});
  }
 
  # Create the physical and the virtual path
@@ -89,7 +89,7 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
                                   lockfile => $config->{'lock_file'},
                                   timeout  => $config->{'lock_timeout'});
 
-  $uselist->lock or abort($config->{'err_lock_failed'},{USELIST => $config->{'uselist_file'}, LOCK_FILE => $config->{'lock_file'}});
+  $uselist->lock or abort($config->{'errors'}->{'lock_failed'},{USELIST => $config->{'uselist_file'}, LOCK_FILE => $config->{'lock_file'}});
   $uselist->load;
 
   # Create a hash with data submitted by user
@@ -111,12 +111,12 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
  }
  else
  {
-  abort($config->{'err_above_root'});
+  abort($config->{'errors'}->{'above_root'});
  }
 }
 else
 {
- abort($config->{'err_not_exist'});
+ abort($config->{'errors'}->{'not_exist'});
 }
 
 #

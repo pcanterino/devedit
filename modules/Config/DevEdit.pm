@@ -3,10 +3,10 @@ package Config::DevEdit;
 #
 # Dev-Editor - Module Config::DevEdit
 #
-# Parse the configuration file
+# Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-01-16
+# Last modified: 2004-04-25
 #
 
 use strict;
@@ -22,13 +22,33 @@ use base qw(Exporter);
 
 # read_config()
 #
-# Parse the configuration file
+# Read the configuration files of Dev-Editor
 #
 # Params: Path to configuration file
 #
 # Return: Configuration (Hash Reference)
 
 sub read_config($)
+{
+ my $file = shift;
+
+ my $config = parse_config($file);
+
+ $config->{'errors'}    = parse_config($config->{'error_file'});
+ $config->{'templates'} = parse_config($config->{'template_file'});
+
+ return $config;
+}
+
+# parse_config()
+#
+# Parse an INI-style configuration file
+#
+# Params: Path to configuration file
+#
+# Return: Configuration (Hash Reference)
+
+sub parse_config($)
 {
  my $file = shift;
  local *CF;
