@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-13
+# Last modified: 2005-02-14
 #
 
 use strict;
@@ -69,7 +69,9 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
  # ... check if the directory exists ...
 
- unless(-d clean_path($config->{'fileroot'}.'/'.$dir) && not -l clean_path($config->{'fileroot'}.'/'.$dir))
+ my $temp_path = clean_path($config->{'fileroot'}.'/'.$dir);
+
+ unless(-d $temp_path && not -l $temp_path)
  {
   abort($config->{'errors'}->{'dir_not_exist'},'/');
  }
@@ -97,7 +99,9 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
 # This check has to be performed first or abs_path() will be confused
 
-if(-e clean_path($config->{'fileroot'}.'/'.$file) || -l clean_path($config->{'fileroot'}.'/'.$file))
+my $temp_path = clean_path($config->{'fileroot'}.'/'.$file);
+
+if(-e $temp_path || -l $temp_path)
 {
  if(my ($physical,$virtual) = check_path($config->{'fileroot'},$file))
  {
