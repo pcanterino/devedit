@@ -26,7 +26,7 @@
 <form action="{SCRIPT}" method="get">
 <input type="hidden" name="command" value="chprop">
 <input type="hidden" name="file" value="{FILE}">
-<td><input type="text" name="mode" value="{MODE_OCTAL}"> <input type="submit" value="Change!"></td>
+<td><input type="text" name="mode"> <input type="submit" value="Change!"></td>
 </form>
 </tr>
 <tr>
@@ -34,10 +34,19 @@
 <form action="{SCRIPT}" method="get">
 <input type="hidden" name="command" value="chprop">
 <input type="hidden" name="file" value="{FILE}">
-<td><input type="text" name="group" value="{GROUP}"> <input type="submit" value="Change!"></td>
+<td><input type="text" name="group"> <input type="submit" value="Change!"></td>
 </form>
 </tr>
 </table>
+
+<p><b>Notes:</b></p>
+
+<ul>
+<li><b>Change mode:</b><br>
+Use an <b>octal</b> number to change the mode of the file. You may use the three or four number form. For this, SetUID, SetGID and Sticky Bit are also supported.</li>
+<li><b>Change group:</b><br>
+Enter the group name or the group ID the file should be assigned to.</li>
+</ul>
 
 <hr>
 
