@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-11-04
+# Last modified: 2003-12-01
 #
 
 use strict;
@@ -87,8 +87,8 @@ sub file_create($)
 
  return if(-e $file);
 
- open(FILE,">",$file) or return;
- close(FILE)          or return;
+ open(FILE,">$file") or return;
+ close(FILE)         or return;
 
  return 1;
 }
@@ -106,9 +106,9 @@ sub file_read($)
  my $file = shift;
  local *FILE;
 
- open(FILE,"<",$file) or return;
+ open(FILE,"<$file") or return;
  read(FILE, my $content, -s $file);
- close(FILE)          or return;
+ close(FILE)         or return;
 
  return \$content;
 }
@@ -127,7 +127,7 @@ sub file_save($$)
  my ($file,$content) = @_;
  local *FILE;
 
- open(FILE,">",$file) or return;
+ open(FILE,">$file")  or return;
  print FILE $$content or do { close(FILE); return };
  close(FILE)          or return;
 
