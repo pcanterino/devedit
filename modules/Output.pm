@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-12-13
+# Last modified: 2004-02-06
 #
 
 use strict;
@@ -14,65 +14,32 @@ use strict;
 use vars qw(@EXPORT);
 
 use CGI qw(header);
-use HTML::Entities;
 use Tool;
+
+use HTML::Entities;
+use Template;
 
 ### Export ###
 
 use base qw(Exporter);
 
-@EXPORT = qw(htmlhead
-             htmlfoot
+@EXPORT = qw(error_template
              error
              abort
-             error_in_use
-             equal_url
-             dir_link);
+             error_in_use);
 
-# htmlhead()
-#
-# Generate the head of a HTML document
-# (a text/html HTTP header will also be created)
-#
-# Params: Title/heading
-#
-# Return: Head for the HTML document
+my $tpl_error;
 
-sub htmlhead($)
+# error_template()
+#
+# Set the path to the template file using for error messages
+# (I'm lazy...)
+#
+# Params: Template file
+
+sub error_template($)
 {
- my $title = shift;
-
- my $html = header(-type => "text/html");
-
- $html .= <<END;
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
-
-<html>
-<head>
-<title>$title</title>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
-</head>
-<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
-
-<h1>$title</h1>
-
-END
-
- return $html;
-}
-
-# htmlfoot()
-#
-# Generate the foot of a HTML document
-#
-# Params: -nothing-
-#
-# Return: Foot for the HTML document
-
-sub htmlfoot
-{
- return "\n</body>\n</html>";
+ $tpl_error = shift;
 }
 
 # error()
@@ -81,25 +48,33 @@ sub htmlfoot
 #
 # Params: 1. Error message
 #         2. Virtual path to which a link should be displayed (optional)
+#         3. Hash reference: Template variables (optional)
 #
 # Return: Formatted message (Scalar Reference)
 
-sub error($;$)
+sub error($;$$)
 {
- my ($message,$path) = @_;
+ my ($message,$path,$vars) = @_;
 
- my $output = htmlhead("Error");
- $output   .= "<p>$message</p>";
+ my $tpl = new Template;
+ $tpl->read_file($tpl_error);
 
- if($path)
+ $tpl->fillin("ERROR",$message);
+ $tpl->fillin("DIR",$path);
+ $tpl->fillin("SCRIPT",encode_entities($ENV{'SCRIPT_NAME'}));
+
+ $tpl->parse_if_block("dir",defined $path);
+
+ if(ref($vars) eq "HASH")
  {
-  $path = encode_entities($path);
-
-  $output .= "\n\n";
-  $output .= "<p><a href=\"$ENV{'SCRIPT_NAME'}?command=show&file=$path\">Back to $path</a></p>";
+  while(my ($key,$value) = each(%$vars))
+  {
+   $tpl->fillin($key,$value);
+  }
  }
 
- $output .= htmlfoot;
+ my $output = header(-type => "text/html");
+ $output   .= $tpl->get_template;
 
  return \$output;
 }
@@ -132,44 +107,6 @@ sub error_in_use($)
  my $file = shift;
 
  return error("The file '".encode_entities($file)."' is currently edited by someone else.",upper_path($file));
-}
-
-# equal_url()
-#
-# Create an "equals"-link
-#
-# Params: 1. HTTP root
-#         2. Relative path
-#
-# Return: Formatted link (String)
-
-sub equal_url($$)
-{
- my ($root,$path) = @_;
- my $url;
-
- $root =~ s!/$!!;
- $path =~ s!^/!!;
- $url  =  $root."/".$path;
- $url  =  encode_entities($url);
-
- return "<p>(equals <a href=\"$url\" target=\"_blank\">$url</a>)</p>\n\n";
-}
-
-# dir_link()
-#
-# Create the link to the directory of a file
-#
-# Params: File
-#
-# Return: Formatted link (String)
-
-sub dir_link($)
-{
- my $dir = upper_path(shift);
- $dir    = encode_entities($dir);
-
- return "<p><a href=\"$ENV{'SCRIPT_NAME'}?command=show&file=$dir\">Back to $dir</a></p>\n\n";
 }
 
 # it's true, baby ;-)

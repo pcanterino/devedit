@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-12-02
+# Last modified: 2004-02-03
 #
 
 use strict;
@@ -24,6 +24,7 @@ use base qw(Exporter);
 @EXPORT = qw(check_path
              clean_path
              devedit_reload
+             equal_url
              file_name
              upper_path);
 
@@ -123,6 +124,28 @@ sub devedit_reload($)
  my $header = redirect("http://$ENV{'HTTP_HOST'}$ENV{'SCRIPT_NAME'}?$query");
 
  return \$header;
+}
+
+# equal_url()
+#
+# Create URL equal to a file or directory
+#
+# Params: 1. HTTP root
+#         2. Relative path
+#
+# Return: Formatted link (String)
+
+sub equal_url($$)
+{
+ my ($root,$path) = @_;
+ my $url;
+
+ $root =~ s!/$!!;
+ $path =~ s!^/!!;
+ $url  =  $root."/".$path;
+ #$url  =  encode_entities($url);
+
+ return $url;
 }
 
 # file_name()

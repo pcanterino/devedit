@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<title>Directory listing of {DIR}</title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<h1>Directory listing of {DIR}</h1>
+
+<p>(equals <a href="{URL}" target="_blank">{URL}</a>)</p>
+
+<hr>
+
+<table border="0" style="font-family:'Courier New',Courier,monospace;font-size:10pt;">
+{DIRLIST}</table>
+
+<hr>
+
+<table border="0">
+<tr>
+<form action="{SCRIPT}">
+<input type="hidden" name="command" value="mkdir">
+<input type="hidden" name="curdir" value="{DIR}">
+<td>Create new directory:</td>
+<td>{DIR} <input type="text" name="newfile"> <input type="submit" value="Create!"></td>
+</form>
+</tr>
+
+<tr>
+<td>Create new file:</td>
+<form action="{SCRIPT}">
+<input type="hidden" name="command" value="mkfile">
+<input type="hidden" name="curdir" value="{DIR}">
+<td>{DIR} <input type="text" name="newfile"> <input type="submit" value="Create!"></td>
+</form>
+</tr>
+</table>
+
+<hr>
+
+</body>
+</html>

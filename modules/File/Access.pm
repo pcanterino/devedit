@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-12-01
+# Last modified: 2004-02-06
 #
 
 use strict;
@@ -23,7 +23,8 @@ use base qw(Exporter);
 @EXPORT = qw(dir_read
              file_create
              file_read
-             file_save);
+             file_save
+             file_unlock);
 
 # dir_read()
 #
@@ -132,6 +133,25 @@ sub file_save($$)
  close(FILE)          or return;
 
  return 1;
+}
+
+# file_unlock()
+#
+# Remove a file from the list of files in use
+#
+# Params: 1. File::UseList object
+#         2. File to remove
+#
+# Return: -nothing-
+
+sub file_unlock($$)
+{
+ my ($uselist,$file) = @_;
+
+ $uselist->remove_file($file);
+ $uselist->save;
+
+ return;
 }
 
 # it's true, baby ;-)

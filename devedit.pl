@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-01-16
+# Last modified: 2004-02-06
 #
 
 use strict;
@@ -27,6 +27,7 @@ use constant CONFIGFILE => 'devedit.dat';
 # Read the configuration file
 
 my $config = read_config(CONFIGFILE);
+error_template($config->{'tpl_error'}); # Yes, I'm lazy...
 
 # Read the most important form data
 
@@ -64,7 +65,7 @@ if($newfile ne '')
 
  unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
  {
-  abort("You aren't allowed to create files and directories above the virtual root directory.");
+  abort($config->{'err_creat_ar'});
  }
 
  # Create the physical and the virtual path
@@ -105,7 +106,7 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
  }
  else
  {
-  abort("Accessing files and directories above the virtual root directory is forbidden.");
+  abort($config->{'err_above_root'});
  }
 }
 else

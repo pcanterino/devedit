@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-12-22
+# Last modified: 2004-02-06
 #
 
 use strict;
@@ -17,26 +17,26 @@ use File::Access;
 use File::Copy;
 use File::Path;
 
-use HTML::Entities;
-use Output;
 use POSIX qw(strftime);
 use Tool;
 
+use CGI qw(header);
+use HTML::Entities;
+use Output;
+use Template;
+
 my $script = $ENV{'SCRIPT_NAME'};
 
-my %dispatch = ('show'         => \&exec_show,
-                'beginedit'    => \&exec_beginedit,
-                'canceledit'   => \&exec_unlock,
-                'endedit'      => \&exec_endedit,
-                'mkdir'        => \&exec_mkdir,
-                'mkfile'       => \&exec_mkfile,
-                'workwithfile' => \&exec_workwithfile,
-                'workwithdir'  => \&exec_workwithdir,
-                'copy'         => \&exec_copy,
-                'rename'       => \&exec_rename,
-                'remove'       => \&exec_remove,
-                'rmdir'        => \&exec_rmdir,
-                'unlock'       => \&exec_unlock
+my %dispatch = ('show'       => \&exec_show,
+                'beginedit'  => \&exec_beginedit,
+                'canceledit' => \&exec_canceledit,
+                'endedit'    => \&exec_endedit,
+                'mkdir'      => \&exec_mkdir,
+                'mkfile'     => \&exec_mkfile,
+                'copy'       => \&exec_copy,
+                'rename'     => \&exec_rename,
+                'remove'     => \&exec_remove,
+                'unlock'     => \&exec_unlock
                );
 
 ### Export ###
@@ -91,32 +91,22 @@ sub exec_show($$)
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
 
-  $output .= htmlhead("Directory listing of $virtual");
-  $output .= equal_url($config->{'httproot'},$virtual);
-  $output .= "<hr>\n\n<pre>\n";
+  my $dirlist = "";
 
   # Create the link to the upper directory
   # (only if we are not in the root directory)
 
   unless($virtual eq "/")
   {
-   my $upper = $physical."/..";
-   my @stat  = stat($upper);
+   my @stat  = stat($physical."/..");
 
-   $output .= "  [SUBDIR]  ";
-   $output .= strftime("%d.%m.%Y %H:%M",localtime($stat[9]));
-   $output .= " " x 10;
-   $output .= "<a href=\"$script?command=show&file=".encode_entities(upper_path($virtual))."\">../</a>\n";
-  }
+   my $udtpl = new Template;
+   $udtpl->read_file($config->{'tpl_dirlist_up'});
 
-  # Get the length of the longest file/directory name
+   $udtpl->fillin("UPPER_DIR",encode_entities(upper_path($virtual)));
+   $udtpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
 
-  my $max_name_len = 0;
-
-  foreach(@$dirs,@$files)
-  {
-   my $length    = length($_);
-   $max_name_len = $length if($length > $max_name_len);
+   $dirlist .= $udtpl->get_template;
   }
 
   # Directories
@@ -126,13 +116,14 @@ sub exec_show($$)
    my @stat      = stat($physical."/".$dir);
    my $virt_path = encode_entities($virtual.$dir."/");
 
-   $output .= "  ";
-   $output .= "[SUBDIR]  ";
-   $output .= strftime($config->{'timeformat'},localtime($stat[9]));
-   $output .= " " x 10;
-   $output .= "<a href=\"$script?command=show&file=$virt_path\">".encode_entities($dir)."/</a>";
-   $output .= " " x ($max_name_len - length($dir) - 1)."\t  (";
-   $output .= "<a href=\"$script?command=workwithdir&file=$virt_path\">Work with directory</a>)\n";
+   my $dtpl = new Template;
+   $dtpl->read_file($config->{'tpl_dirlist_dir'});
+
+   $dtpl->fillin("DIR",$virt_path);
+   $dtpl->fillin("DIR_NAME",$dir);
+   $dtpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
+
+   $dirlist .= $dtpl->get_template;
   }
 
   # Files
@@ -145,83 +136,37 @@ sub exec_show($$)
    my @stat      = stat($phys_path);
    my $in_use    = $data->{'uselist'}->in_use($virtual.$file);
 
-   $output .= " " x (10 - length($stat[7]));
-   $output .= $stat[7];
-   $output .= "  ";
-   $output .= strftime($config->{'timeformat'},localtime($stat[9]));
-   $output .= " " x 10;
-   $output .= encode_entities($file);
-   $output .= " " x ($max_name_len - length($file))."\t  (";
+   my $ftpl = new Template;
+   $ftpl->read_file($config->{'tpl_dirlist_file'});
 
-   # Link "View"
+   $ftpl->fillin("FILE",$virt_path);
+   $ftpl->fillin("FILE_NAME",$file);
+   $ftpl->fillin("SIZE",$stat[7]);
+   $ftpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
 
-   if(-r $phys_path && -T $phys_path)
-   {
-    $output .= "<a href=\"$script?command=show&file=$virt_path\">View</a>";
-   }
-   else
-   {
-    $output .= '<span style="color:#C0C0C0" title="';
+   $ftpl->parse_if_block("not_readable",not -r $phys_path);
+   $ftpl->parse_if_block("binary",-B $phys_path);
+   $ftpl->parse_if_block("readonly",not -w $phys_path);
 
-    $output .= (not -r $phys_path) ? "Not readable" :
-               (-B     $phys_path) ? "Binary file"  : "";
+   $ftpl->parse_if_block("viewable",-r $phys_path && -T $phys_path);
+   $ftpl->parse_if_block("editable",-w $phys_path && -r $phys_path && -T $phys_path && not $in_use);
 
-    $output .= '">View</span>';
-   }
+   $ftpl->parse_if_block("in_use",$in_use);
+   $ftpl->parse_if_block("unused",not $in_use);
 
-   $output .= " | ";
-
-   # Link "Edit"
-
-   if(-w $phys_path && -r $phys_path && -T $phys_path && not $in_use)
-   {
-    $output .= "<a href=\"$script?command=beginedit&file=$virt_path\">Edit</a>";
-   }
-   else
-   {
-    $output .= '<span style="color:#C0C0C0" title="';
-
-    $output .= (not -r $phys_path) ? "Not readable" :
-               (not -w $phys_path) ? "Read only"    :
-               (-B     $phys_path) ? "Binary file"  :
-               ($in_use)           ? "In use"       : "";
-
-    $output .= '">Edit</span>';
-   }
-
-   # Link "Do other stuff"
-
-   $output .= " | <a href=\"$script?command=workwithfile&file=$virt_path\">Work with file</a>)\n";
+   $dirlist .= $ftpl->get_template;
   }
 
-  $output .= "</pre>\n\n<hr>\n\n";
+  my $tpl = new Template;
+  $tpl->read_file($config->{'tpl_dirlist'});
 
-  # Bottom of directory listing
-  # (Fields for creating files and directories)
+  $tpl->fillin("DIRLIST",$dirlist);
+  $tpl->fillin("DIR",$virtual);
+  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
 
-  $output .= <<END;
-<table border="0">
-<tr>
-<form action="$script">
-<input type="hidden" name="command" value="mkdir">
-<input type="hidden" name="curdir" value="$virtual">
-<td>Create new directory:</td>
-<td>$virtual <input type="text" name="newfile"> <input type="submit" value="Create!"></td>
-</form>
-</tr>
-<tr>
-<td>Create new file:</td>
-<form action="$script">
-<input type="hidden" name="command" value="mkfile">
-<input type="hidden" name="curdir" value="$virtual">
-<td>$virtual <input type="text" name="newfile"> <input type="submit" value="Create!"></td>
-</form>
-</tr>
-</table>
-
-<hr>
-END
-  $output .= htmlfoot;
+  $output  = header(-type => "text/html");
+  $output .= $tpl->get_template;
  }
  else
  {
@@ -237,22 +182,25 @@ END
   {
    # Binary file
 
-   return error("This editor is not able to view/edit binary files.",upper_path($virtual));
+   return error($config->{'err_binary'},upper_path($virtual));
   }
   else
   {
    # Text file
 
-   $output  = htmlhead("Contents of file ".encode_entities($virtual));
-   $output .= equal_url($config->{'httproot'},$virtual);
-   $output .= dir_link($virtual);
+   my $content = file_read($physical);
 
-   $output .= '<div style="background-color:#FFFFE0;border:1px solid black;margin-top:10px;width:100%">'."\n";
-   $output .= '<pre style="color:#0000C0;">'."\n";
-   $output .= encode_entities(${file_read($physical)});
-   $output .= "\n</pre>\n</div>";
+   my $tpl = new Template;
+   $tpl->read_file($config->{'tpl_viewfile'});
 
-   $output .= htmlfoot;
+   $tpl->fillin("FILE",$virtual);
+   $tpl->fillin("DIR",upper_path($virtual));
+   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin("SCRIPT",$script);
+   $tpl->fillin("CONTENT",encode_entities($$content));
+
+   $output  = header(-type => "text/html");
+   $output .= $tpl->get_template;
   }
  }
 
@@ -275,9 +223,9 @@ sub exec_beginedit($$)
  my $virtual        = $data->{'virtual'};
  my $uselist        = $data->{'uselist'};
 
- return error("You cannot edit directories.",upper_path($virtual)) if(-d $physical);
+ return error($config->{'err_editdir'},upper_path($virtual)) if(-d $physical);
  return error_in_use($virtual) if($uselist->in_use($virtual));
- return error("You have not enough permissions to edit this file.",upper_path($virtual)) unless(-r $physical && -w $physical);
+ return error($config->{'err_noedit'},upper_path($virtual)) unless(-r $physical && -w $physical);
 
  # Check on binary files
 
@@ -285,7 +233,7 @@ sub exec_beginedit($$)
  {
   # Binary file
 
-  return error("This editor is not able to view/edit binary files.",upper_path($virtual));
+  return error($config->{'err_binary'},upper_path($virtual));
  }
  else
  {
@@ -294,49 +242,41 @@ sub exec_beginedit($$)
   $uselist->add_file($virtual);
   $uselist->save;
 
-  my $dir       = upper_path($virtual);
-  my $content   = encode_entities(${file_read($physical)});
+  my $content = file_read($physical);
 
-  my $equal_url = equal_url($config->{'httproot'},$virtual);
+  my $tpl = new Template;
+  $tpl->read_file($config->{'tpl_editfile'});
 
-  $virtual   = encode_entities($virtual);
+  $tpl->fillin("FILE",$virtual);
+  $tpl->fillin("DIR",upper_path($virtual));
+  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin("CONTENT",encode_entities($$content));
 
-  my $output = htmlhead("Edit file $virtual");
-  $output   .= $equal_url;
-  $output   .= <<END;
-<p><b style="color:#FF0000">Caution!</b> This file is locked for other users while you are editing it. To unlock it, click <i>Save and exit</i> or <i>Exit WITHOUT saving</i>. Please <b>don't</b> click the <i>Reload</i> button in your browser! This will confuse the editor.</p>
-
-<form action="$script" method="get">
-<input type="hidden" name="command" value="canceledit">
-<input type="hidden" name="file" value="$virtual">
-<p><input type="submit" value="Exit WITHOUT saving"></p>
-</form>
-
-<form action="$script" method="post">
-<input type="hidden" name="command" value="endedit">
-<input type="hidden" name="file" value="$virtual">
-
-<table width="100%" border="1">
-<tr>
-<td width="50%" align="center">
-<input type="hidden" name="file" value="$virtual">
-<input type="checkbox" name="saveas" value="1"> Save as new file: $dir <input type=text name="newfile" value=""></td>
-<td width="50%" align="center"><input type="checkbox" name="encode_iso" value="1"> Encode ISO-8859-1 special chars</td>
-</tr>
-<tr>
-<td align="center"><input type="reset" value="Reset form"></td>
-<td align="center"><input type="submit" value="Save and exit"></td>
-</tr>
-</table>
-
-<textarea name="filecontent" rows="25" cols="120">$content</textarea>
-</form>
-END
-
-  $output .= htmlfoot;
+  my $output = header(-type => "text/html");
+  $output   .= $tpl->get_template;
 
   return \$output;
  }
+}
+
+# exec_canceledit()
+#
+# Abort file editing
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_canceledit($$)
+{
+ my ($data,$config) = @_;
+ my $virtual        = $data->{'virtual'};
+ my $uselist        = $data->{'uselist'};
+
+ file_unlock($uselist,$virtual);
+ return devedit_reload({command => 'show', file => upper_path($virtual)});
 }
 
 # exec_endedit()
@@ -355,8 +295,8 @@ sub exec_endedit($$)
  my $virtual        = $data->{'virtual'};
  my $content        = $data->{'cgi'}->param('filecontent');
 
- return error("You cannot edit directories.") if(-d $physical);
- return error("You have not enough permissions to edit this file.",upper_path($virtual)) unless(-r $physical && -w $physical);
+ return error($config->{'err_editdir'},upper_path($virtual)) if(-d $physical);
+ return error($config->{'err_noedit'},upper_path($virtual)) unless(-r $physical && -w $physical);
 
  # Normalize newlines
 
@@ -381,11 +321,12 @@ sub exec_endedit($$)
  {
   # Saving of the file was successful - so unlock it!
 
-  return exec_unlock($data,$config);
+  file_unlock($data->{'uselist'},$virtual);
+  return devedit_reload({command => 'show', file => upper_path($virtual)});
  }
  else
  {
-  return error("Saving of file '".encode_entities($virtual)."' failed'. The file could be damaged, please check it's integrity.",upper_path($virtual));
+  return error($config->{'err_editfailed'},upper_path($virtual),{FILE => $virtual});
  }
 }
 
@@ -435,159 +376,6 @@ sub exec_mkdir($$)
  return devedit_reload({command => 'show', file => $dir});
 }
 
-# exec_workwithfile()
-#
-# Display a form for renaming/copying/removing/unlocking a file
-#
-# Params: 1. Reference to user input hash
-#         2. Reference to config hash
-#
-# Return: Output of the command (Scalar Reference)
-
-sub exec_workwithfile($$)
-{
- my ($data,$config) = @_;
- my $physical       = $data->{'physical'};
- my $virtual        = $data->{'virtual'};
- my $unused         = $data->{'uselist'}->unused($virtual);
-
- my $dir = encode_entities(upper_path($virtual));
-
- my $output = htmlhead("Work with file ".encode_entities($virtual));
- $output   .= equal_url($config->{'httproot'},$virtual);
-
- $virtual   = encode_entities($virtual);
-
- $output   .= dir_link($virtual);
- $output   .= "<p><b>Note:</b> On UNIX systems, filenames are <b>case-sensitive</b>!</p>\n\n";
-
- $output .= "<p>Someone else is currently editing this file. So not all features are available.</p>\n\n" unless($unused);
-
- $output .= "<hr>\n\n";
-
- # Copying of the file is always allowed - but we need read access
-
- if(-r $physical)
- {
-  $output .= <<END;
-<h2>Copy</h2>
-
-<form action="$script">
-<input type="hidden" name="command" value="copy">
-<input type="hidden" name="file" value="$virtual">
-<p>Copy file '$virtual' to:<br>$dir <input type="text" name="newfile" size="30"> <input type="submit" value="Copy!"></p>
-</form>
-
-<hr>
-
-END
- }
-
- if($unused)
- {
-  # File is not locked
-  # Allow renaming and deleting the file
-
-  $output .= <<END;
-<h2>Move/rename</h2>
-
-<form action="$script">
-<input type="hidden" name="command" value="rename">
-<input type="hidden" name="file" value="$virtual">
-<p>Move/Rename file '$virtual' to:<br>$dir <input type="text" name="newfile" size="30"> <input type="submit" value="Move/Rename!"></p>
-</form>
-
-<hr>
-
-<h2>Remove</h2>
-
-<p>Click on the button below to remove the file '$virtual'.</p>
-
-<form action="$script" method="get">
-<input type="hidden" name="file" value="$virtual">
-<input type="hidden" name="command" value="remove">
-<p><input type="submit" value="Remove!"></p>
-</form>
-END
- }
- else
- {
-  # File is locked
-  # Just display a button for unlocking it
-
-  $output .= <<END;
-<h2>Unlock file</h2>
-
-<p>Someone else is currently editing this file. At least, the file is marked so. Maybe, someone who was editing the file has forgotten to unlock it. In this case (and <b>only</b> in this case) you can unlock the file using this button:</p>
-
-<form action="$script" method="get">
-<input type="hidden" name="file" value="$virtual">
-<input type="hidden" name="command" value="unlock">
-<p><input type="submit" value="Unlock file '$virtual'"></p>
-</form>
-END
- }
-
- $output .= "\n<hr>";
- $output .= htmlfoot;
-
- return \$output;
-}
-
-# exec_workwithdir()
-#
-# Display a form for renaming/removing a directory
-#
-# Params: 1. Reference to user input hash
-#         2. Reference to config hash
-#
-# Return: Output of the command (Scalar Reference)
-
-sub exec_workwithdir($$)
-{
- my ($data,$config) = @_;
- my $physical       = $data->{'physical'};
- my $virtual        = $data->{'virtual'};
-
- my $dir = encode_entities(upper_path($virtual));
-
- my $output = htmlhead("Work with directory ".encode_entities($virtual));
- $output   .= equal_url($config->{'httproot'},$virtual);
-
- $virtual   = encode_entities($virtual);
-
- $output   .= dir_link($virtual);
- $output   .= "<p><b>Note:</b> On UNIX systems, filenames are <b>case-sensitive</b>!</p>\n\n";
- $output .= "<hr>\n\n";
-
- $output .= <<END;
-<h2>Move/rename</h2>
-
-<form action="$script">
-<input type="hidden" name="command" value="rename">
-<input type="hidden" name="file" value="$virtual">
-<p>Move/Rename directory '$virtual' to:<br>$dir <input type="text" name="newfile" size="30"> <input type="submit" value="Move/Rename!"></p>
-</form>
-
-<hr>
-
-<h2>Remove</h2>
-
-<p>Click on the button below to completely remove the directory '$virtual' and oll of it's files and sub directories.</p>
-
-<form action="$script" method="get">
-<input type="hidden" name="file" value="$virtual">
-<input type="hidden" name="command" value="rmdir">
-<p><input type="submit" value="Remove!"></p>
-</form>
-END
-
- $output .= "\n<hr>";
- $output .= htmlfoot;
-
- return \$output;
-}
-
 # exec_copy()
 #
 # Copy a file and return to directory view
@@ -618,30 +406,18 @@ sub exec_copy($$)
   }
   elsif(not $data->{'cgi'}->param('confirmed'))
   {
-   $dir = encode_entities($dir);
+   my $tpl = new Template;
+   $tpl->read_file($config->{'tpl_confirm_replace'});
 
-   my $output = htmlhead("Replace existing file");
-   $output   .= <<"END";
-<p>A file called '$new_virtual' already exists. Do you want to replace it?</p>
+   $tpl->fillin("FILE",$virtual);
+   $tpl->fillin("NEW_FILE",$new_virtual);
+   $tpl->fillin("DIR",upper_path($virtual));
+   $tpl->fillin("COMMAND","copy");
+   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin("SCRIPT",$script);
 
-<form action="$script" method="get">
-<input type="hidden" name="command" value="copy">
-<input type="hidden" name="file" value="$virtual">
-<input type="hidden" name="newfile" value="$new_virtual">
-<input type="hidden" name="confirmed" value="1">
-
-<p><input type="submit" value="Yes"></p>
-</form>
-
-<form action="$script" method="get">
-<input type="hidden" name="command" value="show">
-<input type="hidden" name="file" value="$dir">
-
-<p><input type="submit" value="No"></p>
-</form>
-END
-
-   $output .= htmlfoot;
+   my $output = header(-type => "text/html");
+   $output   .= $tpl->get_template;
 
    return \$output;
   }
@@ -685,30 +461,18 @@ sub exec_rename($$)
   }
   elsif(not $data->{'cgi'}->param('confirmed'))
   {
-   $dir = encode_entities($dir);
+   my $tpl = new Template;
+   $tpl->read_file($config->{'tpl_confirm_replace'});
 
-   my $output = htmlhead("Replace existing file");
-   $output   .= <<"END";
-<p>A file called '$new_virtual' already exists. Do you want to replace it?</p>
+   $tpl->fillin("FILE",$virtual);
+   $tpl->fillin("NEW_FILE",$new_virtual);
+   $tpl->fillin("DIR",upper_path($virtual));
+   $tpl->fillin("COMMAND","rename");
+   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin("SCRIPT",$script);
 
-<form action="$script" method="get">
-<input type="hidden" name="command" value="rename">
-<input type="hidden" name="file" value="$virtual">
-<input type="hidden" name="newfile" value="$new_virtual">
-<input type="hidden" name="confirmed" value="1">
-
-<p><input type="submit" value="Yes"></p>
-</form>
-
-<form action="$script" method="get">
-<input type="hidden" name="command" value="show">
-<input type="hidden" name="file" value="$dir">
-
-<p><input type="submit" value="No"></p>
-</form>
-END
-
-   $output .= htmlfoot;
+   my $output = header(-type => "text/html");
+   $output   .= $tpl->get_template;
 
    return \$output;
   }
@@ -725,7 +489,7 @@ END
 
 # exec_remove()
 #
-# Remove a file and return to directory view
+# Remove a file or a directory and return to directory view
 #
 # Params: 1. Reference to user input hash
 #         2. Reference to config hash
@@ -738,107 +502,57 @@ sub exec_remove($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
 
- return exec_rmdir($data,$config) if(-d $physical);
- return error_in_use($virtual)    if($data->{'uselist'}->in_use($virtual));
-
- if($data->{'cgi'}->param('confirmed'))
+ if(-d $physical)
  {
-  unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.",upper_path($virtual));
-  return devedit_reload({command => 'show', file => upper_path($virtual)});
+  # Remove a directory
+
+  if($data->{'cgi'}->param('confirmed'))
+  {
+   rmtree($physical);
+   return devedit_reload({command => 'show', file => upper_path($virtual)});
+  }
+  else
+  {
+   my $tpl = new Template;
+   $tpl->read_file($config->{'tpl_confirm_rmdir'});
+
+   $tpl->fillin("DIR",$virtual);
+   $tpl->fillin("UPPER_DIR",upper_path($virtual));
+   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin("SCRIPT",$script);
+
+   my $output = header(-type => "text/html");
+   $output   .= $tpl->get_template;
+
+   return \$output;
+  }
  }
  else
  {
-  my $dir = encode_entities(upper_path($virtual));
-  my $output;
+  # Remove a file
 
-  $output  = htmlhead("Remove file ".encode_entities($virtual));
-  $output .= equal_url($config->{'httproot'},$virtual);
+  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
 
-  $virtual = encode_entities($virtual);
+  if($data->{'cgi'}->param('confirmed'))
+  {
+   unlink($physical) or return error($config->{'err_editfailed'},upper_path($virtual),{FILE => $virtual});
+   return devedit_reload({command => 'show', file => upper_path($virtual)});
+  }
+  else
+  {
+   my $tpl = new Template;
+   $tpl->read_file($config->{'tpl_confirm_rmfile'});
 
-  $output .= dir_link($virtual);
+   $tpl->fillin("FILE",$virtual);
+   $tpl->fillin("DIR",upper_path($virtual));
+   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin("SCRIPT",$script);
 
-  $output .= <<"END";
-<p>Do you really want to remove the file '$virtual'?</p>
+   my $output = header(-type => "text/html");
+   $output   .= $tpl->get_template;
 
-<form action="$script" method="get">
-<input type="hidden" name="command" value="remove">
-<input type="hidden" name="file" value="$virtual">
-<input type="hidden" name="confirmed" value="1">
-
-<p><input type="submit" value="Yes"></p>
-</form>
-
-<form action="$script" method="get">
-<input type="hidden" name="command" value="show">
-<input type="hidden" name="file" value="$dir">
-
-<p><input type="submit" value="No"></p>
-</form>
-END
-
-  $output .= htmlfoot;
-
-  return \$output;
- }
-}
-
-# exec_rmdir()
-#
-# Remove a directory and return to directory view
-#
-# Params: 1. Reference to user input hash
-#         2. Reference to config hash
-#
-# Return: Output of the command (Scalar Reference)
-
-sub exec_rmdir($$)
-{
- my ($data,$config) = @_;
- my $physical       = $data->{'physical'};
- my $virtual        = $data->{'virtual'};
-
- return exec_remove($data,$config) if(not -d $physical);
-
- if($data->{'cgi'}->param('confirmed'))
- {
-  rmtree($physical);
-  return devedit_reload({command => 'show', file => upper_path($virtual)});
- }
- else
- {
-  my $dir = encode_entities(upper_path($virtual));
-  my $output;
-
-  $output  = htmlhead("Remove directory ".encode_entities($virtual));
-  $output .= equal_url($config->{'httproot'},$virtual);
-
-  $virtual = encode_entities($virtual);
-
-  $output .= dir_link($virtual);
-
-  $output .= <<"END";
-<p>Do you really want to remove the directory '$virtual' and all of it's files and sub directories?</p>
-
-<form action="$script" method="get">
-<input type="hidden" name="command" value="rmdir">
-<input type="hidden" name="file" value="$virtual">
-<input type="hidden" name="confirmed" value="1">
-
-<p><input type="submit" value="Yes"></p>
-</form>
-
-<form action="$script" method="get">
-<input type="hidden" name="command" value="show">
-<input type="hidden" name="file" value="$dir">
-
-<p><input type="submit" value="No"></p>
-</form>
-END
-
-  $output .= htmlfoot;
-
-  return \$output;
+   return \$output;
+  }
  }
 }
 
@@ -858,10 +572,26 @@ sub exec_unlock($$)
  my $virtual        = $data->{'virtual'};
  my $uselist        = $data->{'uselist'};
 
- $uselist->remove_file($virtual);
- $uselist->save;
+ if($data->{'cgi'}->param('confirmed'))
+ {
+  file_unlock($uselist,$virtual);
+  return devedit_reload({command => 'show', file => upper_path($virtual)});
+ }
+ else
+ {
+  my $tpl = new Template;
+  $tpl->read_file($config->{'tpl_confirm_unlock'});
 
- return devedit_reload({command => 'show', file => upper_path($virtual)});
+  $tpl->fillin("FILE",$virtual);
+  $tpl->fillin("DIR",upper_path($virtual));
+  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin("SCRIPT",$script);
+
+  my $output = header(-type => "text/html");
+  $output   .= $tpl->get_template;
+
+  return \$output;
+ }
 }
 
 # it's true, baby ;-)
