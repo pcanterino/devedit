@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 10-03-2003
+# Last modified: 2003-10-03
 #
 
 use strict;
@@ -14,7 +14,6 @@ use strict;
 use vars qw(@EXPORT);
 
 use Cwd qw(abs_path);
-use File::Basename;
 use File::Spec;
 
 ### Export ###
@@ -54,17 +53,11 @@ sub check_path($$)
   # The path points to a file
   # We have to extract the directory name and create the absolute path
 
-  my @pathinfo = fileparse($path);
+  my $dir  = upper_path($path);
+  my $file = file_name($path);
 
-  # This is only to avoid errors
-
-  my $basename = $pathinfo[0] || '';
-  my $dir      = $pathinfo[1] || '';
-  my $ext      = $pathinfo[2] || '';
-
-  $dir = abs_path($dir);
-
-  $path = $dir."/".$basename.$ext;
+  $dir  = abs_path($dir);
+  $path = $dir."/".$file;
  }
  else
  {
