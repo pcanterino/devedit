@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-31
+# Last modified: 2004-11-04
 #
 
 use strict;
@@ -97,6 +97,8 @@ sub exec_show($$)
  {
   # Create directory listing
 
+  return error($config->{'errors'}->{'no_dir_access'},upper_path($virtual)) unless(-r $physical && -x $physical);
+
   my $direntries = dir_read($physical);
   return error($config->{'dir_read_failed'},upper_path($virtual),{DIR => '$virtual'}) unless($direntries);
 
@@ -125,8 +127,10 @@ sub exec_show($$)
 
   foreach my $dir(@$dirs)
   {
-   my @stat      = stat($physical."/".$dir);
+   my $phys_path = $physical."/".$dir;
    my $virt_path = encode_entities($virtual.$dir."/");
+
+   my @stat      = stat($phys_path);
 
    my $dtpl = new Template;
    $dtpl->read_file($config->{'templates'}->{'dirlist_dir'});
@@ -136,7 +140,8 @@ sub exec_show($$)
    $dtpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
    $dtpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
 
-   $dtpl->parse_if_block("users",$users && -o $physical."/".$dir);
+   $dtpl->parse_if_block("readable",-r $phys_path && -x $phys_path);
+   $dtpl->parse_if_block("users",$users && -o $phys_path);
 
    $dirlist .= $dtpl->get_template;
   }

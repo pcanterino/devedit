@@ -1,6 +1,6 @@
 <tr>
 <td align="right" style="white-space:nowrap">[SUBDIR]</td>
 <td style="padding-left:15pt;white-space:nowrap;">{DATE}</td>
-<td style="padding-left:15pt;white-space:nowrap;"><a href="{SCRIPT}?command=show&amp;file={DIR}">{DIR_NAME}/</a></td>
+<td style="padding-left:15pt;white-space:nowrap;">{IF readable}<a href="{SCRIPT}?command=show&amp;file={DIR}">{DIR_NAME}/</a>{ELSE}<span style="color:#C0C0C0" title="Not accessible">{DIR_NAME}/</span>{ENDIF}</td>
 <td style="padding-left:15pt;white-space:nowrap;">(<a href="{SCRIPT}?command=rename&amp;file={DIR}">Rename</a> | <a href="{SCRIPT}?command=remove&amp;file={DIR}">Delete</a> |{IF users} <a href="{SCRIPT}?command=chprop&amp;file={DIR}">Chmod/Chgrp</a> |{ENDIF} <a href="{URL}" target="_blank">View in Browser</a>)</td>
 </tr>

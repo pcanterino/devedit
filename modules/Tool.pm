@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-30
+# Last modified: 2004-11-04
 #
 
 use strict;
@@ -56,21 +56,13 @@ sub check_path($$)
  $path =~ s!^/{1}!!;
  $path = $root."/".$path;
 
- unless(-d $path)
- {
-  # The path points to a file
-  # We have to extract the directory name and create the absolute path
+ # We extract the last part of the path and create the absolute path
 
-  my $dir  = upper_path($path);
-  my $file = file_name($path);
+ my $first = upper_path($path);
+ my $last  = file_name($path);
 
-  $dir  = abs_path($dir);
-  $path = $dir."/".$file;
- }
- else
- {
-  $path = abs_path($path);
- }
+ $first = abs_path($first);
+ $path  = $first."/".$last;
 
  $path = File::Spec->canonpath($path);
 

@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-04
+# Last modified: 2004-11-04
 #
 
 use strict;
@@ -34,6 +34,10 @@ use constant CONFIGFILE => 'devedit.dat';
 
 my $config = read_config(CONFIGFILE);
 error_template($config->{'templates'}->{'error'}); # Yes, I'm lazy...
+
+# Check if we are able to access the root directory
+
+abort($config->{'errors'}->{'no_root_access'}) unless(-r $config->{'fileroot'} && -x $config->{'fileroot'});
 
 # Read the most important form data
 
