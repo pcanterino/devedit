@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-08
+# Last modified: 2005-02-12
 #
 
 use strict;
@@ -83,7 +83,7 @@ sub check_path($$)
  my $short_path = substr($path,length($root));
  $short_path =~ tr!\\!/!;
  $short_path = '/'.$short_path if($short_path !~ m!^/!);
- $short_path = $short_path.'/' if($short_path !~ m!/$! && -d $path);
+ $short_path = $short_path.'/' if($short_path !~ m!/$! && -d $path && not -l $path);
 
  return ($path,$short_path);
 }

@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-10
+# Last modified: 2005-02-12
 #
 
 use strict;
@@ -46,7 +46,7 @@ $has_flock = eval { local $SIG{'__DIE__'}; flock(STDOUT,0); 1 };
 # Params: Directory
 #
 # Return: Hash reference: dirs  => directories
-#                         files => files
+#                         files => files and symbolic links
 
 sub dir_read($)
 {
@@ -72,7 +72,7 @@ sub dir_read($)
  {
   next if($entry eq '.' || $entry eq '..');
 
-  if(-d $dir.'/'.$entry)
+  if(-d $dir.'/'.$entry && not -l $dir.'/'.$entry)
   {
    push(@dirs,$entry);
   }

@@ -19,5 +19,6 @@ mkfile          = templates/mkfile.htm
 renamefile      = templates/renamefile.htm
 upload          = templates/upload.htm
 viewfile        = templates/viewfile.htm
+viewlink        = templates/viewlink.htm
 
 # End of configuration file

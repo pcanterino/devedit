@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-10
+# Last modified: 2005-02-12
 #
 
 use strict;
@@ -96,7 +96,7 @@ sub exec_show($$)
 
  my $tpl = new Template;
 
- if(-d $physical)
+ if(-d $physical && not -l $physical)
  {
   # Create directory listing
 
@@ -116,7 +116,7 @@ sub exec_show($$)
   my $filter2 = ($filter1 && $filter1 ne '*') ? $filter1 : ''; # Wildcard for output
 
   # Create the link to the upper directory
-  # (only if we are not in the root directory)
+  # (only if the current directory is not the root directory)
 
   unless($virtual eq '/')
   {
@@ -165,7 +165,7 @@ sub exec_show($$)
    my $phys_path = $physical.'/'.$file;
    my $virt_path = encode_entities($virtual.$file);
 
-   my @stat      = stat($phys_path);
+   my @stat      = lstat($phys_path);
    my $in_use    = $uselist->in_use($virtual.$file);
    my $too_large = $config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'};
 
@@ -178,12 +178,14 @@ sub exec_show($$)
    $ftpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
    $ftpl->fillin('URL',equal_url(encode_entities($config->{'httproot'}),$virt_path));
 
+   $ftpl->parse_if_block('link',-l $phys_path);
+   $ftpl->parse_if_block('no_link',not -l $phys_path);
    $ftpl->parse_if_block('not_readable',not -r $phys_path);
    $ftpl->parse_if_block('binary',-B $phys_path);
    $ftpl->parse_if_block('readonly',not -w $phys_path);
 
-   $ftpl->parse_if_block('viewable',-r $phys_path && -T $phys_path && not $too_large);
-   $ftpl->parse_if_block('editable',(-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not $in_use);
+   $ftpl->parse_if_block('viewable',(-r $phys_path && -T $phys_path && not $too_large) || -l $phys_path);
+   $ftpl->parse_if_block('editable',((-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not $in_use) && not -l $phys_path);
 
    $ftpl->parse_if_block('in_use',$in_use);
    $ftpl->parse_if_block('unused',not $in_use);
@@ -208,6 +210,21 @@ sub exec_show($$)
   $tpl->parse_if_block('dir_writeable',$dir_writeable);
   $tpl->parse_if_block('filter',$filter2);
   $tpl->parse_if_block('gmt',$config->{'use_gmt'});
+ }
+ elsif(-l $physical)
+ {
+  # Show the target of a symbolic link
+
+  my $link_target = readlink($physical);
+
+  $tpl->read_file($config->{'templates'}->{'viewlink'});
+
+  $tpl->fillin('FILE',encode_entities($virtual));
+  $tpl->fillin('DIR',$upper_path);
+  $tpl->fillin('URL',encode_entities(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('SCRIPT',$script);
+
+  $tpl->fillin('LINK_TARGET',encode_entities($link_target));
  }
  else
  {
@@ -265,9 +282,10 @@ sub exec_beginedit($$)
  my $dir            = upper_path($virtual);
  my $uselist        = $data->{'uselist'};
 
- return error($config->{'errors'}->{'editdir'},$dir)                    if(-d $physical);
- return error($config->{'errors'}->{'in_use'}, $dir,{FILE => $virtual}) if($uselist->in_use($virtual));
- return error($config->{'errors'}->{'no_edit'},$dir)                    unless(-r $physical && -w $physical);
+ return error($config->{'errors'}->{'link_edit'},$dir)                    if(-l $physical);
+ return error($config->{'errors'}->{'dir_edit'}, $dir)                    if(-d $physical);
+ return error($config->{'errors'}->{'in_use'},   $dir,{FILE => $virtual}) if($uselist->in_use($virtual));
+ return error($config->{'errors'}->{'no_edit'},  $dir)                    unless(-r $physical && -w $physical);
 
  # Check on binary files
 
@@ -370,7 +388,8 @@ sub exec_endedit($$)
   return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($uselist->in_use($virtual));
  }
 
- return error($config->{'errors'}->{'editdir'},$dir)        if(-d $physical);
+ return error($config->{'errors'}->{'link_edit'},$dir)      if(-l $physical);
+ return error($config->{'errors'}->{'dir_edit'},$dir)       if(-d $physical);
  return error($config->{'errors'}->{'no_edit'},$dir)        if(-e $physical && !(-r $physical && -w $physical));
  return error($config->{'errors'}->{'text_to_binary'},$dir) unless(-T $physical);
 
@@ -480,7 +499,7 @@ sub exec_upload($$)
  my $virtual        = $data->{'virtual'};
  my $cgi            = $data->{'cgi'};
 
- return error($config->{'errors'}->{'no_directory'},upper_path($virtual),{FILE => $virtual}) unless(-d $physical);
+ return error($config->{'errors'}->{'no_directory'},upper_path($virtual),{FILE => $virtual}) unless(-d $physical && not -l $physical);
  return error($config->{'errors'}->{'dir_no_create'},$virtual,{DIR => $virtual})             unless(-w $physical);
 
  if(my $uploaded_file = $cgi->param('uploaded_file'))
@@ -495,6 +514,7 @@ sub exec_upload($$)
 
   if(-e $file_phys)
   {
+   return error($config->{'errors'}->{'link_replace'},$virtual)                        if(-l $file_phys);
    return error($config->{'errors'}->{'dir_replace'},$virtual)                         if(-d $file_phys);
    return error($config->{'errors'}->{'exist_no_write'},$virtual,{FILE => $file_virt}) unless(-w $file_phys);
    return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt})    unless($cgi->param('overwrite'));
@@ -546,8 +566,9 @@ sub exec_copy($$)
  my $dir            = upper_path($virtual);
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'errors'}->{'dircopy'},$dir) if(-d $physical);
- return error($config->{'errors'}->{'no_copy'},$dir) unless(-r $physical);
+ return error($config->{'errors'}->{'link_copy'},$dir) if(-l $physical);
+ return error($config->{'errors'}->{'dir_copy'},$dir)  if(-d $physical);
+ return error($config->{'errors'}->{'no_copy'},$dir)   unless(-r $physical);
 
  if($new_physical)
  {
@@ -558,6 +579,7 @@ sub exec_copy($$)
   if(-e $new_physical)
   {
    return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual})   if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'link_replace'},$new_dir)                          if(-l $new_physical);
    return error($config->{'errors'}->{'dir_replace'},$new_dir)                           if(-d $new_physical);
    return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual}) unless(-w $new_physical);
 
@@ -633,7 +655,7 @@ sub exec_rename($$)
   if(-e $new_physical)
   {
    return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual})   if($data->{'uselist'}->in_use($data->{'new_virtual'}));
-   return error($config->{'errors'}->{'dir_replace'},$new_dir)                           if(-d $new_physical);
+   return error($config->{'errors'}->{'dir_replace'},$new_dir)                           if(-d $new_physical && not -l $new_physical);
    return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual}) unless(-w $new_physical);
 
    if(not $data->{'cgi'}->param('confirmed'))
@@ -697,7 +719,7 @@ sub exec_remove($$)
  return error($config->{'errors'}->{'remove_root'},'/') if($virtual eq '/');
  return error($config->{'errors'}->{'no_delete'},$dir)  unless(-w upper_path($physical));
 
- if(-d $physical)
+ if(-d $physical && not -l $physical)
  {
   # Remove a directory
 
@@ -770,6 +792,7 @@ sub exec_chprop($$)
  return error($config->{'errors'}->{'no_users'},$dir,{FILE => $virtual})  unless($users);
  return error($config->{'errors'}->{'chprop_root'},'/')                   if($virtual eq '/');
  return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual}) unless(-o $physical);
+ return error($config->{'errors'}->{'chprop_link'},$dir)                  if(-l $physical);
  return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual})    if($data->{'uselist'}->in_use($virtual));
 
  my $cgi   = $data->{'cgi'};
