@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-21
+# Last modified: 2004-12-26
 #
 
 use strict;
@@ -20,7 +20,9 @@ use File::Path;
 use POSIX qw(strftime);
 use Tool;
 
-use CGI qw(header);
+use CGI qw(header
+           escape);
+
 use HTML::Entities;
 use Output;
 use Template;
@@ -110,6 +112,9 @@ sub exec_show($$)
 
   my $dirlist = "";
 
+  my $filter1 = $data->{'cgi'}->param('filter') || '*';        # The real wildcard
+  my $filter2 = ($filter1 && $filter1 ne '*') ? $filter1 : ''; # Wildcard for output
+
   # Create the link to the upper directory
   # (only if we are not in the root directory)
 
@@ -130,6 +135,8 @@ sub exec_show($$)
 
   foreach my $dir(@$dirs)
   {
+   next unless(dos_wildcard_match($filter1,$dir));
+
    my $phys_path = $physical."/".$dir;
    my $virt_path = encode_entities($virtual.$dir."/");
 
@@ -153,6 +160,8 @@ sub exec_show($$)
 
   foreach my $file(@$files)
   {
+   next unless(dos_wildcard_match($filter1,$file));
+
    my $phys_path = $physical."/".$file;
    my $virt_path = encode_entities($virtual.$file);
 
@@ -193,7 +202,11 @@ sub exec_show($$)
   $tpl->fillin("SCRIPT",$script);
   $tpl->fillin("URL",encode_entities(equal_url($config->{'httproot'},$virtual)));
 
+  $tpl->fillin("FILTER",encode_entities($filter2));
+  $tpl->fillin("FILTER_URL",escape($filter2));
+
   $tpl->parse_if_block("dir_writeable",$dir_writeable);
+  $tpl->parse_if_block("filter",$filter2);
  }
  else
  {

@@ -47,11 +47,28 @@
 
 <table border="0" width="100%">
 <tr>
+<td>
+<table border="0">
+<tr>
 <form action="{SCRIPT}">
 <input type="hidden" name="command" value="show">
-<td>Go to directory/file: <input type="text" name="file" value="{DIR}"> <input type="submit" value="Go!"></td>
+<td>Go to directory/file:</td>
+<td><input type="text" name="file" value="{DIR}"></td>
+<td><input type="submit" value="Go!"></td>
 </form>
-<td align="right"><a href="{SCRIPT}?command=about" target="_blank"><i>About Dev-Editor</i></a></td>
+</tr>
+<tr>
+<form action="{SCRIPT}">
+<input type="hidden" name="command" value="show">
+<input type="hidden" name="file" value="{DIR}">
+<td>Filter:</td>
+<td><input type="text" name="filter" value="{FILTER}"></td>
+<td><input type="submit" value="Filter!"></td>
+</form>
+</tr>
+</table>
+</td>
+<td align="right" valign="top"><a href="{SCRIPT}?command=about" target="_blank"><i>About Dev-Editor</i></a></td>
 </tr>
 </table>
 </body>

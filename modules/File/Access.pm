@@ -3,8 +3,8 @@ package File::Access;
 #
 # Dev-Editor - Module File::Access
 #
-# Some simple routines for doing things with files
-# with only one command
+# Some simple routines for doing things with files by
+# using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
 # Last modified: 2004-12-17

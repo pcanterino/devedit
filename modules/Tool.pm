@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-16
+# Last modified: 2004-12-25
 #
 
 use strict;
@@ -28,6 +28,7 @@ use base qw(Exporter);
 @EXPORT = qw(check_path
              clean_path
              devedit_reload
+             dos_wildcard_match
              equal_url
              file_name
              mode_string
@@ -157,6 +158,30 @@ sub devedit_reload(;$)
  my $header = redirect($protocol."://".virtual_host.$port.$ENV{'SCRIPT_NAME'}.$query);
 
  return \$header;
+}
+
+# dos_wildcard_match()
+#
+# Check if a string matches against a DOS-style wildcard
+#
+# Params: 1. Pattern
+#         2. String
+#
+# Return: Status code (Boolean)
+
+sub dos_wildcard_match($$)
+{
+ my ($pattern,$string) = @_;
+
+ # The following part is stolen from File::DosGlob
+
+ # escape regex metachars but not glob chars
+ $pattern =~ s:([].+^\-\${}[|]):\\$1:g;
+ # and convert DOS-style wildcards to regex
+ $pattern =~ s/\*/.*/g;
+ $pattern =~ s/\?/.?/g;
+
+ return ($string =~ m|^$pattern$|is);
 }
 
 # equal_url()
