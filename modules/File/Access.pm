@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-28
+# Last modified: 2004-08-01
 #
 
 use strict;
@@ -40,7 +40,7 @@ use base qw(Exporter);
 sub chgrp($@)
 {
  my ($group,@files) = @_;
- my $gid = getgrnam($group);
+ my $gid = ($group !~ /^\d+$/) ? getgrnam($group): $group;
 
  return unless($gid);
  return chown(-1,$gid,@files);
