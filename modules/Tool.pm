@@ -6,13 +6,14 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-03
+# Last modified: 2003-10-27
 #
 
 use strict;
 
 use vars qw(@EXPORT);
 
+use CGI qw(redirect);
 use Cwd qw(abs_path);
 use File::Spec;
 
@@ -22,6 +23,7 @@ use base qw(Exporter);
 
 @EXPORT = qw(check_path
              clean_path
+             devedit_reload
              file_name
              upper_path);
 
@@ -98,9 +100,34 @@ sub clean_path($)
  return $path;
 }
 
+# devedit_reload()
+#
+# Create a HTTP redirection header to load Dev-Editor
+# with some other parameters
+#
+# Params: Hash Reference (will be merged to a query string)
+#
+# Return: HTTP redirection header (Scalar Reference)
+
+sub devedit_reload($)
+{
+ my $params = shift;
+ my @list;
+
+ while(my ($param,$value) = each(%$params))
+ {
+  push(@list,$param."=".$value);
+ }
+
+ my $query  = join("&",@list);
+ my $header = redirect("http://$ENV{'HTTP_HOST'}$ENV{'SCRIPT_NAME'}?$query");
+
+ return \$header;
+}
+
 # file_name()
 #
-# Returns the last path of a filename
+# Returns the last path of a path
 #
 # Params: Path
 #
@@ -141,8 +168,7 @@ sub upper_path($)
  unless($path eq "/")
  {
   $path = substr($path,0,-1) if($path =~ m!/$!);
-  $path = substr($path,0,rindex($path,"/"));
-  $path = $path."/";
+  $path = substr($path,0,rindex($path,"/")+1);
  }
 
  return $path;

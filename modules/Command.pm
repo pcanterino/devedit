@@ -14,8 +14,6 @@ use strict;
 use vars qw(@EXPORT
             $script);
 
-use CGI qw(redirect);
-
 use File::Access;
 use File::Copy;
 
@@ -354,9 +352,7 @@ sub exec_mkfile($$)
  return error("A file or directory called '$new_virtual' already exists.",$dir) if(-e $new_physical);
 
  file_create($new_physical) or return error("Could not create file '$new_virtual'.",$dir);
-
- my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
- return \$output;
+ return devedit_reload({command => 'show', file => $dir});
 }
 
 # exec_mkdir()
@@ -379,9 +375,7 @@ sub exec_mkdir($$)
  return error("A file or directory called '$new_virtual' already exists.",$dir) if(-e $new_physical);
 
  mkdir($new_physical) or return error("Could not create directory '$new_virtual'.",$dir);
-
- my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
- return \$output;
+ return devedit_reload({command => 'show', file => $dir});
 }
 
 # exec_workwithfile()
@@ -412,13 +406,13 @@ sub exec_workwithfile($$)
 
  $output .= "<p>Someone else is currently editing this file. So not all features are available.</p>\n\n" unless($unused);
 
- # Copying of the file as always allowed if we have read access
+ $output .= "<hr>\n\n";
+
+ # Copying of the file is always allowed - but we need read access
 
  if(-r $physical)
  {
   $output .= <<END;
-<hr>
-
 <h2>Copy</h2>
 
 <form action="$script">
@@ -509,9 +503,7 @@ sub exec_copy($$)
  }
 
  copy($physical,$new_physical) or return error("Could not copy '$virtual' to '$new_virtual'",upper_path($virtual));
-
- my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
- return \$output;
+ return devedit_reload({command => 'show', file => $dir});
 }
 
 # exec_rename()
@@ -541,9 +533,7 @@ sub exec_rename($$)
  }
 
  rename($physical,$new_physical) or return error("Could not move/rename '".encode_entities($virtual)."' to '$new_virtual'.",upper_path($virtual));
-
- my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
- return \$output;
+ return devedit_reload({command => 'show', file => $dir});
 }
 
 # exec_remove()
@@ -565,9 +555,7 @@ sub exec_remove($$)
  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
 
  unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.",upper_path($virtual));
-
- my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=".upper_path($virtual));
- return \$output;
+ return devedit_reload({command => 'show', file => upper_path($virtual)});
 }
 
 # exec_unlock()
@@ -589,8 +577,7 @@ sub exec_unlock($$)
  $uselist->remove_file($virtual);
  $uselist->save;
 
- my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=".upper_path($virtual));
- return \$output;
+ return devedit_reload({command => 'show', file => upper_path($virtual)});
 }
 
 # it's true, baby ;-)
