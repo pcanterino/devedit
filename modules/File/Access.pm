@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-08-05
+# Last modified: 2004-10-26
 #
 
 use strict;
@@ -20,31 +20,11 @@ use Fcntl;
 
 use base qw(Exporter);
 
-@EXPORT = qw(chgrp
-             dir_read
+@EXPORT = qw(dir_read
              file_create
              file_read
              file_save
              file_unlock);
-
-# chgrp()
-#
-# Change the group of files or directories
-#
-# Params: 1. Group name or group ID
-#         2. List of files
-#
-# Return: Number of files group successfully changed
-#         (or false)
-
-sub chgrp($@)
-{
- my ($group,@files) = @_;
- my $gid = ($group !~ /^\d+$/) ? getgrnam($group) : $group;
-
- return unless($gid);
- return chown(-1,$gid,@files);
-}
 
 # dir_read()
 #

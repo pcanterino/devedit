@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-23
+# Last modified: 2004-10-27
 #
 
 use strict;
@@ -223,7 +223,7 @@ sub exec_show($$)
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
     $tpl->fillin("SCRIPT",$script);
 
-    $tpl->parse_if_block("editable",-r $physical && -w $physical && -T $physical && not ($config->{'max_file_size'} && $size > $config->{'max_file_size'}) && $uselist->unused($virtual)); 
+    $tpl->parse_if_block("editable",-r $physical && -w $physical && -T $physical && not ($config->{'max_file_size'} && $size > $config->{'max_file_size'}) && $uselist->unused($virtual));
 
     $tpl->fillin("CONTENT",encode_entities($$content));
    }
@@ -772,7 +772,11 @@ sub exec_chprop($$)
      chmod($oct_mode,$physical);
     }
 
-    chgrp($group,$physical) if($group);
+    if($group)
+    {
+     return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => $group}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
+     system("chgrp",$group,$physical);
+    }
 
     return devedit_reload({command => 'show', file => $dir});
    }

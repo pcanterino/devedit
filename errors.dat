@@ -30,5 +30,6 @@ remove_root    = You are not allowed to remove the root directory.
 rename_root    = You are not allowed to move/rename the root directory.
 no_users       = It seems that your system doesn't support users and groups.
 not_owner      = You are not the owner of {FILE}, so you are not allowed to change the mode and the group.
+invalid_group  = '{GROUP}' seems to be an invalid group name. Please check it and try again.
 
 # End of configuration file
