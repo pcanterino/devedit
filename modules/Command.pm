@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-20
+# Last modified: 2004-07-22
 #
 
 use strict;
@@ -590,6 +590,7 @@ sub exec_rename($$)
  my $virtual        = $data->{'virtual'};
  my $new_physical   = $data->{'new_physical'};
 
+ return error($config->{'errors'}->{'rename_root'},"/") if($virtual eq "/");
  return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
  if($new_physical)
@@ -662,6 +663,8 @@ sub exec_remove($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
+
+ return error($config->{'errors'}->{'remove_root'},"/") if($virtual eq "/");
 
  if(-d $physical)
  {

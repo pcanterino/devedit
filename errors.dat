@@ -24,5 +24,7 @@ lock_failed    = Locking of '{USELIST}' failed. Try it again in a moment. If the
 not_exist      = File/directory does not exist.
 dir_not_exist  = The directory where you want to create this file or directory doesn't exist.
 file_too_large = The file you want to view or edit is too large (max. {SIZE}&nbsp;Bytes).
+remove_root    = You are not allowed to remove the root directory.
+rename_root    = You are not allowed to move/rename the root directory.
 
 # End of configuration file
