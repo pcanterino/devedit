@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-12
+# Last modified: 2005-02-16
 #
 
 use strict;
@@ -151,7 +151,6 @@ sub file_read($;$)
 
  read(FILE, my $content, -s $file);
 
- file_lock(FILE,LOCK_UN)      or do { close(FILE); return };
  close(FILE)                  or return;
 
  return \$content;
@@ -179,7 +178,6 @@ sub file_save($$;$)
 
  print FILE $$content                             or do { close(FILE); return };
 
- file_lock(FILE,LOCK_UN)                          or do { close(FILE); return };
  close(FILE)                                      or return;
 
  return 1;
