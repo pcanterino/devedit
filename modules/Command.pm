@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-26
+# Last modified: 2004-12-28
 #
 
 use strict;
@@ -215,40 +215,30 @@ sub exec_show($$)
   return error($config->{'errors'}->{'no_view'},$upper_path) unless(-r $physical);
 
   # Check on binary files
-  # We have to do it in this way, or empty files
-  # will be recognized as binary files
+  # We have to do it in this way or empty files will be recognized
+  # as binary files
 
-  unless(-T $physical)
-  {
-   # Binary file
+  return error($config->{'errors'}->{'binary'},$upper_path) unless(-T $physical);
 
-   return error($config->{'errors'}->{'binary'},$upper_path);
-  }
-  else
-  {
-   # Text file
+  # Is the file too large?
 
-   if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'})
-   {
-    return error($config->{'errors'}->{'file_too_large'},$upper_path,{SIZE => $config->{'max_file_size'}})
-   }
-   else
-   {
-    my $content =  file_read($physical);
-    $$content   =~ s/\015\012|\012|\015/\n/g;
+  return error($config->{'errors'}->{'file_too_large'},$upper_path,{SIZE => $config->{'max_file_size'}}) if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'});
 
-    $tpl->read_file($config->{'templates'}->{'viewfile'});
+  # View the file
 
-    $tpl->fillin("FILE",encode_entities($virtual));
-    $tpl->fillin("DIR",$upper_path);
-    $tpl->fillin("URL",encode_entities(equal_url($config->{'httproot'},$virtual)));
-    $tpl->fillin("SCRIPT",$script);
+  my $content =  file_read($physical);
+  $$content   =~ s/\015\012|\012|\015/\n/g;
 
-    $tpl->parse_if_block("editable",-w $physical && $uselist->unused($virtual));
+  $tpl->read_file($config->{'templates'}->{'viewfile'});
 
-    $tpl->fillin("CONTENT",encode_entities($$content));
-   }
-  }
+  $tpl->fillin("FILE",encode_entities($virtual));
+  $tpl->fillin("DIR",$upper_path);
+  $tpl->fillin("URL",encode_entities(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin("SCRIPT",$script);
+
+  $tpl->parse_if_block("editable",-w $physical && $uselist->unused($virtual));
+
+  $tpl->fillin("CONTENT",encode_entities($$content));
  }
 
  my $output  = header(-type => "text/html");
@@ -280,43 +270,35 @@ sub exec_beginedit($$)
 
  # Check on binary files
 
- unless(-T $physical)
- {
-  # Binary file
+ return error($config->{'errors'}->{'binary'},$dir) unless(-T $physical);
 
-  return error($config->{'errors'}->{'binary'},$dir);
- }
- else
- {
-  if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'})
-  {
-   return error($config->{'errors'}->{'file_too_large'},$dir,{SIZE => $config->{'max_file_size'}})
-  }
-  else
-  {
-   # Text file
+ # Is the file too large?
 
-   $uselist->add_file($virtual);
-   $uselist->save;
+ return error($config->{'errors'}->{'file_too_large'},$dir,{SIZE => $config->{'max_file_size'}}) if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'});
 
-   my $content =  file_read($physical);
-   $$content   =~ s/\015\012|\012|\015/\n/g;
+ # Lock the file...
 
-   my $tpl = new Template;
-   $tpl->read_file($config->{'templates'}->{'editfile'});
+ $uselist->add_file($virtual);
+ $uselist->save;
 
-   $tpl->fillin("FILE",$virtual);
-   $tpl->fillin("DIR",$dir);
-   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-   $tpl->fillin("SCRIPT",$script);
-   $tpl->fillin("CONTENT",encode_entities($$content));
+ # ... and show the editing form
 
-   my $output = header(-type => "text/html");
-   $output   .= $tpl->get_template;
+ my $content =  file_read($physical);
+ $$content   =~ s/\015\012|\012|\015/\n/g;
 
-   return \$output;
-  }
- }
+ my $tpl = new Template;
+ $tpl->read_file($config->{'templates'}->{'editfile'});
+
+ $tpl->fillin("FILE",$virtual);
+ $tpl->fillin("DIR",$dir);
+ $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+ $tpl->fillin("SCRIPT",$script);
+ $tpl->fillin("CONTENT",encode_entities($$content));
+
+ my $output = header(-type => "text/html");
+ $output   .= $tpl->get_template;
+
+ return \$output;
 }
 
 # exec_canceledit()
