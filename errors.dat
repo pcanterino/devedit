@@ -12,6 +12,7 @@ mkfile_failed  = Could not create file '{FILE}'.
 mkdir_failed   = Could not create directory '{DIR}'.
 copy_failed    = Could not copy '{FILE}' to '{NEW_FILE}'.
 rename_failed  = Could not move/rename '{FILE}' to '{NEW_FILE}'.
+no_root_dir    = The root directory does not exist or is not a directory.
 no_root_access = You have not enough permissions to access the root directory.
 above_root     = Accessing files and directories above the virtual root directory is forbidden.
 create_ar      = You aren't allowed to create files and directories above the virtual root directory.
