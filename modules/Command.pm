@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-08-02
+# Last modified: 2004-08-29
 #
 
 use strict;
@@ -476,7 +476,7 @@ sub exec_upload($$)
   my $file_phys = $physical."/".$filename;
   my $file_virt = $virtual."".$filename;
 
-  return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt}) if(-e $file_phys);
+  return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt}) if(-e $file_phys && not $cgi->param('overwrite'));
 
   my $ascii     = $cgi->param('ascii');
   my $handle    = $cgi->upload('uploaded_file');
