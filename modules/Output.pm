@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-23-2003
+# Last modified: 2003-10-13
 #
 
 use strict;
@@ -53,7 +53,7 @@ sub htmlhead($)
 <title>$title</title>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
 </head>
-<body bgcolor="#FFFFFF">
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
 
 <h1>$title</h1>
 
@@ -79,17 +79,27 @@ sub htmlfoot
 #
 # Format an error message
 #
-# Params: Error message
+# Params: 1. Error message
+#         2. Virtual path to which a link should be displayed (optional)
 #
 # Return: Formatted message (Scalar Reference)
 
-sub error($)
+sub error($;$)
 {
- my $message = shift;
+ my ($message,$path) = @_;
 
  my $output = htmlhead("Error");
  $output   .= "<p>$message</p>";
- $output   .= htmlfoot;
+
+ if($path)
+ {
+  $path = encode_entities($path);
+
+  $output .= "\n\n";
+  $output .= "<p><a href=\"$ENV{'SCRIPT_NAME'}?command=show&file=$path\">Back to $path</a></p>";
+ }
+
+ $output .= htmlfoot;
 
  return \$output;
 }
@@ -118,15 +128,9 @@ sub abort($)
 
 sub error_in_use($)
 {
- my $file = encode_entities(shift);
- my $dir  = upper_path($file);
+ my $file = shift;
 
- my $message = htmlhead("File in use");
- $message   .= "<p>The file '$file' is currently editet by someone else.</p>\n\n";
- $message   .= "<a href=\"$ENV{'SCRIPT_NAME'}?command=show&file=$dir\"><p>Back to $dir</a></p>";
- $message   .= htmlfoot;
-
- return \$message;
+ return error("The file '".encode_entities($file)."' is currently editet by someone else.",upper_path($file));
 }
 
 # equal_url()
