@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-03-04
+# Last modified: 2004-03-12
 #
 
 use strict;
@@ -25,8 +25,7 @@ use base qw(Exporter);
 
 @EXPORT = qw(error_template
              error
-             abort
-             error_in_use);
+             abort);
 
 my $tpl_error;
 
