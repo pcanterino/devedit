@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-12
+# Last modified: 2004-07-17
 #
 
 use strict;
@@ -129,14 +129,14 @@ sub devedit_reload($)
   # SSL encrypted HTTP (HTTPS)
 
   $protocol = "https";
-  $port     = ($ENV{'SERVER_PORT'} == 443) ? "" : ":".$ENV{'SERVER_PORT'};
+  $port     = ":".$ENV{'SERVER_PORT'} if($ENV{'SERVER_PORT'} != 443);
  }
  else
  {
   # Simple HTTP
 
   $protocol = "http";
-  $port     = ($ENV{'SERVER_PORT'} == 80)  ? "" : ":".$ENV{'SERVER_PORT'};
+  $port     = ":".$ENV{'SERVER_PORT'} if($ENV{'SERVER_PORT'} != 80);
  }
 
  # The following code is grabbed from Template::_query of
