@@ -6,14 +6,18 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-24
+# Last modified: 2004-07-12
 #
 
 use strict;
 
 use vars qw(@EXPORT);
 
-use CGI qw(redirect);
+use CGI qw(redirect
+           escape
+           virtual_host
+           https);
+
 use Cwd qw(abs_path);
 use File::Spec;
 
@@ -26,6 +30,7 @@ use base qw(Exporter);
              devedit_reload
              equal_url
              file_name
+             query_string
              upper_path);
 
 # check_path()
@@ -113,15 +118,43 @@ sub clean_path($)
 sub devedit_reload($)
 {
  my $params = shift;
- my @list;
 
- while(my ($param,$value) = each(%$params))
+ # Detect the protocol (simple HTTP or SSL encrypted HTTP)
+ # and check if the server listens on the default port
+
+ my $protocol = "";
+ my $port     = "";
+
+ if(https)
  {
-  push(@list,$param."=".$value);
+  # SSL encrypted HTTP (HTTPS)
+
+  $protocol = "https";
+  $port     = ($ENV{'SERVER_PORT'} == 443) ? "" : ":".$ENV{'SERVER_PORT'};
+ }
+ else
+ {
+  # Simple HTTP
+
+  $protocol = "http";
+  $port     = ($ENV{'SERVER_PORT'} == 80)  ? "" : ":".$ENV{'SERVER_PORT'};
  }
 
- my $query  = join("&",@list);
- my $header = redirect("http://$ENV{'HTTP_HOST'}$ENV{'SCRIPT_NAME'}?$query");
+ # The following code is grabbed from Template::_query of
+ # Andre Malo's selfforum (http://sourceforge.net/projects/selfforum/)
+ # and modified by Patrick Canterino
+
+ my $query = '?'.join ('&' =>
+    map {
+      (ref)
+      ? map{escape ($_).'='.escape ($params -> {$_})} @{$params -> {$_}}
+      : escape ($_).'='.escape ($params -> {$_})
+    } keys %$params
+  );
+
+ # Create the redirection header
+
+ my $header = redirect($protocol."://".virtual_host.$port.$ENV{'SCRIPT_NAME'}.$query);
 
  return \$header;
 }
