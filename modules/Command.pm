@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 10-04-2003
+# Last modified: 2003-10-20
 #
 
 use strict;
@@ -112,7 +112,7 @@ sub exec_show($$$)
 
   foreach my $file(@$files)
   {
-   my $phys_path = $physical."/".$file; # Not exactly...
+   my $phys_path = $physical."/".$file;
    my $virt_path = encode_entities($virtual.$file);
 
    my @stat      = stat($phys_path);
@@ -126,15 +126,15 @@ sub exec_show($$$)
    $output .= encode_entities($file);
    $output .= " " x ($max_name_len - length($file))."\t  (";
 
-   $output .= (-T $phys_path)
+   $output .= (-r $phys_path && -T $phys_path)
               ? "<a href=\"$script?command=show&file=$virt_path\">View</a>"
               : '<span style="color:#C0C0C0">View</span>';
 
    $output .= " | ";
 
-   $output .= ($in_use || not -T $phys_path)
-              ? '<span style="color:#C0C0C0">Edit</span>'
-              : "<a href=\"$script?command=beginedit&file=$virt_path\">Edit</a>";
+   $output .= (-w $phys_path && -r $phys_path && -T $phys_path && not $in_use)
+              ? "<a href=\"$script?command=beginedit&file=$virt_path\">Edit</a>"
+              : '<span style="color:#C0C0C0">Edit</span>';
 
    $output .= " | <a href=\"$script?command=workwithfile&file=$virt_path\">Do other stuff</a>)\n";
   }
@@ -171,6 +171,8 @@ END
  else
  {
   # View a file
+
+  return error("You have not enough permissions to view this file.") unless(-r $physical);
 
   # Check on binary files
   # We have to do it in this way, or empty files
@@ -220,6 +222,7 @@ sub exec_beginedit($$)
 
  return error("You cannot edit directories.") if(-d $physical);
  return error_in_use($virtual) if($uselist->in_use($virtual));
+ return error("You have not enough permissions to edit this file.") unless(-r $physical && -w $physical);
 
  # Check on binary files
 
@@ -298,6 +301,11 @@ sub exec_endedit($$)
  my $content        = $data->{'cgi'}->param('filecontent');
 
  return error("You cannot edit directories.") if(-d $physical);
+ return error("You have not enough permissions to edit this file.") unless(-r $physical && -w $physical);
+
+ # Normalize newlines
+
+ $content =~ s/\015\012|\012|\015/\n/g;
 
  if($data->{'cgi'}->param('encode_iso'))
  {
@@ -322,7 +330,7 @@ sub exec_endedit($$)
  }
  else
  {
-  return error("Saving of file '".encode_entities($virtual)."' failed'.");
+  return error("Saving of file '".encode_entities($virtual)."' failed'.",upper_path($virtual));
  }
 }
 
@@ -343,9 +351,9 @@ sub exec_mkfile($$)
  my $dir            = upper_path($new_virtual);
  $new_virtual       = encode_entities($new_virtual);
 
- return error("A file or directory called '$new_virtual' does already exist.") if(-e $new_physical);
+ return error("A file or directory called '$new_virtual' already exists.",$dir) if(-e $new_physical);
 
- file_create($new_physical) or return error("Could not create file '$new_virtual'.");
+ file_create($new_physical) or return error("Could not create file '$new_virtual'.",$dir);
 
  my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
  return \$output;
@@ -368,9 +376,9 @@ sub exec_mkdir($$)
  my $dir            = upper_path($new_virtual);
  $new_virtual       = encode_entities($new_virtual);
 
- return error("A file or directory called '$new_virtual' does already exist.") if(-e $new_physical);
+ return error("A file or directory called '$new_virtual' already exists.",$dir) if(-e $new_physical);
 
- mkdir($new_physical) or return error("Could not create directory '$new_virtual'.");
+ mkdir($new_physical) or return error("Could not create directory '$new_virtual'.",$dir);
 
  my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
  return \$output;
@@ -493,10 +501,10 @@ sub exec_copy($$)
 
  if(-e $new_physical)
  {
-  return error("A file or directory called '$new_virtual' does already exists and this editor is currently not able to ask to overwrite the existing file or directory.");
+  return error("A file or directory called '$new_virtual' already exists and this editor is currently not able to ask to overwrite the existing file or directory.",upper_path($virtual));
  }
 
- copy($physical,$new_physical) or return error("Could not copy '$virtual' to '$new_virtual'");
+ copy($physical,$new_physical) or return error("Could not copy '$virtual' to '$new_virtual'",upper_path($virtual));
 
  my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
  return \$output;
@@ -525,10 +533,10 @@ sub exec_rename($$)
 
  if(-e $new_physical)
  {
-  return error("A file or directory called '$new_virtual' does already exists and this editor is currently not able to ask to overwrite the existing file or directory.");
+  return error("A file or directory called '$new_virtual' already exists and this editor is currently not able to ask to overwrite the existing file or directory.",upper_path($virtual));
  }
 
- rename($physical,$new_physical) or return error("Could not move/rename '".encode_entities($virtual)."' to '$new_virtual'.");
+ rename($physical,$new_physical) or return error("Could not move/rename '".encode_entities($virtual)."' to '$new_virtual'.",upper_path($virtual));
 
  my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
  return \$output;
@@ -549,10 +557,10 @@ sub exec_remove($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
 
- return error("Deleting directories is currently unsupported") if(-d $physical);
+ return error("Deleting directories is currently unsupported.") if(-d $physical);
  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
 
- unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.");
+ unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.",upper_path($virtual));
 
  my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=".upper_path($virtual));
  return \$output;
