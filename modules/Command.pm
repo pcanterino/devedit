@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-25-2003
+# Last modified: 10-04-2003
 #
 
 use strict;
@@ -14,8 +14,7 @@ use strict;
 use vars qw(@EXPORT
             $script);
 
-use CGI qw(header
-           redirect);
+use CGI qw(redirect);
 
 use File::Access;
 use File::Copy;
@@ -86,7 +85,7 @@ sub exec_show($$$)
    $output .= "<a href=\"$script?command=show&file=".encode_entities(upper_path($virtual))."\">../</a>\n";
   }
 
-  # Get the longest file/directory name
+  # Get the length of the longest file/directory name
 
   my $max_name_len = 0;
 
@@ -104,7 +103,7 @@ sub exec_show($$$)
 
    $output .= "  ";
    $output .= "[SUBDIR]  ";
-   $output .= strftime("%d.%m.%Y %H:%M",localtime($stat[9]));
+   $output .= strftime($config->{'timeformat'},localtime($stat[9]));
    $output .= " " x 10;
    $output .= "<a href=\"$script?command=show&file=".encode_entities($virtual.$dir)."/\">".encode_entities($dir)."/</a>\n";
   }
@@ -122,7 +121,7 @@ sub exec_show($$$)
    $output .= " " x (10 - length($stat[7]));
    $output .= $stat[7];
    $output .= "  ";
-   $output .= strftime("%d.%m.%Y %H:%M",localtime($stat[9]));
+   $output .= strftime($config->{'timeformat'},localtime($stat[9]));
    $output .= ($in_use) ? " (IN USE) " : (not -T $phys_path) ? " (BINARY) " : " " x 10;
    $output .= encode_entities($file);
    $output .= " " x ($max_name_len - length($file))."\t  (";
@@ -148,12 +147,20 @@ sub exec_show($$$)
   $output .= <<END;
 <table border="0">
 <tr>
+<form action="$script">
+<input type="hidden" name="command" value="mkdir">
+<input type="hidden" name="curdir" value="$virtual">
 <td>Create new directory:</td>
-<td>$virtual <input type="text" name="newdirname"> <input type="submit" value="Create!"></td>
+<td>$virtual <input type="text" name="newfile"> <input type="submit" value="Create!"></td>
+</form>
 </tr>
 <tr>
 <td>Create new file:</td>
-<td>$virtual <input type="text" name="newfilename"> <input type="submit" value="Create!"></td>
+<form action="$script">
+<input type="hidden" name="command" value="mkfile">
+<input type="hidden" name="curdir" value="$virtual">
+<td>$virtual <input type="text" name="newfile"> <input type="submit" value="Create!"></td>
+</form>
 </tr>
 </table>
 
@@ -192,7 +199,7 @@ END
   }
  }
 
- return \$output
+ return \$output;
 }
 
 # exec_beginedit
@@ -229,30 +236,33 @@ sub exec_beginedit($$)
   $uselist->add_file($virtual);
   $uselist->save;
 
-  my $dir     = upper_path($virtual);
-  my $content = encode_entities(${file_read($physical)});
+  my $dir       = upper_path($virtual);
+  my $content   = encode_entities(${file_read($physical)});
 
-  my $output = htmlhead("Edit file ".encode_entities($virtual));
-  $output   .= equal_url($config->{'httproot'},$virtual);
+  my $equal_url = equal_url($config->{'httproot'},$virtual);
 
-  $virtual = encode_entities($virtual);
+  $virtual   = encode_entities($virtual);
 
+  my $output = htmlhead("Edit file $virtual");
+  $output   .= $equal_url;
   $output   .= <<END;
 <p><b style="color:#FF0000">Caution!</b> This file is locked for other users while you are editing it. To unlock it, click <i>Save and exit</i> or <i>Exit WITHOUT saving</i>. Please <b>don't</b> click the <i>Reload</i> button in your browser! This will confuse the editor.</p>
 
-<form action="$ENV{'SCRIPT_NAME'}" method="get">
+<form action="$script" method="get">
 <input type="hidden" name="command" value="canceledit">
 <input type="hidden" name="file" value="$virtual">
 <p><input type="submit" value="Exit WITHOUT saving"></p>
 </form>
 
-<form action="$ENV{'SCRIPT_NAME'}" method="post">
+<form action="$script" method="post">
 <input type="hidden" name="command" value="endedit">
 <input type="hidden" name="file" value="$virtual">
 
 <table width="100%" border="1">
 <tr>
-<td width="50%" align="center"><input type="checkbox" name="save_as_new_file" value="1"> Save as new file: $dir <input type=text name="new_filename" value=""></td>
+<td width="50%" align="center">
+<input type="hidden" name="file" value="$virtual">
+<input type="checkbox" name="saveas" value="1"> Save as new file: $dir <input type=text name="newfile" value=""></td>
 <td width="50%" align="center"><input type="checkbox" name="encode_iso" value="1"> Encode ISO-8859-1 special chars</td>
 </tr>
 <tr>
@@ -296,15 +306,23 @@ sub exec_endedit($$)
   $content = encode_entities($content,"\200-\377");
  }
 
+ if($data->{'cgi'}->param('saveas'))
+ {
+  # Create the new filename
+
+  $physical = $data->{'new_physical'};
+  $virtual  = $data->{'new_virtual'};
+ }
+
  if(file_save($physical,\$content))
  {
-  # Saving of the file was successfull - so unlock it!
+  # Saving of the file was successful - so unlock it!
 
   return exec_unlock($data,$config);
  }
  else
  {
-  return error("Saving of file '".encode_entities($virtual)."' failed'");
+  return error("Saving of file '".encode_entities($virtual)."' failed'.");
  }
 }
 
@@ -319,7 +337,18 @@ sub exec_endedit($$)
 
 sub exec_mkfile($$)
 {
- 1;
+ my ($data,$config) = @_;
+ my $new_physical   = $data->{'new_physical'};
+ my $new_virtual    = $data->{'new_virtual'};
+ my $dir            = upper_path($new_virtual);
+ $new_virtual       = encode_entities($new_virtual);
+
+ return error("A file or directory called '$new_virtual' does already exist.") if(-e $new_physical);
+
+ file_create($new_physical) or return error("Could not create file '$new_virtual'.");
+
+ my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
+ return \$output;
 }
 
 # exec_mkdir()
@@ -333,7 +362,18 @@ sub exec_mkfile($$)
 
 sub exec_mkdir($$)
 {
- 1;
+ my ($data,$config) = @_;
+ my $new_physical   = $data->{'new_physical'};
+ my $new_virtual    = $data->{'new_virtual'};
+ my $dir            = upper_path($new_virtual);
+ $new_virtual       = encode_entities($new_virtual);
+
+ return error("A file or directory called '$new_virtual' does already exist.") if(-e $new_physical);
+
+ mkdir($new_physical) or return error("Could not create directory '$new_virtual'.");
+
+ my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
+ return \$output;
 }
 
 # exec_workwithfile()
@@ -352,6 +392,8 @@ sub exec_workwithfile($$)
  my $virtual        = $data->{'virtual'};
  my $unused         = $data->{'uselist'}->unused($virtual);
 
+ my $dir = encode_entities(upper_path($virtual));
+
  my $output = htmlhead("Work with file ".encode_entities($virtual));
  $output   .= equal_url($config->{'httproot'},$virtual);
 
@@ -369,7 +411,11 @@ sub exec_workwithfile($$)
 
 <h2>Copy</h2>
 
-<p>Copy file '$virtual' to: <input type="text" name="newfilename" size="50"> <input type="submit" value="Copy!"></p>
+<form action="$script">
+<input type="hidden" name="command" value="copy">
+<input type="hidden" name="file" value="$virtual">
+<p>Copy file '$virtual' to: $dir <input type="text" name="newfile" size="50"> <input type="submit" value="Copy!"></p>
+</form>
 
 <hr>
 
@@ -383,7 +429,11 @@ END
   $output .= <<END;
 <h2>Move/rename</h2>
 
-<p>Move/Rename file '$virtual' to: <input type="text" name="newfilename" size="50"> <input type="submit" value="Move/Rename!"></p>
+<form action="$script">
+<input type="hidden" name="command" value="rename">
+<input type="hidden" name="file" value="$virtual">
+<p>Move/Rename file '$virtual' to: $dir <input type="text" name="newfile" size="50"> <input type="submit" value="Move/Rename!"></p>
+</form>
 
 <hr>
 
@@ -431,7 +481,25 @@ END
 
 sub exec_copy($$)
 {
- 1;
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = encode_entities($data->{'virtual'});
+ my $new_physical   = $data->{'new_physical'};
+ my $new_virtual    = $data->{'new_virtual'};
+ my $dir            = upper_path($new_virtual);
+ $new_virtual       = encode_entities($new_virtual);
+
+ return error("This editor is not able to copy directories.") if(-d $physical);
+
+ if(-e $new_physical)
+ {
+  return error("A file or directory called '$new_virtual' does already exists and this editor is currently not able to ask to overwrite the existing file or directory.");
+ }
+
+ copy($physical,$new_physical) or return error("Could not copy '$virtual' to '$new_virtual'");
+
+ my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
+ return \$output;
 }
 
 # exec_rename()
@@ -445,7 +513,25 @@ sub exec_copy($$)
 
 sub exec_rename($$)
 {
- 1;
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = $data->{'virtual'};
+ my $new_physical   = $data->{'new_physical'};
+ my $new_virtual    = $data->{'new_virtual'};
+ my $dir            = upper_path($new_virtual);
+ $new_virtual       = encode_entities($new_virtual);
+
+ return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
+
+ if(-e $new_physical)
+ {
+  return error("A file or directory called '$new_virtual' does already exists and this editor is currently not able to ask to overwrite the existing file or directory.");
+ }
+
+ rename($physical,$new_physical) or return error("Could not move/rename '".encode_entities($virtual)."' to '$new_virtual'.");
+
+ my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
+ return \$output;
 }
 
 # exec_remove()
@@ -463,14 +549,12 @@ sub exec_remove($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
 
- return error("Deleting of directories is currently unsupported") if(-d $physical);
+ return error("Deleting directories is currently unsupported") if(-d $physical);
  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
-
- my $dir = upper_path($virtual);
 
  unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.");
 
- my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
+ my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=".upper_path($virtual));
  return \$output;
 }
 
@@ -487,16 +571,13 @@ sub exec_remove($$)
 sub exec_unlock($$)
 {
  my ($data,$config) = @_;
- my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $uselist        = $data->{'uselist'};
-
- my $dir = upper_path($virtual);
 
  $uselist->remove_file($virtual);
  $uselist->save;
 
- my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
+ my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=".upper_path($virtual));
  return \$output;
 }
 

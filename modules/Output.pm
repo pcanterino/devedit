@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-22-2003
+# Last modified: 09-23-2003
 #
 
 use strict;
@@ -32,6 +32,7 @@ use base qw(Exporter);
 # htmlhead()
 #
 # Generate the head of a HTML document
+# (a text/html HTTP header will also be created)
 #
 # Params: Title and heading
 #
@@ -95,7 +96,8 @@ sub error($)
 
 # abort()
 #
-# Print and error message and exit script
+# Print an error message and exit script
+# ^^^^^
 #
 # Params: Error message
 

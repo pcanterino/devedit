@@ -6,14 +6,12 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-22-2003
+# Last modified: 10-03-2003
 #
 
 use strict;
 
 use vars qw(@EXPORT);
-
-use Carp qw(croak);
 
 use Cwd qw(abs_path);
 use File::Basename;
@@ -25,7 +23,7 @@ use base qw(Exporter);
 
 @EXPORT = qw(check_path
              clean_path
-             filemode
+             file_name
              upper_path);
 
 # check_path()
@@ -107,32 +105,26 @@ sub clean_path($)
  return $path;
 }
 
-# filemode()
+# file_name()
 #
-# Creates a readable string of a UNIX filemode number
-# (copied from Tool.pm of Dev-Editor 0.1.4)
+# Returns the last path of a filename
 #
-# Params: Filemode as number
+# Params: Path
 #
-# Return: Filemode as readable string
+# Return: Last part of the path
 
-sub filemode($)
+sub file_name($)
 {
-    my ($modestring, $ur, $uw, $ux, $gr, $gw, $gx, $or, $ow, $ox);
-    my $mode = shift;
+ my $path =  shift;
+ $path    =~ tr!\\!/!;
 
-    $ur = ($mode & 0400) ? "r" : "-";       # User Read
-    $uw = ($mode & 0200) ? "w" : "-";       # User Write
-    $ux = ($mode & 0100) ? "x" : "-";       # User eXecute
-    $gr = ($mode & 0040) ? "r" : "-";       # Group Read
-    $gw = ($mode & 0020) ? "w" : "-";       # Group Write
-    $gx = ($mode & 0010) ? "x" : "-";       # Group eXecute
-    $or = ($mode & 0004) ? "r" : "-";       # Other Read
-    $ow = ($mode & 0002) ? "w" : "-";       # Other Write
-    $ox = ($mode & 0001) ? "x" : "-";       # Other eXecute
+ unless($path eq "/")
+ {
+  $path = substr($path,0,-1) if($path =~ m!/$!);
+  $path = substr($path,rindex($path,"/")+1);
+ }
 
-    # build a readable mode string (rwxrwxrwx)
-    return $ur . $uw . $ux . $gr . $gw . $gx . $or . $ow . $ox;
+ return $path;
 }
 
 # upper_path()
