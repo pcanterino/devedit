@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-12
+# Last modified: 2005-02-13
 #
 
 use strict;
@@ -223,7 +223,7 @@ sub file_name($)
  my $path =  shift;
  $path    =~ tr!\\!/!;
 
- unless($path =~ m!^/+$! || ($^O eq 'MSWin32' && $path =~ m!^[a-z]:/+$!))
+ unless($path =~ m!^/+$! || ($^O eq 'MSWin32' && $path =~ m!^[a-z]:/+$!i))
  {
   $path =~ s!/+$!!;
   $path =  substr($path,rindex($path,'/')+1);
@@ -284,7 +284,7 @@ sub upper_path($)
  my $path =  shift;
  $path    =~ tr!\\!/!;
 
- unless($path =~ m!^/+$! || ($^O eq 'MSWin32' && $path =~ m!^[a-z]:/+$!))
+ unless($path =~ m!^/+$! || ($^O eq 'MSWin32' && $path =~ m!^[a-z]:/+$!i))
  {
   $path =~ s!/+$!!;
   $path =  substr($path,0,rindex($path,'/')+1);
