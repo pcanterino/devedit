@@ -35,7 +35,7 @@ use base qw(Exporter);
 
 # check_path()
 #
-# Check, if a virtual path is above a virtual root directory
+# Check if a virtual path is above a virtual root directory
 # (currently no check if the path exists - check otherwise!)
 #
 # Params: 1. Virtual root directory

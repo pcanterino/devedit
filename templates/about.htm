@@ -204,12 +204,12 @@ WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 {IF users}
 <tr>
 <td><b>User:</b></td>
-<td>{USER} (UID: {UID})</td>
+<td>{IF user_detected}{USER} ({ENDIF}UID: {UID}{IF user_detected}){ENDIF}</td>
 </tr>
 
 <tr>
 <td><b>Group:</b></td>
-<td>{GROUP} (GID: {GID})</td>
+<td>{IF group_detected}{GROUP} ({ENDIF}GID: {GID}{IF group_detected}){ENDIF}</td>
 </tr>
 
 <tr>

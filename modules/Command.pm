@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-11-10
+# Last modified: 2004-11-23
 #
 
 use strict;
@@ -118,7 +118,7 @@ sub exec_show($$)
    $udtpl->read_file($config->{'templates'}->{'dirlist_up'});
 
    $udtpl->fillin("UPPER_DIR",encode_entities(upper_path($virtual)));
-   $udtpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
+   $udtpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
 
    $dirlist .= $udtpl->get_template;
   }
@@ -137,7 +137,7 @@ sub exec_show($$)
 
    $dtpl->fillin("DIR",$virt_path);
    $dtpl->fillin("DIR_NAME",$dir);
-   $dtpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
+   $dtpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
    $dtpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
 
    $dtpl->parse_if_block("readable",-r $phys_path && -x $phys_path);
@@ -162,7 +162,7 @@ sub exec_show($$)
    $ftpl->fillin("FILE",$virt_path);
    $ftpl->fillin("FILE_NAME",$file);
    $ftpl->fillin("SIZE",$stat[7]);
-   $ftpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
+   $ftpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
    $ftpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
 
    $ftpl->parse_if_block("not_readable",not -r $phys_path);
@@ -255,11 +255,12 @@ sub exec_beginedit($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
+ my $dir            = upper_path($virtual);
  my $uselist        = $data->{'uselist'};
 
- return error($config->{'errors'}->{'editdir'},upper_path($virtual))                   if(-d $physical);
- return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
- return error($config->{'errors'}->{'noedit'},upper_path($virtual))                    unless(-r $physical && -w $physical);
+ return error($config->{'errors'}->{'editdir'},$dir)                    if(-d $physical);
+ return error($config->{'errors'}->{'in_use'}, $dir,{FILE => $virtual}) if($uselist->in_use($virtual));
+ return error($config->{'errors'}->{'noedit'}, $dir)                    unless(-r $physical && -w $physical);
 
  # Check on binary files
 
@@ -267,13 +268,13 @@ sub exec_beginedit($$)
  {
   # Binary file
 
-  return error($config->{'errors'}->{'binary'},upper_path($virtual));
+  return error($config->{'errors'}->{'binary'},$dir);
  }
  else
  {
-  if($config->{'max_file_size'} && (stat($physical))[7] > $config->{'max_file_size'})
+  if($config->{'max_file_size'} && (-s $physical) > $config->{'max_file_size'})
   {
-   return error($config->{'errors'}->{'file_too_large'},upper_path($virtual),{SIZE => $config->{'max_file_size'}})
+   return error($config->{'errors'}->{'file_too_large'},$dir,{SIZE => $config->{'max_file_size'}})
   }
   else
   {
@@ -289,7 +290,7 @@ sub exec_beginedit($$)
    $tpl->read_file($config->{'templates'}->{'editfile'});
 
    $tpl->fillin("FILE",$virtual);
-   $tpl->fillin("DIR",upper_path($virtual));
+   $tpl->fillin("DIR",$dir);
    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
    $tpl->fillin("SCRIPT",$script);
    $tpl->fillin("CONTENT",encode_entities($$content));
@@ -334,6 +335,7 @@ sub exec_endedit($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
+ my $dir            = upper_path($virtual);
  my $content        = $data->{'cgi'}->param('filecontent');
  my $uselist        = $data->{'uselist'};
 
@@ -365,22 +367,22 @@ sub exec_endedit($$)
 
   # Check if someone else is editing the new file
 
-  return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
+  return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($uselist->in_use($virtual));
  }
 
- return error($config->{'errors'}->{'text_to_binary'},upper_path($virtual)) unless(-T $physical);
- return error($config->{'errors'}->{'editdir'},upper_path($virtual))        if(-d $physical);
- return error($config->{'errors'}->{'noedit'}, upper_path($virtual))        if(-e $physical && !(-r $physical && -w $physical));
+ return error($config->{'errors'}->{'text_to_binary'},$dir) unless(-T $physical);
+ return error($config->{'errors'}->{'editdir'},$dir)        if(-d $physical);
+ return error($config->{'errors'}->{'noedit'}, $dir)        if(-e $physical && !(-r $physical && -w $physical));
 
  if(file_save($physical,\$content))
  {
   # Saving of the file was successful - so unlock it!
 
-  return devedit_reload({command => 'show', file => upper_path($virtual)});
+  return devedit_reload({command => 'show', file => $dir});
  }
  else
  {
-  return error($config->{'errors'}->{'edit_failed'},upper_path($virtual),{FILE => $virtual});
+  return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual});
  }
 }
 
@@ -779,7 +781,7 @@ sub exec_chprop($$)
 
     if($group)
     {
-     return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => $group}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
+     return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_entities($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
      system("chgrp",$group,$physical);
     }
 
@@ -787,20 +789,34 @@ sub exec_chprop($$)
    }
    else
    {
+    # Display the form
+
     my @stat     = stat($physical);
 
     my $mode     = $stat[2];
     my $mode_oct = substr(sprintf("%04o",$mode),-4);
     my $gid      = $stat[5];
-    my $group    = getgrgid($gid);
 
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'chprop'});
 
+    # Insert file properties into the template
+
     $tpl->fillin("MODE_OCTAL",$mode_oct);
     $tpl->fillin("MODE_STRING",mode_string($mode));
     $tpl->fillin("GID",$gid);
-    $tpl->fillin("GROUP",$group);
+
+    if(my $group = getgrgid($gid))
+    {
+     $tpl->fillin("GROUP",encode_entities($group));
+     $tpl->parse_if_block("group_detected",1);
+    }
+    else
+    {
+     $tpl->parse_if_block("group_detected",0);
+    }
+
+    # Insert other information
 
     $tpl->fillin("FILE",$virtual);
     $tpl->fillin("DIR",$dir);
@@ -888,21 +904,21 @@ sub exec_about($$)
 
  # Some path information
 
- $tpl->fillin("SCRIPT_PHYS",$ENV{'SCRIPT_FILENAME'});
- $tpl->fillin("CONFIG_PATH",$data->{'configfile'});
- $tpl->fillin("FILE_ROOT",$config->{'fileroot'});
- $tpl->fillin("HTTP_ROOT",$config->{'httproot'});
+ $tpl->fillin("SCRIPT_PHYS",encode_entities($ENV{'SCRIPT_FILENAME'}));
+ $tpl->fillin("CONFIG_PATH",encode_entities($data->{'configfile'}));
+ $tpl->fillin("FILE_ROOT",  encode_entities($config->{'fileroot'}));
+ $tpl->fillin("HTTP_ROOT",  encode_entities($config->{'httproot'}));
 
  # Perl
 
- $tpl->fillin("PERL_PROG",$^X);
+ $tpl->fillin("PERL_PROG",encode_entities($^X));
  $tpl->fillin("PERL_VER",sprintf("%vd",$^V));
 
  # Information about the server
 
- $tpl->fillin("HTTPD",$ENV{'SERVER_SOFTWARE'});
+ $tpl->fillin("HTTPD",encode_entities($ENV{'SERVER_SOFTWARE'}));
  $tpl->fillin("OS",$^O);
- $tpl->fillin("TIME",strftime($config->{'timeformat'},localtime));
+ $tpl->fillin("TIME",encode_entities(strftime($config->{'timeformat'},localtime)));
 
  # Process information
 
@@ -927,8 +943,25 @@ sub exec_about($$)
 
   # Names of user and group
 
-  $tpl->fillin("USER",getpwuid($uid));
-  $tpl->fillin("GROUP",getgrgid($gid));
+  if(my $user = getpwuid($uid))
+  {
+   $tpl->fillin("USER",encode_entities($user));
+   $tpl->parse_if_block("user_detected",1);
+  }
+  else
+  {
+   $tpl->parse_if_block("user_detected",0);
+  }
+
+  if(my $group = getgrgid($gid))
+  {
+   $tpl->fillin("GROUP",encode_entities($group));
+   $tpl->parse_if_block("group_detected",1);
+  }
+  else
+  {
+   $tpl->parse_if_block("group_detected",0);
+  }
 
   # Process umask
 
