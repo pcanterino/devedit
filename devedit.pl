@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-11-26
+# Last modified: 2004-12-29
 #
 
 use strict;
@@ -53,7 +53,6 @@ my $curdir  = $cgi->param('curdir')  || '';
 my $newfile = $cgi->param('newfile') || '';
 
 # Create physical and virtual path for the new file
-# This section has to be optimized - ugh!
 
 my $new_physical = '';
 my $new_virtual  = '';
@@ -108,7 +107,7 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
                                   lockfile => $config->{'lock_file'},
                                   timeout  => $config->{'lock_timeout'});
 
-  $uselist->lock or abort($config->{'errors'}->{'lock_failed'},undef,{USELIST => $config->{'uselist_file'}, LOCK_FILE => $config->{'lock_file'}});
+  $uselist->lock or abort($config->{'errors'}->{'lock_failed'},undef,{USELIST => $uselist->{'listfile'}, LOCK_FILE => $uselist->{'lockfile'}});
   $uselist->load;
 
   # Create a hash with data submitted by user
