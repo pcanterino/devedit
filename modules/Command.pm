@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-14
+# Last modified: 2005-02-28
 #
 
 use strict;
@@ -207,6 +207,7 @@ sub exec_show($$)
   $tpl->fillin('FILTER',encode_entities($filter2));
   $tpl->fillin('FILTER_URL',escape($filter2));
 
+  $tpl->parse_if_block('empty',$dirlist eq '');
   $tpl->parse_if_block('dir_writeable',$dir_writeable);
   $tpl->parse_if_block('filter',$filter2);
   $tpl->parse_if_block('gmt',$config->{'use_gmt'});

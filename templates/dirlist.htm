@@ -14,8 +14,8 @@
 
 <hr>
 
-<table border="0" style="font-family:'Courier New',Courier,monospace;font-size:10pt;">
-{DIRLIST}</table>
+{IF empty}<p><i>This directory is empty or nothing is matching against your wildcard</i></p>{ELSE}<table border="0" style="font-family:'Courier New',Courier,monospace;font-size:10pt;">
+{DIRLIST}</table>{ENDIF}
 
 <hr>
 
