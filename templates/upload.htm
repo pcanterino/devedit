@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<title>Upload a file to {DIR}</title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<h1>Upload a file to {DIR}</h1>
+
+<p><a href="{SCRIPT}?command=show&file={DIR}">Back to {DIR}</a></p>
+
+<p>Using this form, you can upload a file to the current directory ('{DIR}').</p>
+
+<p><b>Note:</b> Currently, existing files can't be overwritten, so be careful!</p>
+
+<hr>
+
+<form action="{SCRIPT}" method="post" enctype="multipart/form-data">
+<input type="hidden" name="command" value="upload">
+<input type="hidden" name="file" value="{DIR}">
+
+<p>File to upload:<br>
+<input type="file" name="uploaded_file" size="35"></p>
+
+<p>Transfer mode (see below):<br>
+<input type="radio" name="ascii" value="1">ASCII <input type="radio" name="ascii" value="0" checked>Binary (default)</p>
+
+<p><input type="submit" value="Upload file!"></p>
+</form>
+
+<hr>
+
+<p><b>Explanation of the transfer modes:</b></p>
+
+<ul>
+<li><b>ASCII:</b> Any line separator in the uploaded file will be converted to the system specific line separator. Use this mode for text files, HTML documents, scripts and so on.</li>
+<li><b>Binary:</b> The file will be uploaded as it is. Use this transfer mode for images, executable files and archives, for example. This is the default transfer mode.</li>
+</ul>
+</body>
+</html>
