@@ -1,12 +1,12 @@
 package Template;
 
 #
-# Template (Version 1.3)
+# Template (Version 1.4)
 #
 # Klasse zum Parsen von Templates
 #
-# Autor:            Patrick Canterino <patshaping@gmx.net>
-# Letzte Aenderung: 11.4.2004
+# Autor:            Patrick Canterino <patrick@patshaping.de>
+# Letzte Aenderung: 5.2.2005
 #
 
 use strict;
@@ -24,7 +24,7 @@ use Carp qw(croak);
 sub new
 {
  my $class = shift;
- my $self  = {template => ''};
+ my $self  = {file => '', template => ''};
  return bless($self,$class);
 }
 
@@ -85,12 +85,14 @@ sub add_text($)
 
 sub read_file($;$)
 {
- my ($self,$tfile,$not_include) = @_;
+ my ($self,$file,$not_include) = @_;
  local *FILE;
 
- open(FILE,"<$tfile") or croak "Open $tfile: $!";
- read(FILE, my $content, -s $tfile);
- close(FILE) or croak "Closing $tfile: $!";
+ $self->{'file'} = $file;
+
+ open(FILE,'<'.$file) or croak "Open $file: $!";
+ read(FILE, my $content, -s $file);
+ close(FILE) or croak "Closing $file: $!";
 
  $self->add_text($content);
  $self->parse_includes unless($not_include);
@@ -110,7 +112,7 @@ sub fillin($$)
  my ($self,$var,$text) = @_;
 
  $var  = quotemeta($var);
- $text = "" unless defined $text; # Um Fehler zu vermeiden
+ $text = '' unless defined $text; # Um Fehler zu vermeiden
 
  my $template = $self->get_template;
  $template    =~ s/\{$var\}/$text/g;
@@ -125,14 +127,14 @@ sub fillin($$)
 # Parameter: 1. Variable zum Ersetzen
 #            2. Array-Referenz, durch die die Variable ersetzt werden soll
 #            3. Zeichenkette, mit der das Array verbunden werden soll
-#               (Standard: "")
+#               (Standard: '')
 #
 # Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
 
 sub fillin_array($$;$)
 {
  my ($self,$var,$array,$glue) = @_;
- $glue = "" unless defined $glue;
+ $glue = '' unless defined $glue;
 
  $self->fillin($var,join($glue,@$array));
 }
@@ -166,25 +168,32 @@ sub parse_if_block($$)
  my ($self,$name,$state) = @_;
  my $template            = $self->get_template;
 
- while(index($template,"{IF ".$name."}") >= 0)
+ my $count = 0;
+
+ while(index($template,'{IF '.$name.'}') >= 0)
  {
   # Das alles hier ist nicht wirklich elegant geloest...
   # ... aber solange es funktioniert... ;-)
 
-  my $start    = index($template,"{IF ".$name."}");
+  $count++;
+
+  my $start    = index($template,'{IF '.$name.'}');
   my $tpl_tmp  = substr($template,$start);
   my @splitted = split(/\{ENDIF\}/,$tpl_tmp);
+  push(@splitted,'') if(substr($template,-7) eq '{ENDIF}');
 
-  my $block = ""; # Kompletter bedingter Block
+  my $block = ''; # Kompletter bedingter Block
   my $ifs   = 0;  # IF-Zaehler (wird fuer jedes IF erhoeht und fuer jedes ENDIF erniedrigt)
 
   # {IF}
 
   for(my $x=0;$x<@splitted;$x++)
   {
-   $ifs += substr_count($splitted[$x],"{IF"); # Zum Zaehler jedes Vorkommen von IF hinzuzaehlen
-   $ifs--;                                    # Zaehler um 1 erniedrigen
-   $block .= $splitted[$x]."{ENDIF}";         # Daten zum Block hinzufuegen
+   croak 'Nesting error found while parsing IF block "'.$name.'" nr. '.$count.' in template file "'.$self->{'file'}.'"' if($x == $#splitted);
+
+   $ifs += substr_count($splitted[$x],'{IF '); # Zum Zaehler jedes Vorkommen von IF hinzuzaehlen
+   $ifs--;                                     # Zaehler um 1 erniedrigen
+   $block .= $splitted[$x].'{ENDIF}';          # Daten zum Block hinzufuegen
 
    if($ifs == 0)
    {
@@ -198,15 +207,15 @@ sub parse_if_block($$)
 
   # {ELSE}
 
-  my $else_block = ""; # Alles ab {ELSE}
+  my $else_block = ''; # Alles ab {ELSE}
      $ifs        = 0;  # IF-Zaehler
 
   @splitted = split(/\{ELSE\}/,$if_block);
 
   for(my $x=0;$x<@splitted;$x++)
   {
-   $ifs += substr_count($splitted[$x],"{IF");     # Zum Zaehler jedes Vorkommen von IF hinzuzaehlen
-   $ifs -= substr_count($splitted[$x],"{ENDIF}"); # Vom Zaehler jedes Vorkommen von ENDIF abziehen
+   $ifs += substr_count($splitted[$x],'{IF ');    # Zum Zaehler jedes Vorkommen von IF hinzuzaehlen
+   $ifs -= substr_count($splitted[$x],'{ENDIF}'); # Vom Zaehler jedes Vorkommen von ENDIF abziehen
 
    if($ifs == 0)
    {
@@ -216,13 +225,13 @@ sub parse_if_block($$)
 
     for(my $y=$x+1;$y<@splitted;$y++)
     {
-     $else_block .= "{ELSE}".$splitted[$y];
+     $else_block .= '{ELSE}'.$splitted[$y];
     }
 
     if($else_block)
     {
      $if_block   = substr($if_block,0,length($if_block)-length($else_block));
-     $else_block = (length($else_block) > 6) ? substr($else_block,6) : "";    # Ansonsten gibt es Fehler
+     $else_block = (length($else_block) > 6) ? substr($else_block,6) : '';    # Ansonsten gibt es Fehler
     }
 
     last;
@@ -255,18 +264,18 @@ sub parse_condtag($$)
 
  my $template = $self->get_template;
 
- while(index($template,"<$condtag>") >= 0)
+ while(index($template,'<'.$condtag.'>') >= 0)
  {
-  my $start = index($template,"<$condtag>");                                # Beginn des Blocks
-  my $end   = index($template,"</$condtag>")+length($condtag)+3;            # Ende des Blocks
+  my $start = index($template,'<'.$condtag.'>');                                # Beginn des Blocks
+  my $end   = index($template,'</'.$condtag.'>')+length($condtag)+3;            # Ende des Blocks
 
-  my $extract = substr($template,$start,$end-$start);                       # Kompletten Bedingungsblock extrahieren...
+  my $extract = substr($template,$start,$end-$start);                           # Kompletten Bedingungsblock extrahieren...
 
-  my $replacement = ($state) ? substr($extract,length($condtag)+2,0-length($condtag)-3) : "";
+  my $replacement = ($state) ? substr($extract,length($condtag)+2,0-length($condtag)-3) : '';
 
   $extract = quotemeta($extract);
 
-  $template =~ s/$extract/$replacement/g;                                   # Block durch neue Daten ersetzen
+  $template =~ s/$extract/$replacement/g;                                       # Block durch neue Daten ersetzen
  }
  $self->set_template($template);
 }
@@ -288,13 +297,13 @@ sub parse_includes
  {
   my ($directive,$file) = ($1,$2);
   my $qm_directive      = quotemeta($directive);
-  my $replacement       = "";
+  my $replacement       = '';
 
   if(-f $file)
   {
    local *FILE;
 
-   open(FILE,"<$file") or croak "Open $file: $!";
+   open(FILE,'<'.$file) or croak "Open $file: $!";
    read(FILE, $replacement, -s $file);
    close(FILE) or croak "Closing $file: $!";
   }
