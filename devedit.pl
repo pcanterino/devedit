@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-04
+# Last modified: 2004-10-04
 #
 
 use strict;
@@ -50,7 +50,7 @@ my $newfile = $cgi->param('newfile') || '';
 my $new_physical = '';
 my $new_virtual  = '';
 
-if($newfile ne '')
+if($newfile ne '' && $newfile !~ /^\s+$/)
 {
  $curdir  = upper_path($file) if($curdir eq '');
  my $path = clean_path($curdir.$newfile);
