@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-27
+# Last modified: 2003-10-30
 #
 
 use strict;
@@ -60,7 +60,7 @@ sub exec_show($$$)
   # Create directory listing
 
   my $direntries = dir_read($physical);
-  return error("Reading of directory $virtual failed") unless($direntries);
+  return error("Reading of directory $virtual failed.",upper_path($virtual)) unless($direntries);
 
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
@@ -170,7 +170,7 @@ END
  {
   # View a file
 
-  return error("You have not enough permissions to view this file.") unless(-r $physical);
+  return error("You have not enough permissions to view this file.",upper_path($virtual)) unless(-r $physical);
 
   # Check on binary files
   # We have to do it in this way, or empty files
@@ -180,7 +180,7 @@ END
   {
    # Binary file
 
-   return error("This editor is not able to view/edit binary files.");
+   return error("This editor is not able to view/edit binary files.",upper_path($virtual));
   }
   else
   {
@@ -218,9 +218,9 @@ sub exec_beginedit($$)
  my $virtual        = $data->{'virtual'};
  my $uselist        = $data->{'uselist'};
 
- return error("You cannot edit directories.") if(-d $physical);
+ return error("You cannot edit directories.",upper_path($virtual)) if(-d $physical);
  return error_in_use($virtual) if($uselist->in_use($virtual));
- return error("You have not enough permissions to edit this file.") unless(-r $physical && -w $physical);
+ return error("You have not enough permissions to edit this file.",upper_path($virtual)) unless(-r $physical && -w $physical);
 
  # Check on binary files
 
@@ -228,7 +228,7 @@ sub exec_beginedit($$)
  {
   # Binary file
 
-  return error("This editor is not able to view/edit binary files.");
+  return error("This editor is not able to view/edit binary files.",upper_path($virtual));
  }
  else
  {
@@ -299,7 +299,7 @@ sub exec_endedit($$)
  my $content        = $data->{'cgi'}->param('filecontent');
 
  return error("You cannot edit directories.") if(-d $physical);
- return error("You have not enough permissions to edit this file.") unless(-r $physical && -w $physical);
+ return error("You have not enough permissions to edit this file.",upper_path($virtual)) unless(-r $physical && -w $physical);
 
  # Normalize newlines
 
@@ -551,7 +551,7 @@ sub exec_remove($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
 
- return error("Deleting directories is currently unsupported.") if(-d $physical);
+ return error("Deleting directories is currently unsupported.",upper_path($virtual)) if(-d $physical);
  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
 
  unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.",upper_path($virtual));
