@@ -76,7 +76,9 @@ sub check_path($$)
   # Windows allows to go upwards in a path using things like
   # "..." and "...." and so on
 
-  for(my $x=0;$x<length($last)-1;$x++)
+  my $count = length($last)-1;
+
+  for(my $x=0;$x<$count;$x++)
   {
    unless($first =~ m!^[a-z]{1}:(/|\\)$!i)
    {
@@ -87,10 +89,7 @@ sub check_path($$)
   $last = '';
  }
 
- $path  = $first.'/'.$last;
-
- $first = File::Spec->canonpath($first);
- $path  = File::Spec->canonpath($path);
+ $path = File::Spec->canonpath($first.'/'.$last);
 
  # Check if the path is above the root directory
 
