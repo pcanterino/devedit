@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-25
+# Last modified: 2005-01-04
 #
 
 use strict;
@@ -54,8 +54,9 @@ sub check_path($$)
  $root = abs_path($root);
  $root = File::Spec->canonpath($root);
 
- $path =~ s!^/{1}!!;
- $path = $root."/".$path;
+ $path =~ tr!\\!/!;
+ $path =~ s!^/+!!;
+ $path =  $root."/".$path;
 
  # We extract the last part of the path and create the absolute path
 
@@ -76,7 +77,7 @@ sub check_path($$)
  # Create short path name
 
  my $short_path = substr($path,length($root));
- $short_path =~ tr!\\!\/!;
+ $short_path =~ tr!\\!/!;
  $short_path = "/".$short_path if($short_path !~ m!^/!);
  $short_path = $short_path."/" if($short_path !~ m!/$! && -d $path);
 
@@ -198,8 +199,8 @@ sub equal_url($$)
  my ($root,$path) = @_;
  my $url;
 
- $root =~ s!/$!!;
- $path =~ s!^/!!;
+ $root =~ s!/+$!!;
+ $path =~ s!^/+!!;
  $url  =  $root."/".$path;
 
  return $url;
