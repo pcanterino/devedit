@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-17
+# Last modified: 2004-12-20
 #
 
 use strict;
@@ -72,7 +72,7 @@ sub exec_command($$$)
   }
  }
 
- return error($config->{'errors'}->{'cmd_unknown'},'/',{COMMAND => $command});
+ return error($config->{'errors'}->{'cmd_unknown'},'/',{COMMAND => encode_entities($command)});
 }
 
 # exec_show()
@@ -141,7 +141,7 @@ sub exec_show($$)
    $dtpl->fillin("DIR",$virt_path);
    $dtpl->fillin("DIR_NAME",encode_entities($dir));
    $dtpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
-   $dtpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
+   $dtpl->fillin("URL",equal_url(encode_entities($config->{'httproot'}),$virt_path));
 
    $dtpl->parse_if_block("readable",-r $phys_path && -x $phys_path);
    $dtpl->parse_if_block("users",$users && -o $phys_path);
@@ -167,7 +167,7 @@ sub exec_show($$)
    $ftpl->fillin("FILE_NAME",encode_entities($file));
    $ftpl->fillin("SIZE",$stat[7]);
    $ftpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
-   $ftpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
+   $ftpl->fillin("URL",equal_url(encode_entities($config->{'httproot'}),$virt_path));
 
    $ftpl->parse_if_block("not_readable",not -r $phys_path);
    $ftpl->parse_if_block("binary",-B $phys_path);
@@ -191,7 +191,7 @@ sub exec_show($$)
   $tpl->fillin("DIRLIST",$dirlist);
   $tpl->fillin("DIR",encode_entities($virtual));
   $tpl->fillin("SCRIPT",$script);
-  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin("URL",encode_entities(equal_url($config->{'httproot'},$virtual)));
 
   $tpl->parse_if_block("dir_writeable",$dir_writeable);
  }
@@ -228,7 +228,7 @@ sub exec_show($$)
 
     $tpl->fillin("FILE",encode_entities($virtual));
     $tpl->fillin("DIR",$upper_path);
-    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin("URL",encode_entities(equal_url($config->{'httproot'},$virtual)));
     $tpl->fillin("SCRIPT",$script);
 
     $tpl->parse_if_block("editable",-w $physical && $uselist->unused($virtual));
@@ -540,8 +540,8 @@ sub exec_copy($$)
  my $dir            = upper_path($virtual);
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'errors'}->{'dircopy'},upper_path($virtual)) if(-d $physical);
- return error($config->{'errors'}->{'no_copy'},upper_path($virtual)) unless(-r $physical);
+ return error($config->{'errors'}->{'dircopy'},$dir) if(-d $physical);
+ return error($config->{'errors'}->{'no_copy'},$dir) unless(-r $physical);
 
  if($new_physical)
  {
@@ -616,8 +616,8 @@ sub exec_rename($$)
  my $dir            = upper_path($virtual);
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'errors'}->{'rename_root'},"/") if($virtual eq "/");
- return error($config->{'errors'}->{'no_rename'},$dir) unless(-w upper_path($physical));
+ return error($config->{'errors'}->{'rename_root'},"/")                if($virtual eq "/");
+ return error($config->{'errors'}->{'no_rename'},$dir)                 unless(-w upper_path($physical));
  return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
  if($new_physical)
