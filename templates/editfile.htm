@@ -28,7 +28,7 @@
 <tr>
 <td width="50%" align="center">
 <input type="hidden" name="file" value="{FILE}">
-<input type="checkbox" name="saveas" value="1"> Save as new file: {DIR} <input type="text" name="newfile" value="" onchange="this.form.saveas.checked=true"></td>
+<input type="checkbox" name="saveas" value="1"> Save as new file: {DIR} <input type="text" name="newfile" value="" onchange="if(this.form.newfile.value != '') this.form.saveas.checked = true; else this.form.saveas.checked = false;"></td>
 <td width="50%" align="center"><input type="checkbox" name="encode_iso" value="1"> Encode ISO-8859-1 special chars</td>
 </tr>
 <tr>
