@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-03
+# Last modified: 2004-07-11
 #
 
 use strict;
@@ -24,8 +24,6 @@ use CGI qw(header);
 use HTML::Entities;
 use Output;
 use Template;
-
-use Data::Dumper;
 
 my $script = $ENV{'SCRIPT_NAME'};
 
@@ -376,10 +374,26 @@ sub exec_mkfile($$)
  my $dir            = upper_path($new_virtual);
  $new_virtual       = encode_entities($new_virtual);
 
- return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
+ if($new_physical)
+ {
+  return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
 
- file_create($new_physical) or return error($config->{'errors'}->{'mkfile_failed'},$dir,{FILE => $new_virtual});
- return devedit_reload({command => 'show', file => $dir});
+  file_create($new_physical) or return error($config->{'errors'}->{'mkfile_failed'},$dir,{FILE => $new_virtual});
+  return devedit_reload({command => 'show', file => $dir});
+ }
+ else
+ {
+  my $tpl = new Template;
+  $tpl->read_file($config->{'templates'}->{'mkfile'});
+
+  $tpl->fillin("DIR","/");
+  $tpl->fillin("SCRIPT",$script);
+
+  my $output = header(-type => "text/html");
+  $output   .= $tpl->get_template;
+
+  return \$output;
+ }
 }
 
 # exec_mkdir()
@@ -401,8 +415,24 @@ sub exec_mkdir($$)
 
  return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
 
- mkdir($new_physical,0777) or return error($config->{'errors'}->{'mkdir_failed'},$dir,{DIR => $new_virtual});
- return devedit_reload({command => 'show', file => $dir});
+ if($new_physical)
+ {
+  mkdir($new_physical,0777) or return error($config->{'errors'}->{'mkdir_failed'},$dir,{DIR => $new_virtual});
+  return devedit_reload({command => 'show', file => $dir});
+ }
+ else
+ {
+  my $tpl = new Template;
+  $tpl->read_file($config->{'templates'}->{'mkdir'});
+
+  $tpl->fillin("DIR","/");
+  $tpl->fillin("SCRIPT",$script);
+
+  my $output = header(-type => "text/html");
+  $output   .= $tpl->get_template;
+
+  return \$output;
+ }
 }
 
 # exec_upload()

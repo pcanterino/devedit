@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<title>Create new directory</title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<h1>Create new directory</h1>
+
+<p><a href="{SCRIPT}?command=show&file={DIR}">Back to {DIR}</a></p>
+
+<p>Using this form, you can create a new directory in the current directory ('{DIR}').</p>
+
+<form action="{SCRIPT}">
+<input type="hidden" name="command" value="mkdir">
+<input type="hidden" name="curdir" value="{DIR}">
+<p>{DIR} <input type="text" name="newfile"> <input type="submit" value="Create!"></p>
+</form>
+
+<hr>
+
+<p align="right"><a href="{SCRIPT}?command=about" target="_blank"><i>About Dev-Editor</i></a></p
+
+</body>
+</html>
