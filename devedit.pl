@@ -110,8 +110,8 @@ if(-e clean_path($config->{'fileroot'}.'/'.$file))
   $uselist->lock or abort($config->{'errors'}->{'lock_failed'},undef,{USELIST => $uselist->{'listfile'}, LOCK_FILE => $uselist->{'lockfile'}});
   $uselist->load;
 
-  # Create a hash with data submitted by user
-  # (some other necessary information will also be included)
+  # Create a hash containing data submitted by the user
+  # (some other necessary information are also included)
 
   my %data = (physical     => $physical,
               virtual      => $virtual,

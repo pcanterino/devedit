@@ -272,7 +272,8 @@ sub mode_string($)
 
 # upper_path()
 #
-# Cut away the last part of a path
+# Remove the last part of a path
+# (the resulting path contains a trailing slash)
 #
 # Params: Path
 #

@@ -374,7 +374,7 @@ sub exec_endedit($$)
 
  if(file_save($physical,\$content))
  {
-  # Saving of the file was successful!
+  # The file was successfully saved!
 
   return devedit_reload({command => 'show', file => $dir});
  }
@@ -464,7 +464,7 @@ sub exec_mkdir($$)
 
 # exec_upload()
 #
-# Upload a file
+# Process a file upload
 #
 # Params: 1. Reference to user input hash
 #         2. Reference to config hash
@@ -921,7 +921,8 @@ sub exec_about($$)
 
  $tpl->fillin('PID',$$);
 
- # Check if the functions getpwuid() and getgrgid() are available
+ # The following information is only available on systems supporting
+ # users and groups
 
  if($users)
  {
