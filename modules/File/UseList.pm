@@ -1,20 +1,18 @@
 package File::UseList;
 
 #
-# File::UseList
+# File::UseList 1.1.1
 #
 # Run a list with files that are currently in use
-# (bases upon Filing::UseList by Roland Bluethgen <calocybe@web.de>)
+# (bases on Filing::UseList by Roland Bluethgen <calocybe@web.de>)
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-26-2003
+# Last modified: 2003-10-17
 #
 
 use strict;
 
 use Carp qw(croak);
-
-our $VERSION = '1.1';
 
 # new()
 #
@@ -24,7 +22,7 @@ our $VERSION = '1.1';
 #               lockfile => Lock file (Default: List file + .lock)
 #               timeout  => Lock timeout in seconds (Default: 10)
 #
-# Return: File::UseList object
+# Return: File::UseList object (Blessed Reference)
 
 sub new(%)
 {
@@ -32,17 +30,16 @@ sub new(%)
 
  # Check if we got all the necessary information
 
- croak "Missing path of list file"              unless($args{'listfile'});
- $args{'lockfile'} = $args{'listfile'}.".lock"  unless($args{'lockfile'}); # Default filename of lock file
- $args{'timeout'}  = 10                         unless($args{'timeout'});  # Default timeout
+ croak "Missing path to list file"             unless($args{'listfile'});
+ $args{'lockfile'} = $args{'listfile'}.".lock" unless($args{'lockfile'}); # Default filename of lock file
+ $args{'timeout'}  = 10                        unless($args{'timeout'});  # Default timeout
 
- # Create $self
+ # Add some other information
 
- my $self = \%args;
- $self->{'files'}  = [];
- $self->{'locked'} = 0;
+ $args{'files'}  = [];
+ $args{'locked'} = 0;
 
- return bless($self,$class);
+ return bless(\%args,$class);
 }
 
 # lock()
@@ -98,24 +95,24 @@ sub unlock
 
  if($self->{'locked'})
  {
-  return 1 if(-f $lockfile); # Hmmm...
-
-  open(LOCKFILE,">",$lockfile) or return;
-  close(LOCKFILE)              or return;
+  unless(-f $lockfile)
+  {
+   open(LOCKFILE,">",$lockfile) or return;
+   close(LOCKFILE)              or return;
+  }
 
   $self->{'locked'} = 0;
-
   return 1;
  }
 
- # The list wasn't lock by ourselves
+ # The list wasn't lock by us or it isn't locked at all
 
  return;
 }
 
 # load()
 #
-# Load the list with files
+# Load the list with files from the list file
 #
 # Params: -nothing-
 #
@@ -129,7 +126,7 @@ sub load
 
  # Read out the file and split the content line-per-line
 
- open(FILE,"<".$file) or return;
+ open(FILE,"<",$file) or return;
  read(FILE, my $content, -s $file);
  close(FILE)          or return;
 
@@ -152,7 +149,7 @@ sub load
 
 # save()
 #
-# Save the list with files
+# Write the list with files back to the list file
 #
 # Params: -nothing-
 #
@@ -172,11 +169,9 @@ sub save
  print FILE $data     or do { close(FILE); return };
  close(FILE)          or return;
 
- rename($temp,$file) and return 1;
+ rename($temp,$file)  or return;
 
- # Rubbish
-
- return;
+ return 1;
 }
 
 # add_file()
@@ -263,4 +258,4 @@ sub unused($)
 1;
 
 #
-### Ende ###
+### End ###
