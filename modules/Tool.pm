@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-07
+# Last modified: 2005-01-08
 #
 
 use strict;
@@ -66,27 +66,10 @@ sub check_path($$)
  my $last  = file_name($path);
  $last     = '' if($last eq '.');
 
- if($last eq '..')
+ if($last eq '..' || ($^O eq 'MSWin32' && $last =~ m!^\.\.\.+$!))
  {
-  $first = upper_path($first);
+  $first = abs_path($first.'/'.$last);
   $last  = '';
- }
- elsif($^O eq 'MSWin32' && $last =~ m!^\.\.\.+$!)
- {
-  # Windows allows to go upwards in a path using things like
-  # "..." and "...." and so on
-
-  my $count = length($last)-1;
-
-  for(my $x=0;$x<$count;$x++)
-  {
-   unless($first =~ m!^[a-z]{1}:(/|\\)$!i)
-   {
-    $first = upper_path($first);
-   }
-  }
-
-  $last = '';
  }
 
  $path = File::Spec->canonpath($first.'/'.$last);
@@ -240,7 +223,7 @@ sub file_name($)
  my $path =  shift;
  $path    =~ tr!\\!/!;
 
- unless($path eq '/')
+ unless($path =~ m!^/+$! || ($^O eq 'MSWin32' && $path =~ m!^[a-z]:/+$!))
  {
   $path =~ s!/+$!!;
   $path =  substr($path,rindex($path,'/')+1);
@@ -300,7 +283,7 @@ sub upper_path($)
  my $path =  shift;
  $path    =~ tr!\\!/!;
 
- unless($path eq '/')
+ unless($path =~ m!^/+$! || ($^O eq 'MSWin32' && $path =~ m!^[a-z]:/+$!))
  {
   $path =~ s!/+$!!;
   $path =  substr($path,0,rindex($path,'/')+1);
