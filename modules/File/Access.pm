@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-06
+# Last modified: 2005-02-09
 #
 
 use strict;
@@ -134,17 +134,20 @@ sub file_lock(*$)
 #
 # Read out a file completely
 #
-# Params: File
+# Params: 1. File
+#         2. true  => open in binary mode
+#            false => open in normal mode (default)
 #
 # Return: Contents of the file (Scalar Reference)
 
-sub file_read($)
+sub file_read($;$)
 {
- my $file = shift;
+ my ($file,$binary) = @_;
  local *FILE;
 
  sysopen(FILE,$file,O_RDONLY) or return;
  file_lock(FILE,LOCK_SH)      or do { close(FILE); return };
+ binmode(FILE) if($binary);
 
  read(FILE, my $content, -s $file);
 
