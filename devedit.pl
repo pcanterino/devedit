@@ -1,7 +1,7 @@
 #!C:/Programme/Perl/bin/perl.exe -w
 
 #
-# Dev-Editor 2.0
+# Dev-Editor 2.1
 #
 # Dev-Editor's main program
 #
@@ -23,7 +23,7 @@ use Command;
 use Output;
 use Tool;
 
-$VERSION = '2.0';
+$VERSION = '2.1';
 
 # Path to configuration file
 # Change if necessary!
