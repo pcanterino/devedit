@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-20
+# Last modified: 2005-01-21
 #
 
 use strict;
@@ -128,8 +128,6 @@ sub exec_show($$)
    $udtpl->fillin('UPPER_DIR',$upper_path);
    $udtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
 
-   $udtpl->parse_if_block('gmt',$config->{'use_gmt'});
-
    $dirlist .= $udtpl->get_template;
   }
 
@@ -154,8 +152,6 @@ sub exec_show($$)
 
    $dtpl->parse_if_block('readable',-r $phys_path && -x $phys_path);
    $dtpl->parse_if_block('users',$users && -o $phys_path);
-
-   $dtpl->parse_if_block('gmt',$config->{'use_gmt'});
 
    $dirlist .= $dtpl->get_template;
   }
@@ -194,8 +190,6 @@ sub exec_show($$)
 
    $ftpl->parse_if_block('too_large',$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
 
-   $ftpl->parse_if_block('gmt',$config->{'use_gmt'});
-
    $ftpl->parse_if_block('users',$users && -o $phys_path);
 
    $dirlist .= $ftpl->get_template;
@@ -213,6 +207,7 @@ sub exec_show($$)
 
   $tpl->parse_if_block('dir_writeable',$dir_writeable);
   $tpl->parse_if_block('filter',$filter2);
+  $tpl->parse_if_block('gmt',$config->{'use_gmt'});
  }
  else
  {
