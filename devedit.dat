@@ -12,7 +12,7 @@ lock_timeout  = 10
 
 max_file_size = 100000
 
-error_file    = D:/WWW/cgi-bin/devedit/errors.dat
-template_file = D:/WWW/cgi-bin/devedit/templates.dat
+error_file    = errors.dat
+template_file = templates.dat
 
 # End of configuration file
