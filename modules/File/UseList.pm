@@ -3,53 +3,56 @@ package File::UseList;
 #
 # File::UseList
 #
-# Fuehren einer Liste mit Dateien, auf die zur Zeit zugegriffen wird
-# (basiert auf Filing::UseList von Roland Bluethgen <calocybe@web.de>)
+# Run a list with files that are currently in use
+# (bases upon Filing::UseList by Roland Bluethgen <calocybe@web.de>)
 #
-# Autor:            Patrick Canterino <patshaping@gmx.net>
-# Letzte Aenderung: 20.9.2003
+# Author:        Patrick Canterino <patshaping@gmx.net>
+# Last modified: 09-26-2003
 #
 
 use strict;
 
 use Carp qw(croak);
 
-our $VERSION = '1.0';
+our $VERSION = '1.1';
 
 # new()
 #
-# Konstruktor
+# Constructor
 #
-# Parameter: Hash: listfile => Datei mit der Liste der benutzten Dateien
-#                  lockfile => Lock-Datei
-#                  timeout  => Lock-Timeout in Sekunden (Standard: 10)
+# Params: Hash: listfile => File with list of files in use
+#               lockfile => Lock file (Default: List file + .lock)
+#               timeout  => Lock timeout in seconds (Default: 10)
 #
-# Rueckgabe: File::UseList-Objekt
+# Return: File::UseList object
 
 sub new(%)
 {
  my ($class,%args) = @_;
 
- # Pruefen, ob wir alle Informationen erhalten haben
+ # Check if we got all the necessary information
 
- croak "Missing path of list file" unless($args{'listfile'});
- croak "Missing path of lockfile"  unless($args{'lockfile'});
- $args{'timeout'} = 10             unless($args{'timeout'});  # Standard-Timeout
+ croak "Missing path of list file"              unless($args{'listfile'});
+ $args{'lockfile'} = $args{'listfile'}.".lock"  unless($args{'lockfile'}); # Default filename of lock file
+ $args{'timeout'}  = 10                         unless($args{'timeout'});  # Default timeout
+
+ # Create $self
 
  my $self = \%args;
- $self->{'files'} = [];
+ $self->{'files'}  = [];
+ $self->{'locked'} = 0;
 
  return bless($self,$class);
 }
 
 # lock()
 #
-# Datei mit Liste sperren
-# (Lock-Datei loeschen)
+# Lock list with files
+# (delete lock file)
 #
-# Parameter: -keine-
+# Params: -nothing-
 #
-# Rueckgabe: Status-Code (Boolean)
+# Return: Status code (Boolean)
 
 sub lock
 {
@@ -57,12 +60,19 @@ sub lock
  my $lockfile = $self->{'lockfile'};
  my $timeout  = $self->{'timeout'};
 
- # Versuche, einmal pro Sekunde die Datei zu loeschen
- # bis das Timeout erreicht ist
+ return 1 if($self->{'locked'});
+
+ # Try to delete the lock file one time per second
+ # until the timeout is reached
 
  for(my $x=$timeout;$x>=0;$x--)
  {
-  unlink($lockfile) and return 1;
+  if(unlink($lockfile))
+  {
+   $self->{'locked'} = 1;
+   return 1;
+  }
+
   sleep(1);
  }
 
@@ -73,12 +83,12 @@ sub lock
 
 # unlock()
 #
-# Datei mit Liste freigeben
-# (Lock-Datei anlegen)
+# Unlock list with files, but only if _we_ locked it
+# (create lock file)
 #
-# Parameter: -keine-
+# Params: -nothing-
 #
-# Rueckgabe: Status-Code (Boolean)
+# Return: Status code (Boolean)
 
 sub unlock
 {
@@ -86,21 +96,30 @@ sub unlock
  my $lockfile = $self->{'lockfile'};
  local *LOCKFILE;
 
- return 1 if(-f $lockfile); # Hmmm...
+ if($self->{'locked'})
+ {
+  return 1 if(-f $lockfile); # Hmmm...
 
- open(LOCKFILE,">",$lockfile) or return;
- close(LOCKFILE)              or return;
+  open(LOCKFILE,">",$lockfile) or return;
+  close(LOCKFILE)              or return;
 
- return 1;
+  $self->{'locked'} = 0;
+
+  return 1;
+ }
+
+ # The list wasn't lock by ourselves
+
+ return;
 }
 
 # load()
 #
-# Liste mit Dateien laden
+# Load the list with files
 #
-# Parameter: -keine-
+# Params: -nothing-
 #
-# Rueckgabe: Status-Code (Boolean)
+# Return: Status code (Boolean)
 
 sub load
 {
@@ -108,7 +127,7 @@ sub load
  my $file = $self->{'listfile'};
  local *FILE;
 
- # Datei auslesen und zeilenweise aufteilen
+ # Read out the file and split the content line-per-line
 
  open(FILE,"<".$file) or return;
  read(FILE, my $content, -s $file);
@@ -116,14 +135,14 @@ sub load
 
  my @files = split(/\015\012|\012|\015/,$content);
 
- # Unbrauchbare Zeilen entfernen
+ # Remove useless lines
 
  for(my $x=0;$x<@files;$x++)
  {
   if($files[$x] eq "" || $files[$x] =~ /^\s+$/)
   {
    splice(@files,$x,1);
-   $x--; # <-- sehr wichtig!
+   $x--; # <-- very important!
   }
  }
 
@@ -133,11 +152,11 @@ sub load
 
 # save()
 #
-# Liste mit Dateien speichern
+# Save the list with files
 #
-# Parameter: -keine-
+# Params: -nothing-
 #
-# Rueckgabe: Status-Code (Boolean)
+# Return: Status code (Boolean)
 
 sub save
 {
@@ -147,31 +166,31 @@ sub save
  my $files = $self->{'files'};
  local *FILE;
 
- my $data = (@$files) ? join("\n",@$files)."\n" : '';
+ my $data = (@$files) ? join("\n",@$files) : '';
 
  open(FILE,">",$temp) or return;
- print FILE $data;
+ print FILE $data     or do { close(FILE); return };
  close(FILE)          or return;
 
  rename($temp,$file) and return 1;
 
- # Mist
+ # Rubbish
 
  return;
 }
 
 # add_file()
 #
-# Datei zur Liste hinzufuegen
+# Add a file to the list
 #
-# Parameter: Datei
+# Params: File
 
 sub add_file($)
 {
  my ($self,$file) = @_;
  my $files = $self->{'files'};
 
- # Pruefen, ob die Datei nicht schon in der Liste vorhanden ist
+ # Check if the file is already in the list
 
  return if($self->in_use($file));
 
@@ -180,20 +199,20 @@ sub add_file($)
 
 # remove_file()
 #
-# Datei aus der Liste entfernen
+# Remove a file from the list
 #
-# Parameter: Datei
+# Params: File
 
 sub remove_file($)
 {
  my ($self,$file) = @_;
  my $files = $self->{'files'};
 
- # Pruefen, ob die Datei ueberhaupt in der Liste vorhanden ist
+ # Check if the file is really in the list
 
  return if($self->unused($file));
 
- # Datei entfernen
+ # Remove the file from the list
 
  for(my $x=0;$x<@$files;$x++)
  {
@@ -207,11 +226,11 @@ sub remove_file($)
 
 # in_use()
 #
-# Pruefen, ob eine Datei in der Liste vorhanden ist
+# Check if a file is in the list
 #
-# Parameter: Zu pruefende Datei
+# Params: File to check
 #
-# Rueckgabe: Status-Code (Boolean)
+# Return: Status code (Boolean)
 
 sub in_use($)
 {
@@ -228,11 +247,11 @@ sub in_use($)
 
 # unused()
 #
-# Pruefen, ob eine Datei nicht in der Liste vorhanden ist
+# Check if a file is not in the list
 #
-# Parameter: Zu pruefende Datei
+# Params: File to check
 #
-# Rueckgabe: Status-Code (Boolean)
+# Return: Status code (Boolean)
 
 sub unused($)
 {
