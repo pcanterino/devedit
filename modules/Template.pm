@@ -1,12 +1,12 @@
 package Template;
 
 #
-# Template (Version 1.2a)
+# Template (Version 1.3)
 #
 # Klasse zum Parsen von Templates
 #
 # Autor:            Patrick Canterino <patshaping@gmx.net>
-# Letzte Aenderung: 12.9.2003
+# Letzte Aenderung: 11.4.2004
 #
 
 use strict;
@@ -73,16 +73,19 @@ sub add_text($)
 
 # read_file()
 #
-# Einlesen einer Vorlagendatei
-# (Inhalt wird an bereits vorhandenen Text angehaengt)
+# Einlesen einer Vorlagendatei und {INCLUDE}-Anweisungen ggf. verarbeiten
+# (Text wird an bereits vorhandenen Text angehaengt)
 #
-# Parameter: Datei zum Einlesen
+# Parameter: 1. Datei zum Einlesen
+#            2. Status-Code (Boolean):
+#               true  => {INCLUDE}-Anweisungen nicht verarbeiten
+#               false => {INCLUDE}-Anweisungen verarbeiten (Standard)
 #
 # Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
 
-sub read_file($)
+sub read_file($;$)
 {
- my ($self,$tfile) = @_;
+ my ($self,$tfile,$not_include) = @_;
  local *FILE;
 
  open(FILE,"<$tfile") or croak "Open $tfile: $!";
@@ -90,6 +93,7 @@ sub read_file($)
  close(FILE) or croak "Closing $tfile: $!";
 
  $self->add_text($content);
+ $self->parse_includes unless($not_include);
 }
 
 # fillin()
@@ -128,9 +132,23 @@ sub fillin($$)
 sub fillin_array($$;$)
 {
  my ($self,$var,$array,$glue) = @_;
- $glue = '' unless defined $glue;
+ $glue = "" unless defined $glue;
 
  $self->fillin($var,join($glue,@$array));
+}
+
+# to_file()
+#
+# Template in Datei schreiben
+#
+# Parameter: Datei-Handle
+#
+# Rueckgabe: Status-Code (Boolean)
+
+sub to_file($)
+{
+ my ($self,$handle) = @_;
+ return print $handle $self->get_template;
 }
 
 # parse_if_block()
@@ -138,8 +156,8 @@ sub fillin_array($$;$)
 # IF-Bloecke verarbeiten
 #
 # Parameter: 1. Name des IF-Blocks (das, was nach dem IF steht)
-#            2. Statuscode (true  => Inhalt anzeigen
-#                           false => Inhalt nicht anzeigen
+#            2. Status-Code (true  => Inhalt anzeigen
+#                            false => Inhalt nicht anzeigen
 #
 # Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
 
@@ -226,8 +244,8 @@ sub parse_if_block($$)
 # Bedingungstags in einem Vorlagentext verarbeiten
 #
 # Parameter: 1. Tagname
-#            2. Statuscode (true  => Tag-Inhalt anzeigen
-#                           false => Tag-Inhalt nicht anzeigen
+#            2. Status-Code (true  => Tag-Inhalt anzeigen
+#                            false => Tag-Inhalt nicht anzeigen
 #
 # Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
 
@@ -250,6 +268,40 @@ sub parse_condtag($$)
 
   $template =~ s/$extract/$replacement/g;                                   # Block durch neue Daten ersetzen
  }
+ $self->set_template($template);
+}
+
+# parse_includes()
+#
+# {INCLUDE}-Anweisungen verarbeiten
+#
+# Parameter: -nichts-
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub parse_includes
+{
+ my $self     = shift;
+ my $template = $self->get_template;
+
+ while($template =~ /(\{INCLUDE (\S+?)\})/)
+ {
+  my ($directive,$file) = ($1,$2);
+  my $qm_directive      = quotemeta($directive);
+  my $replacement       = "";
+
+  if(-f $file)
+  {
+   local *FILE;
+
+   open(FILE,"<$file") or croak "Open $file: $!";
+   read(FILE, $replacement, -s $file);
+   close(FILE) or croak "Closing $file: $!";
+  }
+
+  $template =~ s/$qm_directive/$replacement/g;
+ }
+
  $self->set_template($template);
 }
 
