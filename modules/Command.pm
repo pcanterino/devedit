@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-28
+# Last modified: 2005-01-01
 #
 
 use strict;
@@ -499,6 +499,8 @@ sub exec_upload($$)
 
   my $ascii     = $cgi->param('ascii');
   my $handle    = $cgi->upload('uploaded_file');
+
+  return error($config->{'errors'}->{'invalid_upload'},$virtual) unless($handle);
 
   # Read transferred file and write it to disk
 
