@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-12-02
+# Last modified: 2003-12-18
 #
 
 use strict;
@@ -385,7 +385,7 @@ sub exec_endedit($$)
  }
  else
  {
-  return error("Saving of file '".encode_entities($virtual)."' failed'.",upper_path($virtual));
+  return error("Saving of file '".encode_entities($virtual)."' failed'. The file could be damaged, please check it's integrity.",upper_path($virtual));
  }
 }
 
@@ -437,7 +437,7 @@ sub exec_mkdir($$)
 
 # exec_workwithfile()
 #
-# Display a form for renaming/copying/deleting/unlocking a file
+# Display a form for renaming/copying/removing/unlocking a file
 #
 # Params: 1. Reference to user input hash
 #         2. Reference to config hash
@@ -499,14 +499,14 @@ END
 
 <hr>
 
-<h2>Delete</h2>
+<h2>Remove</h2>
 
 <p>Click on the button below to remove the file '$virtual'.</p>
 
 <form action="$script" method="get">
 <input type="hidden" name="file" value="$virtual">
 <input type="hidden" name="command" value="remove">
-<p><input type="submit" value="Delete file!"></p>
+<p><input type="submit" value="Remove!"></p>
 </form>
 END
  }
@@ -536,7 +536,7 @@ END
 
 # exec_workwithdir()
 #
-# Display a form for renaming/deleting a directory
+# Display a form for renaming/removing a directory
 #
 # Params: 1. Reference to user input hash
 #         2. Reference to config hash
@@ -571,14 +571,14 @@ sub exec_workwithdir($$)
 
 <hr>
 
-<h2>Delete</h2>
+<h2>Remove</h2>
 
 <p>Click on the button below to completely remove the directory '$virtual' and oll of it's files and sub directories.</p>
 
 <form action="$script" method="get">
 <input type="hidden" name="file" value="$virtual">
 <input type="hidden" name="command" value="rmdir">
-<p><input type="submit" value="Delete!"></p>
+<p><input type="submit" value="Remove!"></p>
 </form>
 END
 
@@ -612,7 +612,44 @@ sub exec_copy($$)
 
  if(-e $new_physical)
  {
-  return error("A file or directory called '$new_virtual' already exists and this editor is currently not able to ask to overwrite the existing file or directory.",upper_path($virtual));
+  if(-d $new_physical)
+  {
+   return error("A directory called '$new_virtual' already exists. You cannot replace a directory by a file!",$dir);
+  }
+  elsif(not $data->{'cgi'}->param('confirmed'))
+  {
+   $dir = encode_entities($dir);
+
+   my $output = htmlhead("Replace existing file");
+   $output   .= <<"END";
+<p>A file called '$new_virtual' already exists. Do you want to replace it?</p>
+
+<form action="$script" method="get">
+<input type="hidden" name="command" value="copy">
+<input type="hidden" name="file" value="$virtual">
+<input type="hidden" name="newfile" value="$new_virtual">
+<input type="hidden" name="confirmed" value="1">
+
+<p><input type="submit" value="Yes"></p>
+</form>
+
+<form action="$script" method="get">
+<input type="hidden" name="command" value="show">
+<input type="hidden" name="file" value="$dir">
+
+<p><input type="submit" value="No"></p>
+</form>
+END
+
+   $output .= htmlfoot;
+
+   return \$output;
+  }
+ }
+
+ if($data->{'uselist'}->in_use($data->{'new_virtual'}))
+ {
+  return error("The target file '$new_virtual' already exists and it is edited by someone else.",$dir);
  }
 
  copy($physical,$new_physical) or return error("Could not copy '$virtual' to '$new_virtual'",upper_path($virtual));
@@ -686,6 +723,8 @@ sub exec_rmdir($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
 
+ return exec_remove($data,$config) if(not -d $physical);
+
  if($data->{'cgi'}->param('confirmed'))
  {
   rmtree($physical);
@@ -711,14 +750,14 @@ sub exec_rmdir($$)
 <input type="hidden" name="file" value="$virtual">
 <input type="hidden" name="confirmed" value="1">
 
-<input type="submit" value="Yes">
+<p><input type="submit" value="Yes"></p>
 </form>
 
 <form action="$script" method="get">
 <input type="hidden" name="command" value="show">
 <input type="hidden" name="file" value="$dir">
 
-<input type="submit" value="No">
+<p><input type="submit" value="No"></p>
 </form>
 END
 
