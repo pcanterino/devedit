@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-10
+# Last modified: 2004-12-13
 #
 
 use strict;
@@ -495,6 +495,7 @@ sub exec_upload($$)
   my $file_phys = $physical."/".$filename;
   my $file_virt = $virtual.$filename;
 
+  return error($config->{'errors'}->{'in_use'},$virtual,{FILE => $file_virt})      if($data->{'uselist'}->in_use($file_virt));
   return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt}) if(-e $file_phys && not $cgi->param('overwrite'));
 
   my $ascii     = $cgi->param('ascii');
@@ -772,94 +773,73 @@ sub exec_chprop($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $dir            = upper_path($virtual);
- my $cgi            = $data->{'cgi'};
- my $mode           = $cgi->param('mode');
- my $group          = $cgi->param('group');
 
- if($users)
+ return error($config->{'errors'}->{'no_users'},$dir,{FILE => $virtual})  unless($users);
+ return error($config->{'errors'}->{'chprop_root'},"/")                   if($virtual eq "/");
+ return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual}) unless(-o $physical);
+ return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual})    if($data->{'uselist'}->in_use($virtual));
+
+ my $cgi   = $data->{'cgi'};
+ my $mode  = $cgi->param('mode');
+ my $group = $cgi->param('group');
+
+ if($mode || $group)
  {
-  # System supports user and groups
-
-  if($virtual ne "/")
+  if($mode)
   {
-   # Not the root directory
+   # Change the mode
 
-   if(-o $physical)
-   {
-    # We own this file
-
-    if($mode || $group)
-    {
-     if($mode)
-     {
-      # Change the mode
-
-      chmod(oct($mode),$physical);
-     }
-
-     if($group)
-     {
-      # Change the group using the `chgrp` system command
-
-      return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_entities($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
-      system("chgrp",$group,$physical);
-     }
-
-     return devedit_reload({command => 'show', file => $dir});
-    }
-    else
-    {
-     # Display the form
-
-     my @stat = stat($physical);
-     my $mode = $stat[2];
-     my $gid  = $stat[5];
-
-     my $tpl = new Template;
-     $tpl->read_file($config->{'templates'}->{'chprop'});
-
-     # Insert file properties into the template
-
-     $tpl->fillin("MODE_OCTAL",substr(sprintf("%04o",$mode),-4));
-     $tpl->fillin("MODE_STRING",mode_string($mode));
-     $tpl->fillin("GID",$gid);
-
-     if(my $group = getgrgid($gid))
-     {
-      $tpl->fillin("GROUP",encode_entities($group));
-      $tpl->parse_if_block("group_detected",1);
-     }
-     else
-     {
-      $tpl->parse_if_block("group_detected",0);
-     }
-
-     # Insert other information
-
-     $tpl->fillin("FILE",$virtual);
-     $tpl->fillin("DIR",$dir);
-     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-     $tpl->fillin("SCRIPT",$script);
-
-     my $output = header(-type => "text/html");
-     $output   .= $tpl->get_template;
-
-     return \$output;
-    }
-   }
-   else
-   {
-    return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual});
-   }
+   chmod(oct($mode),$physical);
   }
-  else
+
+  if($group)
   {
-   return error($config->{'errors'}->{'chprop_root'},"/");
+   # Change the group using the `chgrp` system command
+
+   return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_entities($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
+   system("chgrp",$group,$physical);
   }
+
+  return devedit_reload({command => 'show', file => $dir});
  }
  else
  {
-  return error($config->{'errors'}->{'no_users'},$dir,{FILE => $virtual});
+  # Display the form
+
+  my @stat = stat($physical);
+  my $mode = $stat[2];
+  my $gid  = $stat[5];
+
+  my $tpl = new Template;
+  $tpl->read_file($config->{'templates'}->{'chprop'});
+
+  # Insert file properties into the template
+
+  $tpl->fillin("MODE_OCTAL",substr(sprintf("%04o",$mode),-4));
+  $tpl->fillin("MODE_STRING",mode_string($mode));
+  $tpl->fillin("GID",$gid);
+
+  if(my $group = getgrgid($gid))
+  {
+   $tpl->fillin("GROUP",encode_entities($group));
+   $tpl->parse_if_block("group_detected",1);
+  }
+  else
+  {
+   $tpl->parse_if_block("group_detected",0);
+  }
+
+  # Insert other information
+
+  $tpl->fillin("FILE",$virtual);
+  $tpl->fillin("DIR",$dir);
+  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin("SCRIPT",$script);
+
+  my $output = header(-type => "text/html");
+  $output   .= $tpl->get_template;
+
+  return \$output;
  }
 }
 
