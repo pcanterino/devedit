@@ -6,7 +6,7 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-04-25
+# Last modified: 2004-10-28
 #
 
 use strict;
@@ -42,7 +42,7 @@ sub read_config($)
 
 # parse_config()
 #
-# Parse an INI-style configuration file
+# Parse a configuration file
 #
 # Params: Path to configuration file
 #
@@ -69,10 +69,10 @@ sub parse_config($)
 
   # Remove whitespaces at the beginning and at the end
 
-  $key   =~ s/^\s*//g;
-  $key   =~ s/\s*$//g;
-  $value =~ s/^\s*//g;
-  $value =~ s/\s*$//g;
+  $key   =~ s/^\s+//g;
+  $key   =~ s/\s+$//g;
+  $value =~ s/^\s+//g;
+  $value =~ s/\s+$//g;
 
   croak "Double defined value '$key' in configuration file '$file'" if($config->{$key});
 
