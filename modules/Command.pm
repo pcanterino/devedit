@@ -6,38 +6,64 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-11-10
+# Last modified: 2003-12-02
 #
 
 use strict;
 
-use vars qw(@EXPORT
-            $script);
+use vars qw(@EXPORT);
 
 use File::Access;
 use File::Copy;
+use File::Path;
 
 use HTML::Entities;
 use Output;
 use POSIX qw(strftime);
 use Tool;
 
-$script = $ENV{'SCRIPT_NAME'};
+my $script = $ENV{'SCRIPT_NAME'};
+
+my %dispatch = ('show'         => \&exec_show,
+                'beginedit'    => \&exec_beginedit,
+                'canceledit'   => \&exec_unlock,
+                'endedit'      => \&exec_endedit,
+                'mkdir'        => \&exec_mkdir,
+                'mkfile'       => \&exec_mkfile,
+                'workwithfile' => \&exec_workwithfile,
+                'workwithdir'  => \&exec_workwithdir,
+                'copy'         => \&exec_copy,
+                'rename'       => \&exec_rename,
+                'remove'       => \&exec_remove,
+                'rmdir'        => \&exec_rmdir,
+                'unlock'       => \&exec_unlock
+               );
 
 ### Export ###
 
 use base qw(Exporter);
 
-@EXPORT = qw(exec_show
-             exec_beginedit
-             exec_endedit
-             exec_mkfile
-             exec_mkdir
-             exec_workwithfile
-             exec_copy
-             exec_rename
-             exec_remove
-             exec_unlock);
+@EXPORT = qw(exec_command);
+
+# exec_command()
+#
+# Execute the specified command
+#
+# Params: 1. Command to execute
+#         2. Reference to user input hash
+#         3. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_command($$$)
+{
+ my ($command,$data,$config) = @_;
+
+ return error("Unknown command: $command") unless($dispatch{$command});
+
+ my $output = &{$dispatch{$command}}($data,$config);
+ return $output;
+}
 
 # exec_show()
 #
@@ -48,7 +74,7 @@ use base qw(Exporter);
 #
 # Return: Output of the command (Scalar Reference)
 
-sub exec_show($$$)
+sub exec_show($$)
 {
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
@@ -97,13 +123,16 @@ sub exec_show($$$)
 
   foreach my $dir(@$dirs)
   {
-   my @stat = stat($physical."/".$dir);
+   my @stat      = stat($physical."/".$dir);
+   my $virt_path = encode_entities($virtual.$dir."/");
 
    $output .= "  ";
    $output .= "[SUBDIR]  ";
    $output .= strftime($config->{'timeformat'},localtime($stat[9]));
    $output .= " " x 10;
-   $output .= "<a href=\"$script?command=show&file=".encode_entities($virtual.$dir)."/\">".encode_entities($dir)."/</a>\n";
+   $output .= "<a href=\"$script?command=show&file=$virt_path\">".encode_entities($dir)."/</a>";
+   $output .= " " x ($max_name_len - length($dir) - 1)."\t  (";
+   $output .= "<a href=\"$script?command=workwithdir&file=$virt_path\">Work with directory</a>)\n";
   }
 
   # Files
@@ -162,7 +191,7 @@ sub exec_show($$$)
 
    # Link "Do other stuff"
 
-   $output .= " | <a href=\"$script?command=workwithfile&file=$virt_path\">Do other stuff</a>)\n";
+   $output .= " | <a href=\"$script?command=workwithfile&file=$virt_path\">Work with file</a>)\n";
   }
 
   $output .= "</pre>\n\n<hr>\n\n";
@@ -402,7 +431,7 @@ sub exec_mkdir($$)
 
  return error("A file or directory called '$new_virtual' already exists.",$dir) if(-e $new_physical);
 
- mkdir($new_physical) or return error("Could not create directory '$new_virtual'.",$dir);
+ mkdir($new_physical,0777) or return error("Could not create directory '$new_virtual'.",$dir);
  return devedit_reload({command => 'show', file => $dir});
 }
 
@@ -446,7 +475,7 @@ sub exec_workwithfile($$)
 <form action="$script">
 <input type="hidden" name="command" value="copy">
 <input type="hidden" name="file" value="$virtual">
-<p>Copy file '$virtual' to: $dir <input type="text" name="newfile" size="50"> <input type="submit" value="Copy!"></p>
+<p>Copy file '$virtual' to:<br>$dir <input type="text" name="newfile" size="30"> <input type="submit" value="Copy!"></p>
 </form>
 
 <hr>
@@ -465,17 +494,19 @@ END
 <form action="$script">
 <input type="hidden" name="command" value="rename">
 <input type="hidden" name="file" value="$virtual">
-<p>Move/Rename file '$virtual' to: $dir <input type="text" name="newfile" size="50"> <input type="submit" value="Move/Rename!"></p>
+<p>Move/Rename file '$virtual' to:<br>$dir <input type="text" name="newfile" size="30"> <input type="submit" value="Move/Rename!"></p>
 </form>
 
 <hr>
 
 <h2>Delete</h2>
 
+<p>Click on the button below to remove the file '$virtual'.</p>
+
 <form action="$script" method="get">
 <input type="hidden" name="file" value="$virtual">
 <input type="hidden" name="command" value="remove">
-<p><input type="submit" value="Delete file '$virtual'!"></p>
+<p><input type="submit" value="Delete file!"></p>
 </form>
 END
  }
@@ -496,6 +527,60 @@ END
 </form>
 END
  }
+
+ $output .= "\n<hr>";
+ $output .= htmlfoot;
+
+ return \$output;
+}
+
+# exec_workwithdir()
+#
+# Display a form for renaming/deleting a directory
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_workwithdir($$)
+{
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = $data->{'virtual'};
+
+ my $dir = encode_entities(upper_path($virtual));
+
+ my $output = htmlhead("Work with directory ".encode_entities($virtual));
+ $output   .= equal_url($config->{'httproot'},$virtual);
+
+ $virtual   = encode_entities($virtual);
+
+ $output   .= dir_link($virtual);
+ $output   .= "<p><b>Note:</b> On UNIX systems, filenames are <b>case-sensitive</b>!</p>\n\n";
+ $output .= "<hr>\n\n";
+
+ $output .= <<END;
+<h2>Move/rename</h2>
+
+<form action="$script">
+<input type="hidden" name="command" value="rename">
+<input type="hidden" name="file" value="$virtual">
+<p>Move/Rename directory '$virtual' to: $dir <input type="text" name="newfile" size="50"> <input type="submit" value="Move/Rename!"></p>
+</form>
+
+<hr>
+
+<h2>Delete</h2>
+
+<p>Click on the button below to completely remove the directory '$virtual' and oll of it's files and sub directories.</p>
+
+<form action="$script" method="get">
+<input type="hidden" name="file" value="$virtual">
+<input type="hidden" name="command" value="rmdir">
+<p><input type="submit" value="Delete!"></p>
+</form>
+END
 
  $output .= "\n<hr>";
  $output .= htmlfoot;
@@ -579,11 +664,68 @@ sub exec_remove($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
 
- return error("Deleting directories is currently unsupported.",upper_path($virtual)) if(-d $physical);
- return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
+ return exec_rmdir($data,$config) if(-d $physical);
+ return error_in_use($virtual)    if($data->{'uselist'}->in_use($virtual));
 
  unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.",upper_path($virtual));
  return devedit_reload({command => 'show', file => upper_path($virtual)});
+}
+
+# exec_rmdir()
+#
+# Remove a directory and return to directory view
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_rmdir($$)
+{
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = $data->{'virtual'};
+
+ if($data->{'cgi'}->param('confirmed'))
+ {
+  rmtree($physical);
+  return devedit_reload({command => 'show', file => upper_path($virtual)});
+ }
+ else
+ {
+  my $dir = encode_entities(upper_path($virtual));
+  my $output;
+
+  $output  = htmlhead("Remove directory $virtual");
+  $output .= equal_url($config->{'httproot'},$virtual);
+
+  $virtual = encode_entities($virtual);
+
+  $output .= dir_link($virtual);
+
+  $output .= <<"END";
+<p>Do you really want to remove the directory '$virtual' and all of it's files and sub directories?</p>
+
+<form action="$script" method="get">
+<input type="hidden" name="command" value="rmdir">
+<input type="hidden" name="file" value="$virtual">
+<input type="hidden" name="confirmed" value="1">
+
+<input type="submit" value="Yes">
+</form>
+
+<form action="$script" method="get">
+<input type="hidden" name="command" value="show">
+<input type="hidden" name="file" value="$dir">
+
+<input type="submit" value="No">
+</form>
+END
+
+  $output .= htmlfoot;
+
+  return \$output;
+ }
 }
 
 # exec_unlock()

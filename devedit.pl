@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-18
+# Last modified: 2003-12-02
 #
 
 use strict;
@@ -86,21 +86,6 @@ if(-e clean_path($config{'fileroot'}."/".$file))
 {
  if(my ($physical,$virtual) = check_path($config{'fileroot'},$file))
  {
-  # Copied from old Dev-Editor (great idea)
-
-  my %dispatch = ('show'         => \&exec_show,
-                  'beginedit'    => \&exec_beginedit,
-                  'canceledit'   => \&exec_unlock,
-                  'endedit'      => \&exec_endedit,
-                  'mkdir'        => \&exec_mkdir,
-                  'mkfile'       => \&exec_mkfile,
-                  'workwithfile' => \&exec_workwithfile,
-                  'copy'         => \&exec_copy,
-                  'rename'       => \&exec_rename,
-                  'remove'       => \&exec_remove,
-                  'unlock'       => \&exec_unlock
-                 );
-
   # Create a File::UseList object and load the list
 
   my $uselist = new File::UseList(listfile => $config{'uselist_file'},
@@ -120,13 +105,7 @@ if(-e clean_path($config{'fileroot'}."/".$file))
               uselist      => $uselist,
               cgi          => $cgi);
 
-  unless($dispatch{$command})
-  {
-   $uselist->unlock;
-   abort("Unknown command: $command");
-  }
-
-  my $output = &{$dispatch{$command}}(\%data,\%config); # Execute the command...
+  my $output = exec_command($command,\%data,\%config); # Execute the command...
 
   $uselist->unlock; # ... unlock the list with files in use...
   print $$output;   # ... and print the output of the command
