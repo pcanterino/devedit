@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-11-26
+# Last modified: 2004-11-29
 #
 
 use strict;
@@ -373,9 +373,9 @@ sub exec_endedit($$)
   return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($uselist->in_use($virtual));
  }
 
- return error($config->{'errors'}->{'text_to_binary'},$dir) unless(-T $physical);
  return error($config->{'errors'}->{'editdir'},$dir)        if(-d $physical);
  return error($config->{'errors'}->{'no_edit'},$dir)        if(-e $physical && !(-r $physical && -w $physical));
+ return error($config->{'errors'}->{'text_to_binary'},$dir) unless(-T $physical);
 
  if(file_save($physical,\$content))
  {
