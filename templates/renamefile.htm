@@ -14,6 +14,8 @@
 
 <p><a href="{SCRIPT}?command=show&file={DIR}">Back to {DIR}</a></p>
 
+<hr>
+
 <form action="{SCRIPT}" method="post">
 <input type="hidden" name="command" value="rename">
 <input type="hidden" name="file" value="{FILE}">
@@ -21,7 +23,11 @@
 <p>Move/Rename file '{FILE}' to:<br>
 {DIR} <input type="text" name="newfile"></p>
 
-<p><input type="submit" value="Move/Rename file!"></p>  
+<p><input type="submit" value="Move/Rename file!"></p>
 </form>
+
+<hr>
+
+<p align="right"><a href="{SCRIPT}?command=about" target="_blank"><i>About Dev-Editor</i></a></p>
 </body>
 </html>

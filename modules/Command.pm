@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-03-04
+# Last modified: 2004-03-09
 #
 
 use strict;
@@ -37,7 +37,8 @@ my %dispatch = ('show'       => \&exec_show,
                 'copy'       => \&exec_copy,
                 'rename'     => \&exec_rename,
                 'remove'     => \&exec_remove,
-                'unlock'     => \&exec_unlock
+                'unlock'     => \&exec_unlock,
+                'about'      => \&exec_about
                );
 
 ### Export ###
@@ -314,7 +315,7 @@ sub exec_endedit($$)
 
   # Check if someone else is editing the new file
 
-  return error_in_use($virtual) if($uselist->in_use($virtual));
+  return error($config->{'err_in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
  }
 
  return error($config->{'err_editdir'},upper_path($virtual)) if(-d $physical);
@@ -487,6 +488,7 @@ sub exec_copy($$)
     $tpl->fillin("NEW_FILENAME",file_name($new_virtual));
     $tpl->fillin("NEW_DIR",$dir);
     $tpl->fillin("DIR",upper_path($virtual));
+
     $tpl->fillin("COMMAND","copy");
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
     $tpl->fillin("SCRIPT",$script);
@@ -560,6 +562,7 @@ sub exec_rename($$)
     $tpl->fillin("NEW_FILENAME",file_name($new_virtual));
     $tpl->fillin("NEW_DIR",$dir);
     $tpl->fillin("DIR",upper_path($virtual));
+
     $tpl->fillin("COMMAND","rename");
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
     $tpl->fillin("SCRIPT",$script);
@@ -695,6 +698,80 @@ sub exec_unlock($$)
 
   return \$output;
  }
+}
+
+# exec_about()
+#
+# Display some information about Dev-Editor
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_about($$)
+{
+ my ($data,$config) = @_;
+
+ my $tpl = new Template;
+ $tpl->read_file($config->{'tpl_about'});
+
+ $tpl->fillin("SCRIPT",$script);
+
+ # Dev-Editor's version number
+
+ $tpl->fillin("VERSION",$data->{'version'});
+
+ # Some path information
+
+ $tpl->fillin("SCRIPT_PHYS",$ENV{'SCRIPT_FILENAME'});
+ $tpl->fillin("CONFIG_PATH",$data->{'configfile'});
+ $tpl->fillin("FILE_ROOT",$config->{'fileroot'});
+ $tpl->fillin("HTTP_ROOT",$config->{'httproot'});
+
+ # Perl
+
+ $tpl->fillin("PERL_PROG",$^X);
+ $tpl->fillin("PERL_VER",sprintf("%vd",$^V));
+
+ # Information about the server
+
+ $tpl->fillin("HTTPD",$ENV{'SERVER_SOFTWARE'});
+ $tpl->fillin("OS",$^O);
+ $tpl->fillin("TIME",strftime($config->{'timeformat'},localtime));
+
+ # Process information
+
+ $tpl->fillin("PID",$$);
+
+ # Check if the functions getpwuid() and getgrgid() are available
+
+ if(eval("getpwuid(0)") && eval("getgrgid(0)"))
+ {
+  # Dev-Editor is running on a system which allows users and groups
+  # So we display the user and the group of our process
+
+  $tpl->parse_if_block("users",1);
+
+  # ID's of user and group
+
+  $tpl->fillin("UID",$<);
+  $tpl->fillin("GID",$();
+
+  # Names of user and group
+
+  $tpl->fillin("USER",getpwuid($<));
+  $tpl->fillin("GROUP",getgrgid($());
+ }
+ else
+ {
+  $tpl->parse_if_block("users",0);
+ }
+
+ my $output = header(-type => "text/html");
+ $output   .= $tpl->get_template;
+
+ return \$output;
 }
 
 # it's true, baby ;-)

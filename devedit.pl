@@ -1,17 +1,18 @@
 #!C:/Programme/Perl/bin/perl.exe -w
 
 #
-# Dev-Editor 1.2
+# Dev-Editor 2.0 (CVS)
 #
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-23
+# Last modified: 2004-03-06
 #
 
 use strict;
 use CGI::Carp qw(fatalsToBrowser);
 
+use vars qw($VERSION);
 use lib 'modules';
 
 use CGI;
@@ -21,6 +22,8 @@ use File::UseList;
 use Command;
 use Output;
 use Tool;
+
+$VERSION = '2.0 (CVS)';
 
 use constant CONFIGFILE => 'devedit.dat';
 
@@ -90,14 +93,16 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
   $uselist->load;
 
   # Create a hash with data submitted by user
-  # (the CGI and the File::UseList object will also be included)
+  # (some other necessary information will also be included)
 
   my %data = (physical     => $physical,
               virtual      => $virtual,
               new_physical => $new_physical,
               new_virtual  => $new_virtual,
               uselist      => $uselist,
-              cgi          => $cgi);
+              cgi          => $cgi,
+              version      => $VERSION,
+              configfile   => CONFIGFILE);
 
   my $output = exec_command($command,\%data,$config); # Execute the command...
 

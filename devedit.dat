@@ -32,6 +32,7 @@ tpl_dirlist_file    = templates/dirlist_file.htm
 tpl_dirlist_dir     = templates/dirlist_dir.htm
 tpl_dirlist_up      = templates/dirlist_up.htm
 tpl_error           = templates/error.htm
+tpl_about           = templates/about.htm
 
 # Error messages
 
