@@ -6,7 +6,7 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-11-24
+# Last modified: 2004-12-31
 #
 
 use strict;
@@ -63,7 +63,7 @@ sub parse_config($)
  foreach my $line(@lines)
  {
   next if($line =~ /^\s*#/);
-  next if($line !~ /^.+=.+$/);
+  next if($line !~ /^\s*\S+\s*=.+$/);
 
   my ($key,$value) = split(/=/,$line,2);
 
