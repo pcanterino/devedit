@@ -1,18 +1,19 @@
 package File::UseList;
 
 #
-# File::UseList 1.2
+# File::UseList 1.3
 #
 # Run a list with files that are currently in use
 # (bases on Filing::UseList by Roland Bluethgen <calocybe@web.de>)
 #
-# Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-11-21
+# Author:        Patrick Canterino <patrick@patshaping.de>
+# Last modified: 2004-12-03
 #
 
 use strict;
 
 use Carp qw(croak);
+use Fcntl;
 
 # new()
 #
@@ -95,8 +96,8 @@ sub unlock
 
  if($self->{'locked'})
  {
-  open(LOCKFILE,">$lockfile") or return;
-  close(LOCKFILE)             or return;
+  sysopen(LOCKFILE,$lockfile,O_WRONLY | O_CREAT | O_TRUNC) or return;
+  close(LOCKFILE)                                          or return;
 
   $self->{'locked'} = 0;
   return 1;
@@ -123,9 +124,9 @@ sub load
 
  # Read out the file and split the content line-per-line
 
- open(FILE,"<$file") or return;
+ sysopen(FILE,$file,O_RDONLY) or return;
  read(FILE, my $content, -s $file);
- close(FILE)         or return;
+ close(FILE)                  or return;
 
  my @files = split(/\015\012|\012|\015/,$content);
 
@@ -162,11 +163,11 @@ sub save
 
  my $data = (@$files) ? join("\n",@$files) : '';
 
- open(FILE,">$temp") or return;
- print FILE $data    or do { close(FILE); return };
- close(FILE)         or return;
+ sysopen(FILE,$temp,O_WRONLY | O_CREAT | O_TRUNC) or return;
+ print FILE $data                                 or do { close(FILE); return };
+ close(FILE)                                      or return;
 
- rename($temp,$file) or return;
+ rename($temp,$file)                              or return;
 
  return 1;
 }
@@ -219,6 +220,23 @@ sub remove_file($)
    return 1;
   }
  }
+}
+
+# remove_all()
+#
+# Remove all files from the list
+#
+# Params: -nothing-
+#
+# Return: -nothing-
+
+sub remove_all
+{
+ my $self = shift;
+
+ $self->{'files'} = [];
+
+ return;
 }
 
 # in_use()
