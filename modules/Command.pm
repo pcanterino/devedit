@@ -354,8 +354,9 @@ sub exec_endedit($$)
   return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
  }
 
- return error($config->{'errors'}->{'editdir'},upper_path($virtual)) if(-d $physical);
- return error($config->{'errors'}->{'noedit'}, upper_path($virtual)) if(-e $physical && !(-r $physical && -w $physical));
+ return error($config->{'errors'}->{'text_to_binary'},upper_path($virtual)) unless(-T $physical);
+ return error($config->{'errors'}->{'editdir'},upper_path($virtual))        if(-d $physical);
+ return error($config->{'errors'}->{'noedit'}, upper_path($virtual))        if(-e $physical && !(-r $physical && -w $physical));
 
  if(file_save($physical,\$content))
  {

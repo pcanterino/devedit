@@ -5,6 +5,7 @@ editdir        = You cannot edit directories.
 noedit         = You have not enough permissions to edit this file.
 file_in_use    = The file '{FILE}' is currently edited by someone else.
 edit_failed    = Saving of file '{FILE}' failed. The file could be damaged, please check its integrity.
+text_to_binary = You aren't allowed to write text data into a binary file.
 delete_failed  = Could not delete file '{FILE}'.
 dir_read_fail  = Reading of directory '{DIR}' failed.
 mkfile_failed  = Could not create file '{FILE}'.
