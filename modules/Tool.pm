@@ -30,7 +30,6 @@ use base qw(Exporter);
              devedit_reload
              equal_url
              file_name
-             query_string
              upper_path);
 
 # check_path()
