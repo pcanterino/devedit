@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-06
+# Last modified: 2005-01-20
 #
 
 use strict;
@@ -128,6 +128,8 @@ sub exec_show($$)
    $udtpl->fillin('UPPER_DIR',$upper_path);
    $udtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
 
+   $udtpl->parse_if_block('gmt',$config->{'use_gmt'});
+
    $dirlist .= $udtpl->get_template;
   }
 
@@ -147,11 +149,13 @@ sub exec_show($$)
 
    $dtpl->fillin('DIR',$virt_path);
    $dtpl->fillin('DIR_NAME',encode_entities($dir));
-   $dtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
+   $dtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
    $dtpl->fillin('URL',equal_url(encode_entities($config->{'httproot'}),$virt_path));
 
    $dtpl->parse_if_block('readable',-r $phys_path && -x $phys_path);
    $dtpl->parse_if_block('users',$users && -o $phys_path);
+
+   $dtpl->parse_if_block('gmt',$config->{'use_gmt'});
 
    $dirlist .= $dtpl->get_template;
   }
@@ -175,7 +179,7 @@ sub exec_show($$)
    $ftpl->fillin('FILE',$virt_path);
    $ftpl->fillin('FILE_NAME',encode_entities($file));
    $ftpl->fillin('SIZE',$stat[7]);
-   $ftpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
+   $ftpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
    $ftpl->fillin('URL',equal_url(encode_entities($config->{'httproot'}),$virt_path));
 
    $ftpl->parse_if_block('not_readable',not -r $phys_path);
@@ -189,6 +193,8 @@ sub exec_show($$)
    $ftpl->parse_if_block('unused',not $in_use);
 
    $ftpl->parse_if_block('too_large',$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
+
+   $ftpl->parse_if_block('gmt',$config->{'use_gmt'});
 
    $ftpl->parse_if_block('users',$users && -o $phys_path);
 
@@ -912,7 +918,9 @@ sub exec_about($$)
 
  $tpl->fillin('HTTPD',encode_entities($ENV{'SERVER_SOFTWARE'}));
  $tpl->fillin('OS',   encode_entities($^O));
- $tpl->fillin('TIME', encode_entities(strftime($config->{'timeformat'},localtime)));
+ $tpl->fillin('TIME', encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime : localtime)));
+
+ $tpl->parse_if_block('gmt',$config->{'use_gmt'});
 
  # Process information
 

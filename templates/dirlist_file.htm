@@ -1,6 +1,6 @@
 <tr>
 <td align="right" style="white-space:nowrap">{SIZE}</td>
-<td style="padding-left:15pt;white-space:nowrap;">{DATE}</td>
+<td style="padding-left:15pt;white-space:nowrap;">{DATE}{IF gmt} (GMT){ENDIF}</td>
 <td style="padding-left:15pt;white-space:nowrap;">{FILE_NAME}</td>
 <td style="padding-left:15pt;white-space:nowrap;">({IF viewable}<a href="{SCRIPT}?command=show&amp;file={FILE}">View</a>{ELSE}<span style="color:#C0C0C0" title="{IF not_readable}Not readable{ELSE}{IF binary}Binary file{ELSE}{IF too_large}File too large{ENDIF}{ENDIF}{ENDIF}">View</span>{ENDIF} | {IF editable}<a href="{SCRIPT}?command=beginedit&amp;file={FILE}">Edit</a>{ELSE}<span style="color:#C0C0C0" title="{IF not_readable}Not readable{ELSE}{IF readonly}Read only{ELSE}{IF binary}Binary file{ELSE}{IF too_large}File too large{ENDIF}{IF in_use}In use{ENDIF}{ENDIF}{ENDIF}{ENDIF}">Edit</span>{ENDIF} | <a href="{SCRIPT}?command=copy&amp;file={FILE}">Copy</a>{IF unused}{IF dir_writeable} | <a href="{SCRIPT}?command=rename&amp;file={FILE}">Rename</a> | <a href="{SCRIPT}?command=remove&amp;file={FILE}">Delete</a>{ENDIF}{ENDIF}{IF in_use} | <a href="{SCRIPT}?command=unlock&amp;file={FILE}">Unlock</a>{ENDIF} |{IF unused}{IF users} <a href="{SCRIPT}?command=chprop&amp;file={FILE}">Chmod/Chgrp</a> |{ENDIF}{ENDIF} <a href="{URL}" target="_blank">View in Browser</a>)</td>
 </tr>
