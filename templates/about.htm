@@ -169,7 +169,7 @@ WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 <tr>
 <td><b>HTTP root:</b></td>
-<td>{HTTP_ROOT}</td>
+<td><a href="{HTTP_ROOT}">{HTTP_ROOT}</a></td>
 </tr>
 
 <tr>
@@ -203,12 +203,12 @@ WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 </tr>
 {IF users}
 <tr>
-<td><b>User:</b></td>
+<td><b>Process user:</b></td>
 <td>{IF user_detected}{USER} ({ENDIF}UID: {UID}{IF user_detected}){ENDIF}</td>
 </tr>
 
 <tr>
-<td><b>Group:</b></td>
+<td><b>Process group:</b></td>
 <td>{IF group_detected}{GROUP} ({ENDIF}GID: {GID}{IF group_detected}){ENDIF}</td>
 </tr>
 
