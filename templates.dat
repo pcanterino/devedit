@@ -1,23 +1,23 @@
 # This file contains the paths to the template files
 # used by Dev-Editor
 
-dirlist         = templates/dirlist.htm
-viewfile        = templates/viewfile.htm
-editfile        = templates/editfile.htm
-copyfile        = templates/copyfile.htm
-renamefile      = templates/renamefile.htm
-mkfile          = templates/mkfile.htm
-mkdir           = templates/mkdir.htm
-upload          = templates/upload.htm
-confirm_rmfile  = templates/confirm_rmfile.htm
-confirm_rmdir   = templates/confirm_rmdir.htm
-confirm_unlock  = templates/confirm_unlock.htm
-confirm_replace = templates/confirm_replace.htm
-dirlist_file    = templates/dirlist_file.htm
-dirlist_dir     = templates/dirlist_dir.htm
-dirlist_up      = templates/dirlist_up.htm
-chprop          = templates/chprop.htm
-error           = templates/error.htm
 about           = templates/about.htm
+chprop          = templates/chprop.htm
+confirm_replace = templates/confirm_replace.htm
+confirm_rmdir   = templates/confirm_rmdir.htm
+confirm_rmfile  = templates/confirm_rmfile.htm
+confirm_unlock  = templates/confirm_unlock.htm
+copyfile        = templates/copyfile.htm
+dirlist         = templates/dirlist.htm
+dirlist_dir     = templates/dirlist_dir.htm
+dirlist_file    = templates/dirlist_file.htm
+dirlist_up      = templates/dirlist_up.htm
+editfile        = templates/editfile.htm
+error           = templates/error.htm
+mkdir           = templates/mkdir.htm
+mkfile          = templates/mkfile.htm
+renamefile      = templates/renamefile.htm
+upload          = templates/upload.htm
+viewfile        = templates/viewfile.htm
 
 # End of configuration file
