@@ -1,19 +1,18 @@
 #!C:/Programme/Perl/bin/perl.exe -w
 
 #
-# Dev-Editor
+# Dev-Editor 1.1
 #
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 10-04-2003
+# Last modified: 2003-10-18
 #
 
 use strict;
 use CGI::Carp qw(fatalsToBrowser);
 
-use vars qw($VERSION
-            %config);
+use vars qw(%config);
 
 use lib 'modules';
 
@@ -23,13 +22,11 @@ use File::UseList;
 use Output;
 use Tool;
 
-$VERSION = '1.0';
-
 ### Settings ###
 
 %config = (
-           fileroot     => 'D:/Server/WWW/dokumente',
-           httproot     => '/',
+           fileroot     => 'D:/Server/WWW/dokumente/devedit-test',
+           httproot     => '/devedit-test/',
            timeformat   => '%d.%m.%Y %H:%M',
            uselist_file => 'uselist',
            lock_file    => 'uselist.lock',
@@ -131,7 +128,7 @@ if(-e clean_path($config{'fileroot'}."/".$file))
 
   my $output = &{$dispatch{$command}}(\%data,\%config); # Execute the command...
 
-  $uselist->unlock; # ... unlock the list with used files...
+  $uselist->unlock; # ... unlock the list with files in use...
   print $$output;   # ... and print the output of the command
  }
  else
