@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-27
+# Last modified: 2004-10-30
 #
 
 use strict;
@@ -910,17 +910,22 @@ sub exec_about($$)
   # Dev-Editor is running on a system which allows users and groups
   # So we display the user and the group of our process
 
+  require POSIX;
+
+  my $uid = POSIX::getuid;
+  my $gid = POSIX::getgid;
+
   $tpl->parse_if_block("users",1);
 
   # ID's of user and group
 
-  $tpl->fillin("UID",$<);
-  $tpl->fillin("GID",$();
+  $tpl->fillin("UID",$uid);
+  $tpl->fillin("GID",$gid);
 
   # Names of user and group
 
-  $tpl->fillin("USER",getpwuid($<));
-  $tpl->fillin("GROUP",getgrgid($());
+  $tpl->fillin("USER",getpwuid($uid));
+  $tpl->fillin("GROUP",getgrgid($gid));
  }
  else
  {
