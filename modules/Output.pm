@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-17
+# Last modified: 2005-01-06
 #
 
 use strict;
@@ -56,13 +56,13 @@ sub error($;$$)
  my $tpl = new Template;
  $tpl->read_file($tpl_error);
 
- $tpl->fillin("ERROR",$message);
- $tpl->fillin("BACK",$path);
- $tpl->fillin("SCRIPT",encode_entities($ENV{'SCRIPT_NAME'}));
+ $tpl->fillin('ERROR',$message);
+ $tpl->fillin('BACK',$path);
+ $tpl->fillin('SCRIPT',encode_entities($ENV{'SCRIPT_NAME'}));
 
- $tpl->parse_if_block("dir",defined $path);
+ $tpl->parse_if_block('dir',defined $path);
 
- if(ref($vars) eq "HASH")
+ if(ref($vars) eq 'HASH')
  {
   while(my ($key,$value) = each(%$vars))
   {
@@ -70,7 +70,7 @@ sub error($;$$)
   }
  }
 
- my $output = header(-type => "text/html");
+ my $output = header(-type => 'text/html');
  $output   .= $tpl->get_template;
 
  return \$output;

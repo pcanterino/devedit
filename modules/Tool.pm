@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-04
+# Last modified: 2005-01-06
 #
 
 use strict;
@@ -56,7 +56,7 @@ sub check_path($$)
 
  $path =~ tr!\\!/!;
  $path =~ s!^/+!!;
- $path =  $root."/".$path;
+ $path =  $root.'/'.$path;
 
  # We extract the last part of the path and create the absolute path
 
@@ -64,7 +64,7 @@ sub check_path($$)
  my $last  = file_name($path);
 
  $first = abs_path($first);
- $path  = $first."/".$last;
+ $path  = $first.'/'.$last;
 
  $first = File::Spec->canonpath($first);
  $path  = File::Spec->canonpath($path);
@@ -78,8 +78,8 @@ sub check_path($$)
 
  my $short_path = substr($path,length($root));
  $short_path =~ tr!\\!/!;
- $short_path = "/".$short_path if($short_path !~ m!^/!);
- $short_path = $short_path."/" if($short_path !~ m!/$! && -d $path);
+ $short_path = '/'.$short_path if($short_path !~ m!^/!);
+ $short_path = $short_path.'/' if($short_path !~ m!/$! && -d $path);
 
  return ($path,$short_path);
 }
@@ -119,31 +119,31 @@ sub devedit_reload(;$)
  # Detect the protocol (simple HTTP or SSL encrypted HTTP)
  # and check if the server listens on the default port
 
- my $protocol = "";
- my $port     = "";
+ my $protocol = '';
+ my $port     = '';
 
  if(https)
  {
   # SSL encrypted HTTP (HTTPS)
 
-  $protocol = "https";
-  $port     = ":".$ENV{'SERVER_PORT'} if($ENV{'SERVER_PORT'} != 443);
+  $protocol = 'https';
+  $port     = ':'.$ENV{'SERVER_PORT'} if($ENV{'SERVER_PORT'} != 443);
  }
  else
  {
   # Simple HTTP
 
-  $protocol = "http";
-  $port     = ":".$ENV{'SERVER_PORT'} if($ENV{'SERVER_PORT'} != 80);
+  $protocol = 'http';
+  $port     = ':'.$ENV{'SERVER_PORT'} if($ENV{'SERVER_PORT'} != 80);
  }
 
  # The following code is grabbed from Template::_query of
  # Andre Malo's selfforum (http://sourceforge.net/projects/selfforum/)
  # and modified by Patrick Canterino
 
- my $query = "";
+ my $query = '';
 
- if(ref($params) eq "HASH")
+ if(ref($params) eq 'HASH')
  {
   $query = '?'.join ('&' =>
     map {
@@ -156,7 +156,7 @@ sub devedit_reload(;$)
 
  # Create the redirection header
 
- my $header = redirect($protocol."://".virtual_host.$port.$ENV{'SCRIPT_NAME'}.$query);
+ my $header = redirect($protocol.'://'.virtual_host.$port.$ENV{'SCRIPT_NAME'}.$query);
 
  return \$header;
 }
@@ -201,7 +201,7 @@ sub equal_url($$)
 
  $root =~ s!/+$!!;
  $path =~ s!^/+!!;
- $url  =  $root."/".$path;
+ $url  =  $root.'/'.$path;
 
  return $url;
 }
@@ -219,10 +219,10 @@ sub file_name($)
  my $path =  shift;
  $path    =~ tr!\\!/!;
 
- unless($path eq "/")
+ unless($path eq '/')
  {
-  $path = substr($path,0,-1) if($path =~ m!/$!);
-  $path = substr($path,rindex($path,"/")+1);
+  $path =~ s!/+$!!;
+  $path =  substr($path,rindex($path,'/')+1);
  }
 
  return $path;
@@ -240,28 +240,28 @@ sub file_name($)
 sub mode_string($)
 {
  my $mode   = shift;
- my $string = "";
+ my $string = '';
 
  # User
 
- $string  = ($mode & 00400) ? "r" : "-";
- $string .= ($mode & 00200) ? "w" : "-";
- $string .= ($mode & 00100) ? (($mode & 04000) ? "s" : "x") :
-                               ($mode & 04000) ? "S" : "-";
+ $string  = ($mode & 00400) ? 'r' : '-';
+ $string .= ($mode & 00200) ? 'w' : '-';
+ $string .= ($mode & 00100) ? (($mode & 04000) ? 's' : 'x') :
+                               ($mode & 04000) ? 'S' : '-';
 
  # Group
 
- $string .= ($mode & 00040) ? "r" : "-";
- $string .= ($mode & 00020) ? "w" : "-";
- $string .= ($mode & 00010) ? (($mode & 02000) ? "s" : "x") :
-                               ($mode & 02000) ? "S" : "-";
+ $string .= ($mode & 00040) ? 'r' : '-';
+ $string .= ($mode & 00020) ? 'w' : '-';
+ $string .= ($mode & 00010) ? (($mode & 02000) ? 's' : 'x') :
+                               ($mode & 02000) ? 'S' : '-';
 
  # Other
 
- $string .= ($mode & 00004) ? "r" : "-";
- $string .= ($mode & 00002) ? "w" : "-";
- $string .= ($mode & 00001) ? (($mode & 01000) ? "t" : "x") :
-                               ($mode & 01000) ? "T" : "-";
+ $string .= ($mode & 00004) ? 'r' : '-';
+ $string .= ($mode & 00002) ? 'w' : '-';
+ $string .= ($mode & 00001) ? (($mode & 01000) ? 't' : 'x') :
+                               ($mode & 01000) ? 'T' : '-';
 
  return $string;
 }
@@ -279,10 +279,10 @@ sub upper_path($)
  my $path =  shift;
  $path    =~ tr!\\!/!;
 
- unless($path eq "/")
+ unless($path eq '/')
  {
-  $path = substr($path,0,-1) if($path =~ m!/$!);
-  $path = substr($path,0,rindex($path,"/")+1);
+  $path =~ s!/+$!!;
+  $path =  substr($path,0,rindex($path,'/')+1);
  }
 
  return $path;

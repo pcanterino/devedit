@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-05
+# Last modified: 2005-01-06
 #
 
 use strict;
@@ -28,7 +28,7 @@ use Output;
 use Template;
 
 my $script = encode_entities($ENV{'SCRIPT_NAME'});
-my $users  = eval("getpwuid(0)") && eval("getgrgid(0)");
+my $users  = eval('getpwuid(0)') && eval('getgrgid(0)');
 
 my %dispatch = ('show'       => \&exec_show,
                 'beginedit'  => \&exec_beginedit,
@@ -110,7 +110,7 @@ sub exec_show($$)
 
   my $dir_writeable = -w $physical;
 
-  my $dirlist = "";
+  my $dirlist = '';
 
   my $filter1 = $data->{'cgi'}->param('filter') || '*';        # The real wildcard
   my $filter2 = ($filter1 && $filter1 ne '*') ? $filter1 : ''; # Wildcard for output
@@ -118,15 +118,15 @@ sub exec_show($$)
   # Create the link to the upper directory
   # (only if we are not in the root directory)
 
-  unless($virtual eq "/")
+  unless($virtual eq '/')
   {
-   my @stat  = stat($physical."/..");
+   my @stat  = stat($physical.'/..');
 
    my $udtpl = new Template;
    $udtpl->read_file($config->{'templates'}->{'dirlist_up'});
 
-   $udtpl->fillin("UPPER_DIR",$upper_path);
-   $udtpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
+   $udtpl->fillin('UPPER_DIR',$upper_path);
+   $udtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
 
    $dirlist .= $udtpl->get_template;
   }
@@ -137,21 +137,21 @@ sub exec_show($$)
   {
    next unless(dos_wildcard_match($filter1,$dir));
 
-   my $phys_path = $physical."/".$dir;
-   my $virt_path = encode_entities($virtual.$dir."/");
+   my $phys_path = $physical.'/'.$dir;
+   my $virt_path = encode_entities($virtual.$dir.'/');
 
    my @stat      = stat($phys_path);
 
    my $dtpl = new Template;
    $dtpl->read_file($config->{'templates'}->{'dirlist_dir'});
 
-   $dtpl->fillin("DIR",$virt_path);
-   $dtpl->fillin("DIR_NAME",encode_entities($dir));
-   $dtpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
-   $dtpl->fillin("URL",equal_url(encode_entities($config->{'httproot'}),$virt_path));
+   $dtpl->fillin('DIR',$virt_path);
+   $dtpl->fillin('DIR_NAME',encode_entities($dir));
+   $dtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
+   $dtpl->fillin('URL',equal_url(encode_entities($config->{'httproot'}),$virt_path));
 
-   $dtpl->parse_if_block("readable",-r $phys_path && -x $phys_path);
-   $dtpl->parse_if_block("users",$users && -o $phys_path);
+   $dtpl->parse_if_block('readable',-r $phys_path && -x $phys_path);
+   $dtpl->parse_if_block('users',$users && -o $phys_path);
 
    $dirlist .= $dtpl->get_template;
   }
@@ -162,7 +162,7 @@ sub exec_show($$)
   {
    next unless(dos_wildcard_match($filter1,$file));
 
-   my $phys_path = $physical."/".$file;
+   my $phys_path = $physical.'/'.$file;
    my $virt_path = encode_entities($virtual.$file);
 
    my @stat      = stat($phys_path);
@@ -172,41 +172,41 @@ sub exec_show($$)
    my $ftpl = new Template;
    $ftpl->read_file($config->{'templates'}->{'dirlist_file'});
 
-   $ftpl->fillin("FILE",$virt_path);
-   $ftpl->fillin("FILE_NAME",encode_entities($file));
-   $ftpl->fillin("SIZE",$stat[7]);
-   $ftpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
-   $ftpl->fillin("URL",equal_url(encode_entities($config->{'httproot'}),$virt_path));
+   $ftpl->fillin('FILE',$virt_path);
+   $ftpl->fillin('FILE_NAME',encode_entities($file));
+   $ftpl->fillin('SIZE',$stat[7]);
+   $ftpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
+   $ftpl->fillin('URL',equal_url(encode_entities($config->{'httproot'}),$virt_path));
 
-   $ftpl->parse_if_block("not_readable",not -r $phys_path);
-   $ftpl->parse_if_block("binary",-B $phys_path);
-   $ftpl->parse_if_block("readonly",not -w $phys_path);
+   $ftpl->parse_if_block('not_readable',not -r $phys_path);
+   $ftpl->parse_if_block('binary',-B $phys_path);
+   $ftpl->parse_if_block('readonly',not -w $phys_path);
 
-   $ftpl->parse_if_block("viewable",-r $phys_path && -T $phys_path && not $too_large);
-   $ftpl->parse_if_block("editable",(-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not $in_use);
+   $ftpl->parse_if_block('viewable',-r $phys_path && -T $phys_path && not $too_large);
+   $ftpl->parse_if_block('editable',(-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not $in_use);
 
-   $ftpl->parse_if_block("in_use",$in_use);
-   $ftpl->parse_if_block("unused",not $in_use);
+   $ftpl->parse_if_block('in_use',$in_use);
+   $ftpl->parse_if_block('unused',not $in_use);
 
-   $ftpl->parse_if_block("too_large",$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
+   $ftpl->parse_if_block('too_large',$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
 
-   $ftpl->parse_if_block("users",$users && -o $phys_path);
+   $ftpl->parse_if_block('users',$users && -o $phys_path);
 
    $dirlist .= $ftpl->get_template;
   }
 
   $tpl->read_file($config->{'templates'}->{'dirlist'});
 
-  $tpl->fillin("DIRLIST",$dirlist);
-  $tpl->fillin("DIR",encode_entities($virtual));
-  $tpl->fillin("SCRIPT",$script);
-  $tpl->fillin("URL",encode_entities(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('DIRLIST',$dirlist);
+  $tpl->fillin('DIR',encode_entities($virtual));
+  $tpl->fillin('SCRIPT',$script);
+  $tpl->fillin('URL',encode_entities(equal_url($config->{'httproot'},$virtual)));
 
-  $tpl->fillin("FILTER",encode_entities($filter2));
-  $tpl->fillin("FILTER_URL",escape($filter2));
+  $tpl->fillin('FILTER',encode_entities($filter2));
+  $tpl->fillin('FILTER_URL',escape($filter2));
 
-  $tpl->parse_if_block("dir_writeable",$dir_writeable);
-  $tpl->parse_if_block("filter",$filter2);
+  $tpl->parse_if_block('dir_writeable',$dir_writeable);
+  $tpl->parse_if_block('filter',$filter2);
  }
  else
  {
@@ -231,17 +231,17 @@ sub exec_show($$)
 
   $tpl->read_file($config->{'templates'}->{'viewfile'});
 
-  $tpl->fillin("FILE",encode_entities($virtual));
-  $tpl->fillin("DIR",$upper_path);
-  $tpl->fillin("URL",encode_entities(equal_url($config->{'httproot'},$virtual)));
-  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin('FILE',encode_entities($virtual));
+  $tpl->fillin('DIR',$upper_path);
+  $tpl->fillin('URL',encode_entities(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('SCRIPT',$script);
 
-  $tpl->parse_if_block("editable",-w $physical && $uselist->unused($virtual));
+  $tpl->parse_if_block('editable',-w $physical && $uselist->unused($virtual));
 
-  $tpl->fillin("CONTENT",encode_entities($$content));
+  $tpl->fillin('CONTENT',encode_entities($$content));
  }
 
- my $output  = header(-type => "text/html");
+ my $output  = header(-type => 'text/html');
  $output    .= $tpl->get_template;
 
  return \$output;
@@ -289,13 +289,13 @@ sub exec_beginedit($$)
  my $tpl = new Template;
  $tpl->read_file($config->{'templates'}->{'editfile'});
 
- $tpl->fillin("FILE",$virtual);
- $tpl->fillin("DIR",$dir);
- $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
- $tpl->fillin("SCRIPT",$script);
- $tpl->fillin("CONTENT",encode_entities($$content));
+ $tpl->fillin('FILE',$virtual);
+ $tpl->fillin('DIR',$dir);
+ $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+ $tpl->fillin('SCRIPT',$script);
+ $tpl->fillin('CONTENT',encode_entities($$content));
 
- my $output = header(-type => "text/html");
+ my $output = header(-type => 'text/html');
  $output   .= $tpl->get_template;
 
  return \$output;
@@ -412,10 +412,10 @@ sub exec_mkfile($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'mkfile'});
 
-  $tpl->fillin("DIR","/");
-  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin('DIR','/');
+  $tpl->fillin('SCRIPT',$script);
 
-  my $output = header(-type => "text/html");
+  my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
 
   return \$output;
@@ -451,10 +451,10 @@ sub exec_mkdir($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'mkdir'});
 
-  $tpl->fillin("DIR","/");
-  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin('DIR','/');
+  $tpl->fillin('SCRIPT',$script);
 
-  my $output = header(-type => "text/html");
+  my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
 
   return \$output;
@@ -485,7 +485,7 @@ sub exec_upload($$)
   # Process file upload
 
   my $filename  = file_name($uploaded_file);
-  my $file_phys = $physical."/".$filename;
+  my $file_phys = $physical.'/'.$filename;
   my $file_virt = $virtual.$filename;
 
   return error($config->{'errors'}->{'in_use'},$virtual,{FILE => $file_virt}) if($data->{'uselist'}->in_use($file_virt));
@@ -508,18 +508,18 @@ sub exec_upload($$)
   $data =~ s/\015\012|\012|\015/\n/g if($ascii); # Replace line separators if transferring in ASCII mode
   file_save($file_phys,\$data,not $ascii) or return error($config->{'errors'}->{'mkfile_failed'},$virtual,{FILE => $file_virt});
 
-  return devedit_reload({command => "show", file => $virtual});
+  return devedit_reload({command => 'show', file => $virtual});
  }
  else
  {
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'upload'});
 
-  $tpl->fillin("DIR",$virtual);
-  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin('DIR',$virtual);
+  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('SCRIPT',$script);
 
-  my $output = header(-type => "text/html");
+  my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
 
   return \$output;
@@ -563,17 +563,17 @@ sub exec_copy($$)
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
-    $tpl->fillin("FILE",$virtual);
-    $tpl->fillin("NEW_FILE",$new_virtual);
-    $tpl->fillin("NEW_FILENAME",file_name($new_virtual));
-    $tpl->fillin("NEW_DIR",$new_dir);
-    $tpl->fillin("DIR",$dir);
+    $tpl->fillin('FILE',$virtual);
+    $tpl->fillin('NEW_FILE',$new_virtual);
+    $tpl->fillin('NEW_FILENAME',file_name($new_virtual));
+    $tpl->fillin('NEW_DIR',$new_dir);
+    $tpl->fillin('DIR',$dir);
 
-    $tpl->fillin("COMMAND","copy");
-    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-    $tpl->fillin("SCRIPT",$script);
+    $tpl->fillin('COMMAND','copy');
+    $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin('SCRIPT',$script);
 
-    my $output = header(-type => "text/html");
+    my $output = header(-type => 'text/html');
     $output   .= $tpl->get_template;
 
     return \$output;
@@ -588,12 +588,12 @@ sub exec_copy($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'copyfile'});
 
-  $tpl->fillin("FILE",$virtual);
-  $tpl->fillin("DIR",$dir);
-  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin('FILE',$virtual);
+  $tpl->fillin('DIR',$dir);
+  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('SCRIPT',$script);
 
-  my $output = header(-type => "text/html");
+  my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
 
   return \$output;
@@ -617,7 +617,7 @@ sub exec_rename($$)
  my $dir            = upper_path($virtual);
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'errors'}->{'rename_root'},"/")                if($virtual eq "/");
+ return error($config->{'errors'}->{'rename_root'},'/')                if($virtual eq '/');
  return error($config->{'errors'}->{'no_rename'},$dir)                 unless(-w upper_path($physical));
  return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
@@ -638,17 +638,17 @@ sub exec_rename($$)
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
-    $tpl->fillin("FILE",$virtual);
-    $tpl->fillin("NEW_FILE",$new_virtual);
-    $tpl->fillin("NEW_FILENAME",file_name($new_virtual));
-    $tpl->fillin("NEW_DIR",$new_dir);
-    $tpl->fillin("DIR",$dir);
+    $tpl->fillin('FILE',$virtual);
+    $tpl->fillin('NEW_FILE',$new_virtual);
+    $tpl->fillin('NEW_FILENAME',file_name($new_virtual));
+    $tpl->fillin('NEW_DIR',$new_dir);
+    $tpl->fillin('DIR',$dir);
 
-    $tpl->fillin("COMMAND","rename");
-    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-    $tpl->fillin("SCRIPT",$script);
+    $tpl->fillin('COMMAND','rename');
+    $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin('SCRIPT',$script);
 
-    my $output = header(-type => "text/html");
+    my $output = header(-type => 'text/html');
     $output   .= $tpl->get_template;
 
     return \$output;
@@ -663,12 +663,12 @@ sub exec_rename($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'renamefile'});
 
-  $tpl->fillin("FILE",$virtual);
-  $tpl->fillin("DIR",$dir);
-  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin('FILE',$virtual);
+  $tpl->fillin('DIR',$dir);
+  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('SCRIPT',$script);
 
-  my $output = header(-type => "text/html");
+  my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
 
   return \$output;
@@ -691,7 +691,7 @@ sub exec_remove($$)
  my $virtual        = $data->{'virtual'};
  my $dir            = upper_path($virtual);
 
- return error($config->{'errors'}->{'remove_root'},"/") if($virtual eq "/");
+ return error($config->{'errors'}->{'remove_root'},'/') if($virtual eq '/');
  return error($config->{'errors'}->{'no_delete'},$dir)  unless(-w upper_path($physical));
 
  if(-d $physical)
@@ -708,12 +708,12 @@ sub exec_remove($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmdir'});
 
-   $tpl->fillin("DIR",$virtual);
-   $tpl->fillin("UPPER_DIR",$dir);
-   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-   $tpl->fillin("SCRIPT",$script);
+   $tpl->fillin('DIR',$virtual);
+   $tpl->fillin('UPPER_DIR',$dir);
+   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin('SCRIPT',$script);
 
-   my $output = header(-type => "text/html");
+   my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
 
    return \$output;
@@ -735,12 +735,12 @@ sub exec_remove($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmfile'});
 
-   $tpl->fillin("FILE",$virtual);
-   $tpl->fillin("DIR",$dir);
-   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-   $tpl->fillin("SCRIPT",$script);
+   $tpl->fillin('FILE',$virtual);
+   $tpl->fillin('DIR',$dir);
+   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin('SCRIPT',$script);
 
-   my $output = header(-type => "text/html");
+   my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
 
    return \$output;
@@ -765,7 +765,7 @@ sub exec_chprop($$)
  my $dir            = upper_path($virtual);
 
  return error($config->{'errors'}->{'no_users'},$dir,{FILE => $virtual})  unless($users);
- return error($config->{'errors'}->{'chprop_root'},"/")                   if($virtual eq "/");
+ return error($config->{'errors'}->{'chprop_root'},'/')                   if($virtual eq '/');
  return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual}) unless(-o $physical);
  return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual})    if($data->{'uselist'}->in_use($virtual));
 
@@ -787,7 +787,7 @@ sub exec_chprop($$)
    # Change the group using the `chgrp` system command
 
    return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_entities($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
-   system("chgrp",$group,$physical);
+   system('chgrp',$group,$physical);
   }
 
   return devedit_reload({command => 'show', file => $dir});
@@ -805,28 +805,28 @@ sub exec_chprop($$)
 
   # Insert file properties into the template
 
-  $tpl->fillin("MODE_OCTAL",substr(sprintf("%04o",$mode),-4));
-  $tpl->fillin("MODE_STRING",mode_string($mode));
-  $tpl->fillin("GID",$gid);
+  $tpl->fillin('MODE_OCTAL',substr(sprintf('%04o',$mode),-4));
+  $tpl->fillin('MODE_STRING',mode_string($mode));
+  $tpl->fillin('GID',$gid);
 
   if(my $group = getgrgid($gid))
   {
-   $tpl->fillin("GROUP",encode_entities($group));
-   $tpl->parse_if_block("group_detected",1);
+   $tpl->fillin('GROUP',encode_entities($group));
+   $tpl->parse_if_block('group_detected',1);
   }
   else
   {
-   $tpl->parse_if_block("group_detected",0);
+   $tpl->parse_if_block('group_detected',0);
   }
 
   # Insert other information
 
-  $tpl->fillin("FILE",$virtual);
-  $tpl->fillin("DIR",$dir);
-  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin('FILE',$virtual);
+  $tpl->fillin('DIR',$dir);
+  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('SCRIPT',$script);
 
-  my $output = header(-type => "text/html");
+  my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
 
   return \$output;
@@ -862,12 +862,12 @@ sub exec_unlock($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'confirm_unlock'});
 
-  $tpl->fillin("FILE",$virtual);
-  $tpl->fillin("DIR",$dir);
-  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-  $tpl->fillin("SCRIPT",$script);
+  $tpl->fillin('FILE',$virtual);
+  $tpl->fillin('DIR',$dir);
+  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('SCRIPT',$script);
 
-  my $output = header(-type => "text/html");
+  my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
 
   return \$output;
@@ -890,33 +890,33 @@ sub exec_about($$)
  my $tpl = new Template;
  $tpl->read_file($config->{'templates'}->{'about'});
 
- $tpl->fillin("SCRIPT",$script);
+ $tpl->fillin('SCRIPT',$script);
 
  # Dev-Editor's version number
 
- $tpl->fillin("VERSION",$data->{'version'});
+ $tpl->fillin('VERSION',$data->{'version'});
 
  # Some path information
 
- $tpl->fillin("SCRIPT_PHYS",encode_entities($ENV{'SCRIPT_FILENAME'}));
- $tpl->fillin("CONFIG_PATH",encode_entities($data->{'configfile'}));
- $tpl->fillin("FILE_ROOT",  encode_entities($config->{'fileroot'}));
- $tpl->fillin("HTTP_ROOT",  encode_entities($config->{'httproot'}));
+ $tpl->fillin('SCRIPT_PHYS',encode_entities($ENV{'SCRIPT_FILENAME'}));
+ $tpl->fillin('CONFIG_PATH',encode_entities($data->{'configfile'}));
+ $tpl->fillin('FILE_ROOT',  encode_entities($config->{'fileroot'}));
+ $tpl->fillin('HTTP_ROOT',  encode_entities($config->{'httproot'}));
 
  # Perl
 
- $tpl->fillin("PERL_PROG",encode_entities($^X));
- $tpl->fillin("PERL_VER", sprintf("%vd",$^V));
+ $tpl->fillin('PERL_PROG',encode_entities($^X));
+ $tpl->fillin('PERL_VER', sprintf('%vd',$^V));
 
  # Information about the server
 
- $tpl->fillin("HTTPD",encode_entities($ENV{'SERVER_SOFTWARE'}));
- $tpl->fillin("OS",   encode_entities($^O));
- $tpl->fillin("TIME", encode_entities(strftime($config->{'timeformat'},localtime)));
+ $tpl->fillin('HTTPD',encode_entities($ENV{'SERVER_SOFTWARE'}));
+ $tpl->fillin('OS',   encode_entities($^O));
+ $tpl->fillin('TIME', encode_entities(strftime($config->{'timeformat'},localtime)));
 
  # Process information
 
- $tpl->fillin("PID",$$);
+ $tpl->fillin('PID',$$);
 
  # Check if the functions getpwuid() and getgrgid() are available
 
@@ -928,45 +928,45 @@ sub exec_about($$)
   my $uid = POSIX::getuid;
   my $gid = POSIX::getgid;
 
-  $tpl->parse_if_block("users",1);
+  $tpl->parse_if_block('users',1);
 
   # ID's of user and group
 
-  $tpl->fillin("UID",$uid);
-  $tpl->fillin("GID",$gid);
+  $tpl->fillin('UID',$uid);
+  $tpl->fillin('GID',$gid);
 
   # Names of user and group
 
   if(my $user = getpwuid($uid))
   {
-   $tpl->fillin("USER",encode_entities($user));
-   $tpl->parse_if_block("user_detected",1);
+   $tpl->fillin('USER',encode_entities($user));
+   $tpl->parse_if_block('user_detected',1);
   }
   else
   {
-   $tpl->parse_if_block("user_detected",0);
+   $tpl->parse_if_block('user_detected',0);
   }
 
   if(my $group = getgrgid($gid))
   {
-   $tpl->fillin("GROUP",encode_entities($group));
-   $tpl->parse_if_block("group_detected",1);
+   $tpl->fillin('GROUP',encode_entities($group));
+   $tpl->parse_if_block('group_detected',1);
   }
   else
   {
-   $tpl->parse_if_block("group_detected",0);
+   $tpl->parse_if_block('group_detected',0);
   }
 
   # Process umask
 
-  $tpl->fillin("UMASK",sprintf("%04o",umask));
+  $tpl->fillin('UMASK',sprintf('%04o',umask));
  }
  else
  {
-  $tpl->parse_if_block("users",0);
+  $tpl->parse_if_block('users',0);
  }
 
- my $output = header(-type => "text/html");
+ my $output = header(-type => 'text/html');
  $output   .= $tpl->get_template;
 
  return \$output;

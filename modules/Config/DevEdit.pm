@@ -6,7 +6,7 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-31
+# Last modified: 2005-01-06
 #
 
 use strict;
@@ -53,17 +53,20 @@ sub parse_config($)
  my $file = shift;
  local *CF;
 
- open(CF,"<".$file) or croak("Open $file: $!");
+ open(CF,'<'.$file) or croak("Open $file: $!");
  read(CF, my $data, -s $file);
  close(CF);
 
  my @lines  = split(/\015\012|\012|\015/,$data);
  my $config = {};
+ my $count  = 0;
 
  foreach my $line(@lines)
  {
+  $count++;
+
   next if($line =~ /^\s*#/);
-  next if($line !~ /^\s*\S+\s*=.+$/);
+  next if($line !~ /^\s*\S+\s*=.*$/);
 
   my ($key,$value) = split(/=/,$line,2);
 
@@ -74,7 +77,7 @@ sub parse_config($)
   $value =~ s/^\s+//g;
   $value =~ s/\s+$//g;
 
-  croak "Double defined value '$key' in configuration file '$file'" if($config->{$key});
+  croak "Configuration option '$key' defined twice in line $count of configuration file '$file'" if($config->{$key});
 
   $config->{$key} = $value;
  }

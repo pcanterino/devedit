@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-17
+# Last modified: 2005-01-06
 #
 
 use strict;
@@ -70,9 +70,9 @@ sub dir_read($)
 
  foreach my $entry(@entries)
  {
-  next if($entry eq "." || $entry eq "..");
+  next if($entry eq '.' || $entry eq '..');
 
-  if(-d $dir."/".$entry)
+  if(-d $dir.'/'.$entry)
   {
    push(@dirs,$entry);
   }

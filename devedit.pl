@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-29
+# Last modified: 2005-01-06
 #
 
 use strict;
@@ -60,7 +60,7 @@ my $new_virtual  = '';
 if($newfile ne '' && $newfile !~ /^\s+$/)
 {
  $curdir  = upper_path($file) if($curdir eq '');
- my $path = clean_path($curdir.$newfile);
+ my $path = $curdir.$newfile;
 
  # Extract file and directory name...
 
@@ -69,16 +69,16 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
  # ... check if the directory exists ...
 
- unless(-d clean_path($config->{'fileroot'}."/".$dir))
+ unless(-d clean_path($config->{'fileroot'}.'/'.$dir))
  {
-  abort($config->{'errors'}->{'dir_not_exist'},"/");
+  abort($config->{'errors'}->{'dir_not_exist'},'/');
  }
 
  # ... and check if the path is above the root directory
 
  unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
  {
-  abort($config->{'errors'}->{'create_ar'},"/");
+  abort($config->{'errors'}->{'create_ar'},'/');
  }
 
  # Check if we have enough permissions to create a file
@@ -86,18 +86,18 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
  unless(-r $new_physical && -w $new_physical && -x $new_physical)
  {
-  abort($config->{'errors'}->{'dir_no_create'},"/",{DIR => $new_virtual});
+  abort($config->{'errors'}->{'dir_no_create'},'/',{DIR => $new_virtual});
  }
 
  # Create the physical and the virtual path
 
- $new_physical = File::Spec->canonpath($new_physical."/".$file);
+ $new_physical = File::Spec->canonpath($new_physical.'/'.$file);
  $new_virtual .= $file;
 }
 
 # This check has to be performed first or abs_path() will be confused
 
-if(-e clean_path($config->{'fileroot'}."/".$file))
+if(-e clean_path($config->{'fileroot'}.'/'.$file))
 {
  if(my ($physical,$virtual) = check_path($config->{'fileroot'},$file))
  {
@@ -129,12 +129,12 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
  }
  else
  {
-  abort($config->{'errors'}->{'above_root'},"/");
+  abort($config->{'errors'}->{'above_root'},'/');
  }
 }
 else
 {
- abort($config->{'errors'}->{'not_exist'},"/");
+ abort($config->{'errors'}->{'not_exist'},'/');
 }
 
 #
