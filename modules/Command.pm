@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-06
+# Last modified: 2004-12-10
 #
 
 use strict;
@@ -24,6 +24,8 @@ use CGI qw(header);
 use HTML::Entities;
 use Output;
 use Template;
+
+use Data::Dumper;
 
 my $script = $ENV{'SCRIPT_NAME'};
 my $users  = eval("getpwuid(0)") && eval("getgrgid(0)");
@@ -174,7 +176,7 @@ sub exec_show($$)
    $ftpl->parse_if_block("readonly",not -w $phys_path);
 
    $ftpl->parse_if_block("viewable",-r $phys_path && -T $phys_path && not $too_large);
-   $ftpl->parse_if_block("editable",-r $phys_path && -w $phys_path && -T $phys_path && not $too_large && not $in_use);
+   $ftpl->parse_if_block("editable",(-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not $in_use);
 
    $ftpl->parse_if_block("in_use",$in_use);
    $ftpl->parse_if_block("unused",not $in_use);
