@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-12-13
+# Last modified: 2004-12-16
 #
 
 use strict;
@@ -25,9 +25,7 @@ use HTML::Entities;
 use Output;
 use Template;
 
-use Data::Dumper;
-
-my $script = $ENV{'SCRIPT_NAME'};
+my $script = encode_entities($ENV{'SCRIPT_NAME'});
 my $users  = eval("getpwuid(0)") && eval("getgrgid(0)");
 
 my %dispatch = ('show'       => \&exec_show,
@@ -91,7 +89,7 @@ sub exec_show($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
- my $upper_path     = upper_path($virtual);
+ my $upper_path     = encode_entities(upper_path($virtual));
  my $uselist        = $data->{'uselist'};
 
  my $tpl = new Template;
@@ -103,7 +101,7 @@ sub exec_show($$)
   return error($config->{'errors'}->{'no_dir_access'},$upper_path) unless(-r $physical && -x $physical);
 
   my $direntries = dir_read($physical);
-  return error($config->{'dir_read_fail'},$upper_path,{DIR => $virtual}) unless($direntries);
+  return error($config->{'dir_read_fail'},$upper_path,{DIR => encode_entities($virtual)}) unless($direntries);
 
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
@@ -122,7 +120,7 @@ sub exec_show($$)
    my $udtpl = new Template;
    $udtpl->read_file($config->{'templates'}->{'dirlist_up'});
 
-   $udtpl->fillin("UPPER_DIR",encode_entities($upper_path));
+   $udtpl->fillin("UPPER_DIR",$upper_path);
    $udtpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
 
    $dirlist .= $udtpl->get_template;
@@ -141,7 +139,7 @@ sub exec_show($$)
    $dtpl->read_file($config->{'templates'}->{'dirlist_dir'});
 
    $dtpl->fillin("DIR",$virt_path);
-   $dtpl->fillin("DIR_NAME",$dir);
+   $dtpl->fillin("DIR_NAME",encode_entities($dir));
    $dtpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
    $dtpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
 
@@ -166,7 +164,7 @@ sub exec_show($$)
    $ftpl->read_file($config->{'templates'}->{'dirlist_file'});
 
    $ftpl->fillin("FILE",$virt_path);
-   $ftpl->fillin("FILE_NAME",$file);
+   $ftpl->fillin("FILE_NAME",encode_entities($file));
    $ftpl->fillin("SIZE",$stat[7]);
    $ftpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
    $ftpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
@@ -191,7 +189,7 @@ sub exec_show($$)
   $tpl->read_file($config->{'templates'}->{'dirlist'});
 
   $tpl->fillin("DIRLIST",$dirlist);
-  $tpl->fillin("DIR",$virtual);
+  $tpl->fillin("DIR",encode_entities($virtual));
   $tpl->fillin("SCRIPT",$script);
   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
 
@@ -228,7 +226,7 @@ sub exec_show($$)
 
     $tpl->read_file($config->{'templates'}->{'viewfile'});
 
-    $tpl->fillin("FILE",$virtual);
+    $tpl->fillin("FILE",encode_entities($virtual));
     $tpl->fillin("DIR",$upper_path);
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
     $tpl->fillin("SCRIPT",$script);
@@ -916,13 +914,13 @@ sub exec_about($$)
  # Perl
 
  $tpl->fillin("PERL_PROG",encode_entities($^X));
- $tpl->fillin("PERL_VER",sprintf("%vd",$^V));
+ $tpl->fillin("PERL_VER", sprintf("%vd",$^V));
 
  # Information about the server
 
  $tpl->fillin("HTTPD",encode_entities($ENV{'SERVER_SOFTWARE'}));
- $tpl->fillin("OS",$^O);
- $tpl->fillin("TIME",encode_entities(strftime($config->{'timeformat'},localtime)));
+ $tpl->fillin("OS",   encode_entities($^O));
+ $tpl->fillin("TIME", encode_entities(strftime($config->{'timeformat'},localtime)));
 
  # Process information
 

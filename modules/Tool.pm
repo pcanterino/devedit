@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-11-13
+# Last modified: 2004-12-16
 #
 
 use strict;
@@ -106,10 +106,11 @@ sub clean_path($)
 # with some other parameters
 #
 # Params: Hash Reference (will be merged to a query string)
+#         (optional)
 #
 # Return: HTTP redirection header (Scalar Reference)
 
-sub devedit_reload($)
+sub devedit_reload(;$)
 {
  my $params = shift;
 
@@ -138,13 +139,18 @@ sub devedit_reload($)
  # Andre Malo's selfforum (http://sourceforge.net/projects/selfforum/)
  # and modified by Patrick Canterino
 
- my $query = '?'.join ('&' =>
-   map {
-     (ref)
-     ? map{escape ($_).'='.escape ($params -> {$_})} @{$params -> {$_}}
-     : escape ($_).'='.escape ($params -> {$_})
-   } keys %$params
- );
+ my $query = "";
+
+ if(ref($params) eq "HASH")
+ {
+  $query = '?'.join ('&' =>
+    map {
+      (ref)
+      ? map{escape ($_).'='.escape ($params -> {$_})} @{$params -> {$_}}
+      : escape ($_).'='.escape ($params -> {$_})
+    } keys %$params
+  );
+ }
 
  # Create the redirection header
 
