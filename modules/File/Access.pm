@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-26-2003
+# Last modified: 2003-10-13
 #
 
 use strict;
@@ -15,7 +15,6 @@ use strict;
 use vars qw(@EXPORT);
 
 use Carp qw(croak);
-use File::Spec;
 
 ### Export ###
 
@@ -59,7 +58,7 @@ sub dir_read($)
  {
   next if($entry eq "." || $entry eq "..");
 
-  if(-d File::Spec->canonpath($dir."/".$entry))
+  if(-d $dir."/".$entry)
   {
    push(@dirs,$entry);
   }
