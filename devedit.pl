@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-04-25
+# Last modified: 2004-07-04
 #
 
 use strict;
@@ -24,6 +24,9 @@ use Output;
 use Tool;
 
 $VERSION = '2.0 (CVS)';
+
+# Path to configuration file
+# Change if necessary!
 
 use constant CONFIGFILE => 'devedit.dat';
 
@@ -107,7 +110,7 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
   my $output = exec_command($command,\%data,$config); # Execute the command...
 
   $uselist->unlock; # ... unlock the list with files in use...
-  print $$output;   # ... and print the output of the command
+  print $$output;   # ... and show the output of the command
  }
  else
  {
