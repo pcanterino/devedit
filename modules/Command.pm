@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-09-05
+# Last modified: 2004-10-04
 #
 
 use strict;
@@ -342,7 +342,7 @@ sub exec_endedit($$)
   $content = encode_entities($content,"\200-\377");
  }
 
- if($data->{'cgi'}->param('saveas'))
+ if($data->{'cgi'}->param('saveas') && $data->{'new_physical'} ne '' && $data->{'new_virtual'} ne '')
  {
   # Create the new filename
 
@@ -355,7 +355,7 @@ sub exec_endedit($$)
  }
 
  return error($config->{'errors'}->{'editdir'},upper_path($virtual)) if(-d $physical);
- return error($config->{'errors'}->{'noedit'}, upper_path($virtual)) unless(-r $physical && -w $physical);
+ return error($config->{'errors'}->{'noedit'}, upper_path($virtual)) if(-e $physical && !(-r $physical && -w $physical));
 
  if(file_save($physical,\$content))
  {
