@@ -60,7 +60,7 @@ my $new_virtual  = '';
 if($newfile ne '' && $newfile !~ /^\s+$/)
 {
  $curdir  = upper_path($file) if($curdir eq '');
- my $path = $curdir.$newfile;
+ my $path = $curdir.'/'.$newfile;
 
  # Extract file and directory name...
 
