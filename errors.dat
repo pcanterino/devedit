@@ -26,5 +26,7 @@ dir_not_exist  = The directory where you want to create this file or directory d
 file_too_large = The file you want to view or edit is too large (max. {SIZE}&nbsp;Bytes).
 remove_root    = You are not allowed to remove the root directory.
 rename_root    = You are not allowed to move/rename the root directory.
+no_users       = It seems that your system doesn't support users and groups.
+not_owner      = You are not the owner of {FILE}, so you are not allowed to change the mode and the group.
 
 # End of configuration file

@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<title>Change properties of {FILE}</title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<h1>Change properties of {FILE}</h1>
+
+<p>(equals <a href="{URL}" target="_blank">{URL}</a>)</p>
+
+<p><a href="{SCRIPT}?command=show&amp;file={DIR}">Back to {DIR}</a></p>
+
+<p>Current mode: {MODE_STRING} (Octal: {MODE_OCTAL})</p>
+
+<p>Current group: {GROUP} (GID: {GID})</p>
+
+<hr>
+
+<table border="0">
+<tr>
+<td>Change mode:</td>
+<form action="{SCRIPT}" method="get">
+<input type="hidden" name="command" value="chprop">
+<input type="hidden" name="file" value="{FILE}">
+<td><input type="text" name="mode" value="{MODE_OCTAL}"> <input type="submit" value="Change!"></td>
+</form>
+</tr>
+<tr>
+<td>Change group:</td>
+<form action="{SCRIPT}" method="get">
+<input type="hidden" name="command" value="chprop">
+<input type="hidden" name="file" value="{FILE}">
+<td><input type="text" name="group" value="{GROUP}"> <input type="submit" value="Change!"></td>
+</form>
+</tr>
+</table>
+
+<hr>
+
+<p align="right"><a href="{SCRIPT}?command=about" target="_blank"><i>About Dev-Editor</i></a></p>
+</body>
+</html>

@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-17
+# Last modified: 2004-07-28
 #
 
 use strict;
@@ -30,6 +30,7 @@ use base qw(Exporter);
              devedit_reload
              equal_url
              file_name
+             mode_string
              upper_path);
 
 # check_path()
@@ -144,12 +145,12 @@ sub devedit_reload($)
  # and modified by Patrick Canterino
 
  my $query = '?'.join ('&' =>
-    map {
-      (ref)
-      ? map{escape ($_).'='.escape ($params -> {$_})} @{$params -> {$_}}
-      : escape ($_).'='.escape ($params -> {$_})
-    } keys %$params
-  );
+   map {
+     (ref)
+     ? map{escape ($_).'='.escape ($params -> {$_})} @{$params -> {$_}}
+     : escape ($_).'='.escape ($params -> {$_})
+   } keys %$params
+ );
 
  # Create the redirection header
 
@@ -199,6 +200,48 @@ sub file_name($)
  }
 
  return $path;
+}
+
+# mode_string()
+#
+# Convert a binary file mode string into a human
+# readable string (rwxr-x-r-x)
+#
+# Params: Binary file mode string
+#
+# Return: Humand readable mode string
+
+sub mode_string($)
+{
+ my $mode = shift;
+
+ my $string = "";
+
+  # Owner
+  $string .= (($mode & 0x0100) ? 'r' : '-') .
+         (($mode & 0x0080) ? 'w' : '-') .
+         (($mode & 0x0040) ?
+           (($mode & 0x0800) ? 's' : 'x' ) :
+           (($mode & 0x0800) ? 'S' : '-')
+         );
+
+  # Group
+  $string .= (($mode & 0x0020) ? 'r' : '-') .
+         (($mode & 0x0010) ? 'w' : '-') .
+         (($mode & 0x0008) ?
+           (($mode & 0x0400) ? 's' : 'x') :
+           (($mode & 0x0400) ? 'S' : '-')
+         );
+
+  # World
+  $string .= (($mode & 0x0004) ? 'r' : '-') .
+         (($mode & 0x0002) ? 'w' : '-') .
+         (($mode & 0x0001) ?
+           (($mode & 0x0200) ? 't' : 'x' ) :
+           (($mode & 0x0200) ? 'T' : '-')
+         );
+
+ return $string;
 }
 
 # upper_path()

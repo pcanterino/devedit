@@ -16,6 +16,7 @@ confirm_replace = templates/confirm_replace.htm
 dirlist_file    = templates/dirlist_file.htm
 dirlist_dir     = templates/dirlist_dir.htm
 dirlist_up      = templates/dirlist_up.htm
+chprop          = templates/chprop.htm
 error           = templates/error.htm
 about           = templates/about.htm
 

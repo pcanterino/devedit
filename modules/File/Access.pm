@@ -7,7 +7,7 @@ package File::Access;
 # with only one command
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-21
+# Last modified: 2004-07-28
 #
 
 use strict;
@@ -20,11 +20,31 @@ use Carp qw(croak);
 
 use base qw(Exporter);
 
-@EXPORT = qw(dir_read
+@EXPORT = qw(chgrp
+             dir_read
              file_create
              file_read
              file_save
              file_unlock);
+
+# chgrp()
+#
+# Change the group of files or directories
+#
+# Params: 1. Group name
+#         2. List of files
+#
+# Return: Number of files group successfully changed
+#         (or false)
+
+sub chgrp($@)
+{
+ my ($group,@files) = @_;
+ my $gid = getgrnam($group);
+
+ return unless($gid);
+ return chown(-1,$gid,@files);
+}
 
 # dir_read()
 #

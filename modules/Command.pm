@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-27
+# Last modified: 2004-07-28
 #
 
 use strict;
@@ -26,6 +26,7 @@ use Output;
 use Template;
 
 my $script = $ENV{'SCRIPT_NAME'};
+my $users  = eval("getpwuid(0)") && eval("getgrgid(0)");
 
 my %dispatch = ('show'       => \&exec_show,
                 'beginedit'  => \&exec_beginedit,
@@ -37,6 +38,7 @@ my %dispatch = ('show'       => \&exec_show,
                 'copy'       => \&exec_copy,
                 'rename'     => \&exec_rename,
                 'remove'     => \&exec_remove,
+                'chprop'     => \&exec_chprop,
                 'unlock'     => \&exec_unlock,
                 'about'      => \&exec_about
                );
@@ -134,6 +136,8 @@ sub exec_show($$)
    $dtpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
    $dtpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
 
+   $dtpl->parse_if_block("users",$users && -o $physical."/".$dir);
+
    $dirlist .= $dtpl->get_template;
   }
 
@@ -168,6 +172,8 @@ sub exec_show($$)
    $ftpl->parse_if_block("unused",not $in_use);
 
    $ftpl->parse_if_block("too_large",$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
+
+   $ftpl->parse_if_block("users",$users && -o $phys_path);
 
    $dirlist .= $ftpl->get_template;
   }
@@ -726,6 +732,83 @@ sub exec_remove($$)
  }
 }
 
+# exec_chprop()
+#
+# Change the mode and the group of a file or a directory
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_chprop($$)
+{
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = $data->{'virtual'};
+ my $dir            = upper_path($virtual);
+ my $cgi            = $data->{'cgi'};
+ my $mode           = $cgi->param('mode');
+ my $group          = $cgi->param('group');
+
+ if($users)
+ {
+  if(-o $physical)
+  {
+   if($mode || $group)
+   {
+    if($mode)
+    {
+     my $oct_mode = $mode;
+     $oct_mode    = "0".$oct_mode if(length($oct_mode) == 3);
+     $oct_mode    = oct($oct_mode);
+
+     chmod($oct_mode,$physical);
+    }
+
+    chgrp($group,$physical) if($group);
+
+    return devedit_reload({command => 'show', file => $dir});
+   }
+   else
+   {
+    my @stat     = lstat($physical);
+
+    my $mode     = $stat[2];
+    my $mode_oct = substr(sprintf("%04o",$mode),-4);
+    my $gid      = $stat[5];
+    my $group    = getgrgid($gid);
+
+    my $tpl = new Template;
+    $tpl->read_file($config->{'templates'}->{'chprop'});
+
+    $tpl->fillin("MODE_OCTAL",$mode_oct);
+    $tpl->fillin("MODE_STRING",mode_string($mode));
+    $tpl->fillin("GID",$gid);
+    $tpl->fillin("GROUP",$group);
+
+    $tpl->fillin("FILE",$virtual);
+    $tpl->fillin("DIR",$dir);
+    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin("SCRIPT",$script);
+
+    my $output = header(-type => "text/html");
+    $output   .= $tpl->get_template;
+
+    return \$output;
+   }
+  }
+  else
+  {
+   return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual});
+  }
+ }
+ else
+ {
+  return error($config->{'errors'}->{'no_users'},$dir,{FILE => $virtual});
+ }
+}
+
 # exec_unlock()
 #
 # Remove a file from the list of used files and
@@ -809,7 +892,7 @@ sub exec_about($$)
 
  # Check if the functions getpwuid() and getgrgid() are available
 
- if(eval("getpwuid(0)") && eval("getgrgid(0)"))
+ if($users)
  {
   # Dev-Editor is running on a system which allows users and groups
   # So we display the user and the group of our process
