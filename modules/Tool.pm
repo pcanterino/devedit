@@ -204,11 +204,10 @@ sub file_name($)
 
 # mode_string()
 #
-# Convert a binary file mode string into a human
-# readable string (rwxr-x-r-x)
-# (also supports SetUID, SetGID and Sticky Bits)
+# Convert a file mode number into a human readable string (rwxr-x-r-x)
+# (also supports SetUID, SetGID and Sticky Bit)
 #
-# Params: Binary file mode string
+# Params: File mode number
 #
 # Return: Humand readable mode string
 

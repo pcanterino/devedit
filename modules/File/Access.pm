@@ -40,7 +40,7 @@ use base qw(Exporter);
 sub chgrp($@)
 {
  my ($group,@files) = @_;
- my $gid = ($group !~ /^\d+$/) ? getgrnam($group): $group;
+ my $gid = ($group !~ /^\d+$/) ? getgrnam($group) : $group;
 
  return unless($gid);
  return chown(-1,$gid,@files);

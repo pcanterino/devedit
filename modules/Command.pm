@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-28
+# Last modified: 2004-08-02
 #
 
 use strict;
@@ -772,7 +772,7 @@ sub exec_chprop($$)
    }
    else
    {
-    my @stat     = lstat($physical);
+    my @stat     = stat($physical);
 
     my $mode     = $stat[2];
     my $mode_oct = substr(sprintf("%04o",$mode),-4);
