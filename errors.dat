@@ -16,6 +16,7 @@ create_ar      = You aren't allowed to create files and directories above the vi
 file_exists    = A file or directory called '{FILE}' already exists.
 exist_edited   = The target file '{FILE}' already exists and is edited by someone else.
 in_use         = The file '{FILE}' is currently edited by someone else.
+dir_replace    = You are not allowed to replace a directory.
 noview         = You have not enough permissions to view this file.
 nocopy         = You have not enough permissions to copy this file.
 dircopy        = This editor is not able to copy directories.

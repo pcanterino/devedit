@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-08-29
+# Last modified: 2004-09-05
 #
 
 use strict;
@@ -528,7 +528,8 @@ sub exec_copy($$)
  my $virtual        = encode_entities($data->{'virtual'});
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'errors'}->{'nocopy'}) unless(-r $physical);
+ return error($config->{'errors'}->{'dircopy'}) if(-d $physical);
+ return error($config->{'errors'}->{'nocopy'})  unless(-r $physical);
 
  if($new_physical)
  {
@@ -542,7 +543,7 @@ sub exec_copy($$)
 
    if(-d $new_physical)
    {
-    return error($config->{'errors'}->{'dircopy'});
+    return error($config->{'errors'}->{'dir_replace'},$dir);
    }
    elsif(not $data->{'cgi'}->param('confirmed'))
    {
@@ -617,7 +618,7 @@ sub exec_rename($$)
 
    if(-d $new_physical)
    {
-    return error($config->{'errors'}->{'dircopy'});
+    return error($config->{'errors'}->{'dir_replace'},$dir);
    }
    elsif(not $data->{'cgi'}->param('confirmed'))
    {
