@@ -40,5 +40,8 @@ remove_root    = You are not allowed to remove the root directory.
 rename_failed  = Could not move/rename '{FILE}' to '{NEW_FILE}'.
 rename_root    = You are not allowed to move/rename the root directory.
 text_to_binary = You are not allowed to write text data into a binary file.
+ul_add_failed  = Could not add '{FILE}' to the list of files in use.
+ul_rm_failed   = Could not remove '{FILE}' from the list of files in use. Try it again using the 'unlock' command of Dev-Editor or by removing the file manually from '{USELIST}'.
+unlock_failed  = Unlocking of '{USELIST}' failed. Ask the administrator to check the lock file ('{LOCK_FILE}') and to recreate it if necessary.
 
 # End of configuration file

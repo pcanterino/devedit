@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-06
+# Last modified: 2005-02-10
 #
 
 use strict;
@@ -122,10 +122,14 @@ if(-e clean_path($config->{'fileroot'}.'/'.$file))
               version      => $VERSION,
               configfile   => CONFIGFILE);
 
-  my $output = exec_command($command,\%data,$config); # Execute the command...
+  # Execute the command...
 
-  $uselist->unlock; # ... unlock the list with files in use...
-  print $$output;   # ... and show the output of the command
+  my $output = exec_command($command,\%data,$config);
+
+  # ... unlock the list with files in use and show the output of the command
+
+  $uselist->unlock or abort($config->{'errors'}->{'unlock_failed'},undef,{USELIST => $uselist->{'listfile'}, LOCK_FILE => $uselist->{'lockfile'}});
+  print $$output;
  }
  else
  {

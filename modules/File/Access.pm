@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-09
+# Last modified: 2005-02-10
 #
 
 use strict;
@@ -192,16 +192,16 @@ sub file_save($$;$)
 # Params: 1. File::UseList object
 #         2. File to remove
 #
-# Return: -nothing-
+# Return: Status code (Boolean)
 
 sub file_unlock($$)
 {
  my ($uselist,$file) = @_;
 
- $uselist->remove_file($file);
- $uselist->save;
+ $uselist->remove_file($file) or return;
+ $uselist->save               or return;
 
- return;
+ return 1;
 }
 
 # it's true, baby ;-)

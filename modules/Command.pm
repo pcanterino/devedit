@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-24
+# Last modified: 2005-02-10
 #
 
 use strict;
@@ -279,8 +279,8 @@ sub exec_beginedit($$)
 
  # Lock the file...
 
- $uselist->add_file($virtual);
- $uselist->save;
+ ($uselist->add_file($virtual) and
+  $uselist->save)              or return error($config->{'errors'}->{'ul_add_failed'},$dir,{FILE => $virtual});
 
  # ... and show the editing form
 
@@ -315,9 +315,11 @@ sub exec_canceledit($$)
 {
  my ($data,$config) = @_;
  my $virtual        = $data->{'virtual'};
+ my $dir            = upper_path($virtual);
+ my $uselist        = $data->{'uselist'};
 
- file_unlock($data->{'uselist'},$virtual);
- return devedit_reload({command => 'show', file => upper_path($virtual)});
+ file_unlock($uselist,$virtual) or return error($config->{'errors'}->{'ul_rm_failed'},$dir,{FILE => $virtual, USELIST => $uselist->{'listfile'}});
+ return devedit_reload({command => 'show', file => $dir});
 }
 
 # exec_endedit()
@@ -343,7 +345,7 @@ sub exec_endedit($$)
  # No other user of Dev-Editor will access the file during this
  # routine because of the concept of File::UseList.
 
- file_unlock($uselist,$virtual);
+ file_unlock($uselist,$virtual) or return error($config->{'errors'}->{'ul_rm_failed'},$dir,{FILE => $virtual, USELIST => $uselist->{'listfile'}});
 
  # Normalize newlines
 
@@ -855,7 +857,7 @@ sub exec_unlock($$)
 
  if($data->{'cgi'}->param('confirmed'))
  {
-  file_unlock($uselist,$virtual);
+  file_unlock($uselist,$virtual) or return error($config->{'errors'}->{'ul_rm_failed'},$dir,{FILE => $virtual, USELIST => $uselist->{'listfile'}});
   return devedit_reload({command => 'show', file => $dir});
  }
  else
