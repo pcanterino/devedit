@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-03-09
+# Last modified: 2004-03-15
 #
 
 use strict;
@@ -125,6 +125,7 @@ sub exec_show($$)
    $dtpl->fillin("DIR",$virt_path);
    $dtpl->fillin("DIR_NAME",$dir);
    $dtpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
+   $dtpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
 
    $dirlist .= $dtpl->get_template;
   }
@@ -146,6 +147,7 @@ sub exec_show($$)
    $ftpl->fillin("FILE_NAME",$file);
    $ftpl->fillin("SIZE",$stat[7]);
    $ftpl->fillin("DATE",strftime($config->{'timeformat'},localtime($stat[9])));
+   $ftpl->fillin("URL",equal_url($config->{'httproot'},$virt_path));
 
    $ftpl->parse_if_block("not_readable",not -r $phys_path);
    $ftpl->parse_if_block("binary",-B $phys_path);
