@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-04-25
+# Last modified: 2004-07-03
 #
 
 use strict;
@@ -24,6 +24,8 @@ use CGI qw(header);
 use HTML::Entities;
 use Output;
 use Template;
+
+use Data::Dumper;
 
 my $script = $ENV{'SCRIPT_NAME'};
 
@@ -153,11 +155,14 @@ sub exec_show($$)
    $ftpl->parse_if_block("binary",-B $phys_path);
    $ftpl->parse_if_block("readonly",not -w $phys_path);
 
-   $ftpl->parse_if_block("viewable",-r $phys_path && -T $phys_path);
-   $ftpl->parse_if_block("editable",-w $phys_path && -r $phys_path && -T $phys_path && not $in_use);
+   $ftpl->parse_if_block("viewable",-r $phys_path && -T $phys_path && not ($config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'}));
+
+   $ftpl->parse_if_block("editable",-r $phys_path && -w $phys_path && -T $phys_path && not ($config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'}) && not $in_use);
 
    $ftpl->parse_if_block("in_use",$in_use);
    $ftpl->parse_if_block("unused",not $in_use);
+
+   $ftpl->parse_if_block("too_large",$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
 
    $dirlist .= $ftpl->get_template;
   }
@@ -189,16 +194,23 @@ sub exec_show($$)
   {
    # Text file
 
-   my $content =  file_read($physical);
-   $$content   =~ s/\015\012|\012|\015/\n/g;
+   if($config->{'max_file_size'} && (stat($physical))[7] > $config->{'max_file_size'})
+   {
+    return error($config->{'errors'}->{'file_too_large'},upper_path($virtual),{SIZE => $config->{'max_file_size'}})
+   }
+   else
+   {
+    my $content =  file_read($physical);
+    $$content   =~ s/\015\012|\012|\015/\n/g;
 
-   $tpl->read_file($config->{'templates'}->{'viewfile'});
+    $tpl->read_file($config->{'templates'}->{'viewfile'});
 
-   $tpl->fillin("FILE",$virtual);
-   $tpl->fillin("DIR",upper_path($virtual));
-   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-   $tpl->fillin("SCRIPT",$script);
-   $tpl->fillin("CONTENT",encode_entities($$content));
+    $tpl->fillin("FILE",$virtual);
+    $tpl->fillin("DIR",upper_path($virtual));
+    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin("SCRIPT",$script);
+    $tpl->fillin("CONTENT",encode_entities($$content));
+   }
   }
  }
 
@@ -238,27 +250,34 @@ sub exec_beginedit($$)
  }
  else
  {
-  # Text file
+  if($config->{'max_file_size'} && (stat($physical))[7] > $config->{'max_file_size'})
+  {
+   return error($config->{'errors'}->{'file_too_large'},upper_path($virtual),{SIZE => $config->{'max_file_size'}})
+  }
+  else
+   {
+   # Text file
 
-  $uselist->add_file($virtual);
-  $uselist->save;
+   $uselist->add_file($virtual);
+   $uselist->save;
 
-  my $content =  file_read($physical);
-  $$content   =~ s/\015\012|\012|\015/\n/g;
+   my $content =  file_read($physical);
+   $$content   =~ s/\015\012|\012|\015/\n/g;
 
-  my $tpl = new Template;
-  $tpl->read_file($config->{'templates'}->{'editfile'});
+   my $tpl = new Template;
+   $tpl->read_file($config->{'templates'}->{'editfile'});
 
-  $tpl->fillin("FILE",$virtual);
-  $tpl->fillin("DIR",upper_path($virtual));
-  $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
-  $tpl->fillin("SCRIPT",$script);
-  $tpl->fillin("CONTENT",encode_entities($$content));
+   $tpl->fillin("FILE",$virtual);
+   $tpl->fillin("DIR",upper_path($virtual));
+   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin("SCRIPT",$script);
+   $tpl->fillin("CONTENT",encode_entities($$content));
 
-  my $output = header(-type => "text/html");
-  $output   .= $tpl->get_template;
+   my $output = header(-type => "text/html");
+   $output   .= $tpl->get_template;
 
-  return \$output;
+   return \$output;
+  }
  }
 }
 
@@ -420,13 +439,11 @@ sub exec_upload($$)
   open(FILE,">$file_phys") or return error($config->{'errors'}->{'mkfile_failed'},$virtual,{FILE => $file_virt});
   binmode(FILE) unless($ascii);
 
-  my $data;
+  # Read transferred file and write it to disk
 
-  while(read($handle,$data,1024))
-  {
-   $data =~ s/\015\012|\012|\015/\n/g if($ascii);
-   print FILE $data;
-  }
+  read($handle, my $data, -s $handle);
+  $data =~ s/\015\012|\012|\015/\n/g if($ascii); # Replace line separators if transferring in ASCII mode
+  print FILE $data;
 
   close(FILE);
 
