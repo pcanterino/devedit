@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-05
+# Last modified: 2004-10-22
 #
 
 use strict;
@@ -331,6 +331,14 @@ sub exec_endedit($$)
  my $content        = $data->{'cgi'}->param('filecontent');
  my $uselist        = $data->{'uselist'};
 
+ # We already unlock the file at the beginning of the
+ # subroutine, because if we have to abort this routine,
+ # the file keeps locked.
+ # Nobody else will access the file during this routine
+ # because of the concept of File::UseList.
+
+ file_unlock($uselist,$virtual);
+
  # Normalize newlines
 
  $content =~ s/\015\012|\012|\015/\n/g;
@@ -361,11 +369,6 @@ sub exec_endedit($$)
  if(file_save($physical,\$content))
  {
   # Saving of the file was successful - so unlock it!
-
-  file_unlock($uselist,$data->{'virtual'});
-  #                    ^^^^^^^^^^^^^^^^^^
-  # Maybe the user saved the file using another filename...
-  # But we have to unlock the original file!
 
   return devedit_reload({command => 'show', file => upper_path($virtual)});
  }
