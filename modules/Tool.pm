@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-11-04
+# Last modified: 2004-11-13
 #
 
 use strict;
@@ -64,11 +64,13 @@ sub check_path($$)
  $first = abs_path($first);
  $path  = $first."/".$last;
 
- $path = File::Spec->canonpath($path);
+ $first = File::Spec->canonpath($first);
+ $path  = File::Spec->canonpath($path);
 
  # Check if the path is above the root directory
 
  return if(index($path,$root) == -1);
+ return if($first eq $root && $last =~ m!^(/|\\)?\.\.(/|\\)?$!);
 
  # Create short path name
 

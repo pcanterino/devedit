@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-11-07
+# Last modified: 2004-11-13
 #
 
 use strict;
@@ -72,14 +72,14 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
  unless(-d clean_path($config->{'fileroot'}."/".$dir))
  {
-  abort($config->{'errors'}->{'dir_not_exist'});
+  abort($config->{'errors'}->{'dir_not_exist'},"/");
  }
 
  # ... and check if the path is above the root directory
 
  unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
  {
-  abort($config->{'errors'}->{'create_ar'});
+  abort($config->{'errors'}->{'create_ar'},"/");
  }
 
  # Create the physical and the virtual path
@@ -100,7 +100,7 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
                                   lockfile => $config->{'lock_file'},
                                   timeout  => $config->{'lock_timeout'});
 
-  $uselist->lock or abort($config->{'errors'}->{'lock_failed'},{USELIST => $config->{'uselist_file'}, LOCK_FILE => $config->{'lock_file'}});
+  $uselist->lock or abort($config->{'errors'}->{'lock_failed'},undef,{USELIST => $config->{'uselist_file'}, LOCK_FILE => $config->{'lock_file'}});
   $uselist->load;
 
   # Create a hash with data submitted by user
@@ -122,12 +122,12 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
  }
  else
  {
-  abort($config->{'errors'}->{'above_root'});
+  abort($config->{'errors'}->{'above_root'},"/");
  }
 }
 else
 {
- abort($config->{'errors'}->{'not_exist'});
+ abort($config->{'errors'}->{'not_exist'},"/");
 }
 
 #

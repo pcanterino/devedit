@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-03-12
+# Last modified: 2004-11-13
 #
 
 use strict;
@@ -46,7 +46,7 @@ sub error_template($)
 # Format an error message
 #
 # Params: 1. Error message
-#         2. Virtual path to which a link should be displayed (optional)
+#         2. Display a link to this path at the bottom of the page (optional)
 #         3. Hash reference: Template variables (optional)
 #
 # Return: Formatted message (Scalar Reference)
@@ -84,11 +84,12 @@ sub error($;$$)
 # ^^^^^
 #
 # Params: 1. Error message
-#         2. Hash reference: Template variables (optional)
+#         2. Display a link to this path at the bottom of the page (optional)
+#         3. Hash reference: Template variables (optional)
 
-sub abort($;$)
+sub abort($;$$)
 {
- my $output = error(shift,undef,shift);
+ my $output = error(shift,shift,shift);
  print $$output;
  exit;
 }
