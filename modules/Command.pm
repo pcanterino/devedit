@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-04
+# Last modified: 2004-10-05
 #
 
 use strict;
@@ -825,10 +825,13 @@ sub exec_unlock($$)
 {
  my ($data,$config) = @_;
  my $virtual        = $data->{'virtual'};
+ my $uselist        = $data->{'uselist'};
+
+ return devedit_reload({command => 'show', file => upper_path($virtual)}) if($uselist->unused($virtual));
 
  if($data->{'cgi'}->param('confirmed'))
  {
-  file_unlock($data->{'uselist'},$virtual);
+  file_unlock($uselist,$virtual);
   return devedit_reload({command => 'show', file => upper_path($virtual)});
  }
  else
