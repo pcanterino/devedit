@@ -25,6 +25,7 @@ noedit         = You have not enough permissions to edit this file.
 nocopy         = You have not enough permissions to copy this file.
 noview         = You have not enough permissions to view this file.
 no_dir_access  = You have not enough permissions to access this directory.
+no_directory   = '{FILE}' is not a directory.
 no_root_access = You have not enough permissions to access the root directory.
 no_root_dir    = The root directory does not exist or is not a directory.
 no_users       = It seems that your system doesn't support users and groups.

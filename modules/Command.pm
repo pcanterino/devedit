@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-11-23
+# Last modified: 2004-11-24
 #
 
 use strict;
@@ -89,6 +89,7 @@ sub exec_show($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
+ my $upper_path     = upper_path($virtual);
  my $uselist        = $data->{'uselist'};
 
  my $tpl = new Template;
@@ -97,10 +98,10 @@ sub exec_show($$)
  {
   # Create directory listing
 
-  return error($config->{'errors'}->{'no_dir_access'},upper_path($virtual)) unless(-r $physical && -x $physical);
+  return error($config->{'errors'}->{'no_dir_access'},$upper_path) unless(-r $physical && -x $physical);
 
   my $direntries = dir_read($physical);
-  return error($config->{'dir_read_fail'},upper_path($virtual),{DIR => $virtual}) unless($direntries);
+  return error($config->{'dir_read_fail'},$upper_path,{DIR => $virtual}) unless($direntries);
 
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
@@ -117,7 +118,7 @@ sub exec_show($$)
    my $udtpl = new Template;
    $udtpl->read_file($config->{'templates'}->{'dirlist_up'});
 
-   $udtpl->fillin("UPPER_DIR",encode_entities(upper_path($virtual)));
+   $udtpl->fillin("UPPER_DIR",encode_entities($upper_path));
    $udtpl->fillin("DATE",encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
 
    $dirlist .= $udtpl->get_template;
@@ -194,7 +195,7 @@ sub exec_show($$)
  {
   # View a file
 
-  return error($config->{'errors'}->{'noview'},upper_path($virtual)) unless(-r $physical);
+  return error($config->{'errors'}->{'noview'},$upper_path) unless(-r $physical);
 
   # Check on binary files
   # We have to do it in this way, or empty files
@@ -204,17 +205,17 @@ sub exec_show($$)
   {
    # Binary file
 
-   return error($config->{'errors'}->{'binary'},upper_path($virtual));
+   return error($config->{'errors'}->{'binary'},$upper_path);
   }
   else
   {
    # Text file
 
-   my $size = (stat($physical))[7];
+   my $size = -s $physical;
 
    if($config->{'max_file_size'} && $size > $config->{'max_file_size'})
    {
-    return error($config->{'errors'}->{'file_too_large'},upper_path($virtual),{SIZE => $config->{'max_file_size'}})
+    return error($config->{'errors'}->{'file_too_large'},$upper_path,{SIZE => $config->{'max_file_size'}})
    }
    else
    {
@@ -224,7 +225,7 @@ sub exec_show($$)
     $tpl->read_file($config->{'templates'}->{'viewfile'});
 
     $tpl->fillin("FILE",$virtual);
-    $tpl->fillin("DIR",upper_path($virtual));
+    $tpl->fillin("DIR",$upper_path);
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
     $tpl->fillin("SCRIPT",$script);
 
@@ -479,6 +480,8 @@ sub exec_upload($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $cgi            = $data->{'cgi'};
+
+ return error($config->{'errors'}->{'no_directory'},upper_path($virtual),{FILE => $virtual}) unless(-d $physical);
 
  if(my $uploaded_file = $cgi->param('uploaded_file'))
  {
@@ -766,12 +769,18 @@ sub exec_chprop($$)
 
  if($users)
  {
+  # System supports user and groups
+
   if(-o $physical)
   {
+   # We own this file
+
    if($mode || $group)
    {
     if($mode)
     {
+     # Change the mode
+
      my $oct_mode = $mode;
      $oct_mode    = "0".$oct_mode if(length($oct_mode) == 3);
      $oct_mode    = oct($oct_mode);
@@ -781,6 +790,8 @@ sub exec_chprop($$)
 
     if($group)
     {
+     # Change the group using the `chgrp` system command
+
      return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_entities($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
      system("chgrp",$group,$physical);
     }
