@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-22-2003
+# Last modified: 09-23-2003
 #
 
 use strict;
@@ -113,20 +113,27 @@ sub exec_show($$$)
 
   foreach my $file(@$files)
   {
-   my @stat      = stat($physical."/".$file);
+   my $phys_path = $physical."/".$file; # Not exactly...
    my $virt_path = $virtual.$file;
+
+   my @stat      = stat($phys_path);
    my $in_use    = $data->{'uselist'}->in_use($virtual.$file);
 
    $output .= " " x (10 - length($stat[7]));
    $output .= $stat[7];
    $output .= "  ";
    $output .= strftime("%d.%m.%Y %H:%M",localtime($stat[9]));
-   $output .= ($in_use) ? " (IN USE) " : " " x 10;
+   $output .= ($in_use) ? " (IN USE) " : (-B $phys_path) ? " (BINARY) " : " " x 10;
    $output .= encode_entities($file);
    $output .= " " x ($max_name_len - length($file))."\t  (";
-   $output .= "<a href=\"$script?command=show&file=$virt_path\">View</a> | ";
 
-   $output .= ($in_use)
+   $output .= (-T $phys_path)
+              ? "<a href=\"$script?command=show&file=$virt_path\">View</a>"
+              : '<span style="color:#C0C0C0">View</span>';
+
+   $output .= " | ";
+
+   $output .= ($in_use || -B $phys_path)
               ? '<span style="color:#C0C0C0">Edit</span>'
               : "<a href=\"$script?command=beginedit&file=$virt_path\">Edit</a>";
 
@@ -356,6 +363,9 @@ END
 
  if($unused)
  {
+  # File is not locked
+  # Allow renaming and deleting the file
+
   $output .= <<END;
 <h2>Move/rename</h2>
 
@@ -374,10 +384,13 @@ END
  }
  else
  {
+  # File is locked
+  # Just display a button for unlocking it
+
   $output .= <<END;
 <h2>Unlock file</h2>
 
-<p>Someone else is currently editing this file. At least, the file is marked so. Maybe, someone who was editing the file, has forgotten to unlock it. In this case (and <b>only</b> in this case) you can unlock the file using this button:</p>
+<p>Someone else is currently editing this file. At least, the file is marked so. Maybe, someone who was editing the file has forgotten to unlock it. In this case (and <b>only</b> in this case) you can unlock the file using this button:</p>
 
 <form action="$script" method="get">
 <input type="hidden" name="file" value="$virtual">
@@ -440,7 +453,7 @@ sub exec_remove($$)
 
  my $dir = upper_path($virtual);
 
- unlink($physical);
+ unlink($physical) or return error("Could not delete file '$virtual'.");
 
  my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
  return \$output;
