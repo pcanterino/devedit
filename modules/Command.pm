@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-11-25
+# Last modified: 2004-11-26
 #
 
 use strict;
@@ -106,6 +106,8 @@ sub exec_show($$)
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
 
+  my $dir_writeable = -w $physical;
+
   my $dirlist = "";
 
   # Create the link to the upper directory
@@ -156,6 +158,7 @@ sub exec_show($$)
 
    my @stat      = stat($phys_path);
    my $in_use    = $uselist->in_use($virtual.$file);
+   my $too_large = $config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'};
 
    my $ftpl = new Template;
    $ftpl->read_file($config->{'templates'}->{'dirlist_file'});
@@ -170,8 +173,8 @@ sub exec_show($$)
    $ftpl->parse_if_block("binary",-B $phys_path);
    $ftpl->parse_if_block("readonly",not -w $phys_path);
 
-   $ftpl->parse_if_block("viewable",-r $phys_path && -T $phys_path && not ($config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'}));
-   $ftpl->parse_if_block("editable",-r $phys_path && -w $phys_path && -T $phys_path && not ($config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'}) && not $in_use);
+   $ftpl->parse_if_block("viewable",-r $phys_path && -T $phys_path && not $too_large);
+   $ftpl->parse_if_block("editable",-r $phys_path && -w $phys_path && -T $phys_path && not $too_large && not $in_use);
 
    $ftpl->parse_if_block("in_use",$in_use);
    $ftpl->parse_if_block("unused",not $in_use);
@@ -189,12 +192,14 @@ sub exec_show($$)
   $tpl->fillin("DIR",$virtual);
   $tpl->fillin("SCRIPT",$script);
   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
+
+  $tpl->parse_if_block("dir_writeable",$dir_writeable);
  }
  else
  {
   # View a file
 
-  return error($config->{'errors'}->{'noview'},$upper_path) unless(-r $physical);
+  return error($config->{'errors'}->{'no_view'},$upper_path) unless(-r $physical);
 
   # Check on binary files
   # We have to do it in this way, or empty files
@@ -258,7 +263,7 @@ sub exec_beginedit($$)
 
  return error($config->{'errors'}->{'editdir'},$dir)                    if(-d $physical);
  return error($config->{'errors'}->{'in_use'}, $dir,{FILE => $virtual}) if($uselist->in_use($virtual));
- return error($config->{'errors'}->{'noedit'}, $dir)                    unless(-r $physical && -w $physical);
+ return error($config->{'errors'}->{'no_edit'},$dir)                    unless(-r $physical && -w $physical);
 
  # Check on binary files
 
@@ -370,7 +375,7 @@ sub exec_endedit($$)
 
  return error($config->{'errors'}->{'text_to_binary'},$dir) unless(-T $physical);
  return error($config->{'errors'}->{'editdir'},$dir)        if(-d $physical);
- return error($config->{'errors'}->{'noedit'}, $dir)        if(-e $physical && !(-r $physical && -w $physical));
+ return error($config->{'errors'}->{'no_edit'},$dir)        if(-e $physical && !(-r $physical && -w $physical));
 
  if(file_save($physical,\$content))
  {
@@ -479,6 +484,7 @@ sub exec_upload($$)
  my $cgi            = $data->{'cgi'};
 
  return error($config->{'errors'}->{'no_directory'},upper_path($virtual),{FILE => $virtual}) unless(-d $physical);
+ return error($config->{'errors'}->{'dir_no_create'},$virtual,{DIR => $virtual});
 
  if(my $uploaded_file = $cgi->param('uploaded_file'))
  {
@@ -541,7 +547,7 @@ sub exec_copy($$)
  my $new_physical   = $data->{'new_physical'};
 
  return error($config->{'errors'}->{'dircopy'},upper_path($virtual)) if(-d $physical);
- return error($config->{'errors'}->{'nocopy'},upper_path($virtual))  unless(-r $physical);
+ return error($config->{'errors'}->{'no_copy'},upper_path($virtual)) unless(-r $physical);
 
  if($new_physical)
  {
@@ -616,6 +622,7 @@ sub exec_rename($$)
  my $new_physical   = $data->{'new_physical'};
 
  return error($config->{'errors'}->{'rename_root'},"/") if($virtual eq "/");
+ return error($config->{'errors'}->{'no_rename'},upper_path($virtual)) unless(-w upper_path($physical));
  return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
  if($new_physical)
@@ -689,7 +696,8 @@ sub exec_remove($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
 
- return error($config->{'errors'}->{'remove_root'},"/") if($virtual eq "/");
+ return error($config->{'errors'}->{'remove_root'},"/")                if($virtual eq "/");
+ return error($config->{'errors'}->{'no_delete'},upper_path($virtual)) unless(-w upper_path($physical));
 
  if(-d $physical)
  {
@@ -778,11 +786,7 @@ sub exec_chprop($$)
     {
      # Change the mode
 
-     my $oct_mode = $mode;
-     $oct_mode    = "0".$oct_mode if(length($oct_mode) == 3);
-     $oct_mode    = oct($oct_mode);
-
-     chmod($oct_mode,$physical);
+     chmod(oct($mode),$physical);
     }
 
     if($group)

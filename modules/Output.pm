@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-11-13
+# Last modified: 2004-11-26
 #
 
 use strict;
@@ -59,7 +59,7 @@ sub error($;$$)
  $tpl->read_file($tpl_error);
 
  $tpl->fillin("ERROR",$message);
- $tpl->fillin("DIR",$path);
+ $tpl->fillin("BACK",$path);
  $tpl->fillin("SCRIPT",encode_entities($ENV{'SCRIPT_NAME'}));
 
  $tpl->parse_if_block("dir",defined $path);

@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-11-13
+# Last modified: 2004-11-26
 #
 
 use strict;
@@ -80,6 +80,14 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
  unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
  {
   abort($config->{'errors'}->{'create_ar'},"/");
+ }
+
+ # Check if we have enough permissions to create a file
+ # in this directory
+
+ unless(-r $new_physical && -w $new_physical && -x $new_physical)
+ {
+  abort($config->{'errors'}->{'dir_no_create'},"/",{DIR => $new_virtual});
  }
 
  # Create the physical and the virtual path
