@@ -26,9 +26,9 @@
 <input type="file" name="uploaded_file" size="35"></p>
 
 <p>Transfer mode (see below):<br>
-<input type="radio" name="ascii" value="1">ASCII <input type="radio" name="ascii" value="0" checked>Binary (default)</p>
+<input type="radio" name="ascii" id="ascii" value="1"><label for="ascii">ASCII</label> <input type="radio" name="ascii" id="binary" value="0" checked><label for="binary">Binary (default)</label></p>
 
-<p><input type="checkbox" name="overwrite">Overwrite file if it already exists</p>
+<p><input type="checkbox" name="overwrite" id="overwrite"><label for="overwrite">Overwrite file if it already exists</label></p>
 
 <p><input type="submit" value="Upload file!"></p>
 </form>
