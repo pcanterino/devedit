@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-20
+# Last modified: 2004-02-23
 #
 
 use strict;
@@ -59,7 +59,7 @@ sub exec_command($$$)
 {
  my ($command,$data,$config) = @_;
 
- return error("Unknown command: $command") unless($dispatch{$command});
+ return error($config->{'err_cmd_unknown'},'/',{COMMAND => $command}) unless($dispatch{$command});
 
  my $output = &{$dispatch{$command}}($data,$config);
  return $output;
@@ -158,7 +158,6 @@ sub exec_show($$)
    $dirlist .= $ftpl->get_template;
   }
 
-
   $tpl->read_file($config->{'tpl_dirlist'});
 
   $tpl->fillin("DIRLIST",$dirlist);
@@ -186,7 +185,8 @@ sub exec_show($$)
   {
    # Text file
 
-   my $content = file_read($physical);
+   my $content =  file_read($physical);
+   $$content   =~ s/\015\012|\012|\015/\n/g;
 
    $tpl->read_file($config->{'tpl_viewfile'});
 
@@ -239,7 +239,8 @@ sub exec_beginedit($$)
   $uselist->add_file($virtual);
   $uselist->save;
 
-  my $content = file_read($physical);
+  my $content =  file_read($physical);
+  $$content   =~ s/\015\012|\012|\015/\n/g;
 
   my $tpl = new Template;
   $tpl->read_file($config->{'tpl_editfile'});
@@ -270,9 +271,8 @@ sub exec_canceledit($$)
 {
  my ($data,$config) = @_;
  my $virtual        = $data->{'virtual'};
- my $uselist        = $data->{'uselist'};
 
- file_unlock($uselist,$virtual);
+ file_unlock($data->{'uselist'},$virtual);
  return devedit_reload({command => 'show', file => upper_path($virtual)});
 }
 
@@ -291,9 +291,7 @@ sub exec_endedit($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $content        = $data->{'cgi'}->param('filecontent');
-
- return error($config->{'err_editdir'},upper_path($virtual)) if(-d $physical);
- return error($config->{'err_noedit'}, upper_path($virtual)) unless(-r $physical && -w $physical);
+ my $uselist        = $data->{'uselist'};
 
  # Normalize newlines
 
@@ -312,18 +310,29 @@ sub exec_endedit($$)
 
   $physical = $data->{'new_physical'};
   $virtual  = $data->{'new_virtual'};
+
+  # Check if someone else is editing the new file
+
+  return error_in_use($virtual) if($uselist->in_use($virtual));
  }
+
+ return error($config->{'err_editdir'},upper_path($virtual)) if(-d $physical);
+ return error($config->{'err_noedit'}, upper_path($virtual)) unless(-r $physical && -w $physical);
 
  if(file_save($physical,\$content))
  {
   # Saving of the file was successful - so unlock it!
 
-  file_unlock($data->{'uselist'},$virtual);
+  file_unlock($uselist,$data->{'virtual'});
+  #                    ^^^^^^^^^^^^^^^^^^
+  # Maybe the user saved the file using another filename...
+  # But we have to unlock the original file!
+
   return devedit_reload({command => 'show', file => upper_path($virtual)});
  }
  else
  {
-  return error($config->{'err_editfailed'},upper_path($virtual),{FILE => $virtual});
+  return error($config->{'err_edit_failed'},upper_path($virtual),{FILE => $virtual});
  }
 }
 
@@ -344,9 +353,9 @@ sub exec_mkfile($$)
  my $dir            = upper_path($new_virtual);
  $new_virtual       = encode_entities($new_virtual);
 
- return error("A file or directory called '$new_virtual' already exists.",$dir) if(-e $new_physical);
+ return error($config->{'err_file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
 
- file_create($new_physical) or return error("Could not create file '$new_virtual'.",$dir);
+ file_create($new_physical) or return error($config->{'err_mkfile_failed'},$dir,{FILE => $new_virtual});
  return devedit_reload({command => 'show', file => $dir});
 }
 
@@ -367,9 +376,9 @@ sub exec_mkdir($$)
  my $dir            = upper_path($new_virtual);
  $new_virtual       = encode_entities($new_virtual);
 
- return error("A file or directory called '$new_virtual' already exists.",$dir) if(-e $new_physical);
+ return error($config->{'err_file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
 
- mkdir($new_physical,0777) or return error("Could not create directory '$new_virtual'.",$dir);
+ mkdir($new_physical,0777) or return error($config->{'err_mkdir_failed'},$dir,{DIR => $new_virtual});
  return devedit_reload({command => 'show', file => $dir});
 }
 
@@ -389,8 +398,7 @@ sub exec_copy($$)
  my $virtual        = encode_entities($data->{'virtual'});
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'err_dircopy'}) if(-d $physical);
- return error($config->{'err_nocopy'})  unless(-r $physical);
+ return error($config->{'err_nocopy'}) unless(-r $physical);
 
  if($new_physical)
  {
@@ -400,9 +408,11 @@ sub exec_copy($$)
 
   if(-e $new_physical)
   {
+   return error($config->{'err_exist_edited'},$dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+
    if(-d $new_physical)
    {
-    return error("A directory called '$new_virtual' already exists. You cannot replace a directory by a file!",$dir);
+    return error($config->{'err_dircopy'});
    }
    elsif(not $data->{'cgi'}->param('confirmed'))
    {
@@ -425,12 +435,7 @@ sub exec_copy($$)
    }
   }
 
-  if($data->{'uselist'}->in_use($data->{'new_virtual'}))
-  {
-   return error("The target file '$new_virtual' already exists and it is edited by someone else.",$dir);
-  }
-
-  copy($physical,$new_physical) or return error("Could not copy '$virtual' to '$new_virtual'",upper_path($virtual));
+  copy($physical,$new_physical) or return error($config->{'err_copy_failed'},upper_path($virtual),{FILE => $virtual, NEW_FILE => $new_virtual});
   return devedit_reload({command => 'show', file => $dir});
  }
  else
@@ -465,9 +470,6 @@ sub exec_rename($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $new_physical   = $data->{'new_physical'};
- my $new_virtual    = $data->{'new_virtual'};
- my $dir            = upper_path($new_virtual);
- $new_virtual       = encode_entities($new_virtual);
 
  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
 
@@ -479,9 +481,11 @@ sub exec_rename($$)
 
   if(-e $new_physical)
   {
+   return error($config->{'err_exist_edited'},$dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+
    if(-d $new_physical)
    {
-    return error("A directory called '$new_virtual' already exists. You cannot replace a directory by a file!",$dir);
+    return error($config->{'err_dircopy'});
    }
    elsif(not $data->{'cgi'}->param('confirmed'))
    {
@@ -504,12 +508,7 @@ sub exec_rename($$)
    }
   }
 
-  if($data->{'uselist'}->in_use($data->{'new_virtual'}))
-  {
-   return error("The target file '$new_virtual' already exists and it is edited by someone else.",$dir);
-  }
-
-  rename($physical,$new_physical) or return error("Could not move/rename '$virtual' to '$new_virtual'",upper_path($virtual));
+  rename($physical,$new_physical) or return error($config->{'err_rename_failed'},upper_path($virtual),{FILE => $virtual, NEW_FILE => $new_virtual});
   return devedit_reload({command => 'show', file => $dir});
  }
  else
@@ -577,7 +576,7 @@ sub exec_remove($$)
 
   if($data->{'cgi'}->param('confirmed'))
   {
-   unlink($physical) or return error($config->{'err_editfailed'},upper_path($virtual),{FILE => $virtual});
+   unlink($physical) or return error($config->{'err_delete_failed'},upper_path($virtual),{FILE => $virtual});
    return devedit_reload({command => 'show', file => upper_path($virtual)});
   }
   else
@@ -612,11 +611,10 @@ sub exec_unlock($$)
 {
  my ($data,$config) = @_;
  my $virtual        = $data->{'virtual'};
- my $uselist        = $data->{'uselist'};
 
  if($data->{'cgi'}->param('confirmed'))
  {
-  file_unlock($uselist,$virtual);
+  file_unlock($data->{'uselist'},$virtual);
   return devedit_reload({command => 'show', file => upper_path($virtual)});
  }
  else

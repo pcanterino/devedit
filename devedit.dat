@@ -35,13 +35,24 @@ tpl_error           = templates/error.htm
 err_binary        = This editor is not able to view/edit binary files.
 err_editdir       = You cannot edit directories.
 err_noedit        = You have not enough permissions to edit this file.
+err_file_in_use   = The file '{FILE}' is currently edited by someone else.
 err_edit_failed   = Saving of file '{FILE}' failed. The file could be damaged, please check its integrity.
 err_delete_failed = Could not delete file '{FILE}'.
+err_dir_read_fail = Reading of directory '{DIR}' failed.
+err_mkfile_failed = Could not create file '{FILE}'.
+err_mkdir_failed  = Could not create directory '{DIR}'.
+err_copy_failed   = Could not copy '{FILE}' to '{NEW_FILE}'.
+err_rename_failed = Could not move/rename '{FILE}' to '{NEW_FILE}'.
 err_above_root    = Accessing files and directories above the virtual root directory is forbidden.
 err_create_ar     = You aren't allowed to create files and directories above the virtual root directory.
-err_dir_read_fail = Reading of directory '{DIR}' failed.
+err_file_exists   = A file or directory called '{FILE}' already exists.
+err_exist_edited  = The target file '{FILE}' already exists and is edited by someone else.
 err_noview        = You have not enough permissions to view this file.
 err_nocopy        = You have not enough permissions to copy this file.
 err_dircopy       = This editor is not able to copy directories.
+err_cmd_unknown   = Unknown command: {COMMAND}
+err_lock_failed   = Locking of '{USELIST}' failed. Try it again in a moment. If the problem persists, ask someone to recreate the lock file ('{LOCK_FILE}').
+err_not_exist     = File/directory does not exist.
+err_dir_not_exist = The directory where you want to create this file or directory doesn't exist.
 
 # End of configuration file

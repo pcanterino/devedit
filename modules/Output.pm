@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-06
+# Last modified: 2004-02-23
 #
 
 use strict;
@@ -32,7 +32,7 @@ my $tpl_error;
 
 # error_template()
 #
-# Set the path to the template file using for error messages
+# Set the path to the template file used for error messages
 # (I'm lazy...)
 #
 # Params: Template file
@@ -84,11 +84,12 @@ sub error($;$$)
 # Print an error message and exit script
 # ^^^^^
 #
-# Params: Error message
+# Params: 1. Error message
+#         2. Hash reference: Template variables (optional)
 
-sub abort($)
+sub abort($;$)
 {
- my $output = error(shift);
+ my $output = error(shift,undef,shift);
  print $$output;
  exit;
 }

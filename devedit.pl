@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-20
+# Last modified: 2004-02-23
 #
 
 use strict;
@@ -58,7 +58,7 @@ if($newfile ne '')
 
  unless(-d clean_path($config->{'fileroot'}."/".$dir))
  {
-  abort("The directory where you want to create this file or directory doesn't exist.");
+  abort($config->{'err_dir_not_exist'});
  }
 
  # ... and check if the path is above the root directory
@@ -86,7 +86,7 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
                                   lockfile => $config->{'lock_file'},
                                   timeout  => $config->{'lock_timeout'});
 
-  $uselist->lock or abort("Locking of $config->{'uselist_file'} failed. Try it again in a moment. If the problem persists, ask someone to recreate the lock file ($config->{'lock_file'}).");
+  $uselist->lock or abort($config->{'err_lock_failed'},{USELIST => $config->{'uselist_file'}, LOCK_FILE => $config->{'lock_file'}});
   $uselist->load;
 
   # Create a hash with data submitted by user
@@ -111,7 +111,7 @@ if(-e clean_path($config->{'fileroot'}."/".$file))
 }
 else
 {
- abort("File/directory does not exist.");
+ abort($config->{'err_not_exist'});
 }
 
 #
