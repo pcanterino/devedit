@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-01
+# Last modified: 2005-01-05
 #
 
 use strict;
@@ -439,10 +439,10 @@ sub exec_mkdir($$)
  my $dir            = upper_path($new_virtual);
  $new_virtual       = encode_entities($new_virtual);
 
- return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
-
  if($new_physical)
  {
+  return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
+
   mkdir($new_physical,0777) or return error($config->{'errors'}->{'mkdir_failed'},$dir,{DIR => $new_virtual});
   return devedit_reload({command => 'show', file => $dir});
  }
