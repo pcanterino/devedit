@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-28
+# Last modified: 2005-03-18
 #
 
 use strict;
@@ -681,7 +681,7 @@ sub exec_rename($$)
    }
   }
 
-  rename($physical,$new_physical) or return error($config->{'errors'}->{'rename_failed'},$dir,{FILE => $virtual, NEW_FILE => $new_virtual});
+  move($physical,$new_physical) or return error($config->{'errors'}->{'rename_failed'},$dir,{FILE => $virtual, NEW_FILE => $new_virtual});
   return devedit_reload({command => 'show', file => $new_dir});
  }
  else
