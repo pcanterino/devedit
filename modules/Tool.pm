@@ -5,7 +5,7 @@ package Tool;
 #
 # Some shared sub routines
 #
-# Author:        Patrick Canterino <patshaping@gmx.net>
+# Author:        Patrick Canterino <patrick@patshaping.de>
 # Last modified: 2004-11-13
 #
 

@@ -6,7 +6,7 @@ package File::Access;
 # Some simple routines for doing things with files
 # with only one command
 #
-# Author:        Patrick Canterino <patshaping@gmx.net>
+# Author:        Patrick Canterino <patrick@patshaping.de>
 # Last modified: 2004-10-26
 #
 

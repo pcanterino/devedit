@@ -5,7 +5,7 @@ package Config::DevEdit;
 #
 # Read and parse the configuration files
 #
-# Author:        Patrick Canterino <patshaping@gmx.net>
+# Author:        Patrick Canterino <patrick@patshaping.de>
 # Last modified: 2004-11-24
 #
 

@@ -5,7 +5,7 @@ package Command;
 #
 # Execute Dev-Editor's commands
 #
-# Author:        Patrick Canterino <patshaping@gmx.net>
+# Author:        Patrick Canterino <patrick@patshaping.de>
 # Last modified: 2004-11-26
 #
 
