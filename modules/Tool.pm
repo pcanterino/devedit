@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-27
+# Last modified: 2003-12-02
 #
 
 use strict;
@@ -76,7 +76,7 @@ sub check_path($$)
 
  my $short_path = substr($path,length($root));
  $short_path =~ tr!\\!\/!;
- $short_path = "/".$short_path unless($short_path =~ m!^/!);
+ $short_path = "/".$short_path if($short_path !~ m!^/!);
  $short_path = $short_path."/" if($short_path !~ m!/$! && -d $path);
 
  return ($path,$short_path);
@@ -149,12 +149,7 @@ sub file_name($)
 
 # upper_path()
 #
-# Truncate a path in one of the following ways:
-#
-# - If the path points to a directory, the upper directory
-#   will be returned.
-# - If the path points to a file, the directory containing
-#   the file will be returned.
+# Cut the last part of a path away
 #
 # Params: Path
 #
