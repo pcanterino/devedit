@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-10-22
+# Last modified: 2004-10-23
 #
 
 use strict;
@@ -222,9 +222,10 @@ sub exec_show($$)
     $tpl->fillin("DIR",upper_path($virtual));
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
     $tpl->fillin("SCRIPT",$script);
-    $tpl->fillin("CONTENT",encode_entities($$content));
 
-    $tpl->parse_if_block("editable",-r $physical && -w $physical && -T $physical && not ($config->{'max_file_size'} && $size > $config->{'max_file_size'}) && $uselist->unused($virtual));
+    $tpl->parse_if_block("editable",-r $physical && -w $physical && -T $physical && not ($config->{'max_file_size'} && $size > $config->{'max_file_size'}) && $uselist->unused($virtual)); 
+
+    $tpl->fillin("CONTENT",encode_entities($$content));
    }
   }
  }
@@ -270,7 +271,7 @@ sub exec_beginedit($$)
    return error($config->{'errors'}->{'file_too_large'},upper_path($virtual),{SIZE => $config->{'max_file_size'}})
   }
   else
-   {
+  {
    # Text file
 
    $uselist->add_file($virtual);
