@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-13
+# Last modified: 2003-12-13
 #
 
 use strict;
@@ -34,7 +34,7 @@ use base qw(Exporter);
 # Generate the head of a HTML document
 # (a text/html HTTP header will also be created)
 #
-# Params: Title and heading
+# Params: Title/heading
 #
 # Return: Head for the HTML document
 
@@ -120,7 +120,8 @@ sub abort($)
 
 # error_in_use()
 #
-# Create a message, that a file is currently in use
+# Create a message, which shows, that a
+# file is currently in use
 #
 # Params: File, which is in use
 #
@@ -130,12 +131,12 @@ sub error_in_use($)
 {
  my $file = shift;
 
- return error("The file '".encode_entities($file)."' is currently editet by someone else.",upper_path($file));
+ return error("The file '".encode_entities($file)."' is currently edited by someone else.",upper_path($file));
 }
 
 # equal_url()
 #
-# Create an "equals"-link and print it out
+# Create an "equals"-link
 #
 # Params: 1. HTTP root
 #         2. Relative path
@@ -157,8 +158,7 @@ sub equal_url($$)
 
 # dir_link()
 #
-# Create the link to the directory of a file and
-# print it out
+# Create the link to the directory of a file
 #
 # Params: File
 #
