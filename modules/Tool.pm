@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-28
+# Last modified: 2004-07-30
 #
 
 use strict;
@@ -206,6 +206,7 @@ sub file_name($)
 #
 # Convert a binary file mode string into a human
 # readable string (rwxr-x-r-x)
+# (also supports SetUID, SetGID and Sticky Bits)
 #
 # Params: Binary file mode string
 #
@@ -213,33 +214,29 @@ sub file_name($)
 
 sub mode_string($)
 {
- my $mode = shift;
-
+ my $mode   = shift;
  my $string = "";
 
-  # Owner
-  $string .= (($mode & 0x0100) ? 'r' : '-') .
-         (($mode & 0x0080) ? 'w' : '-') .
-         (($mode & 0x0040) ?
-           (($mode & 0x0800) ? 's' : 'x' ) :
-           (($mode & 0x0800) ? 'S' : '-')
-         );
+ # User
 
-  # Group
-  $string .= (($mode & 0x0020) ? 'r' : '-') .
-         (($mode & 0x0010) ? 'w' : '-') .
-         (($mode & 0x0008) ?
-           (($mode & 0x0400) ? 's' : 'x') :
-           (($mode & 0x0400) ? 'S' : '-')
-         );
+ $string  = ($mode & 00400) ? "r" : "-";
+ $string .= ($mode & 00200) ? "w" : "-";
+ $string .= ($mode & 00100) ? (($mode & 04000) ? "s" : "x") :
+                               ($mode & 04000) ? "S" : "-";
 
-  # World
-  $string .= (($mode & 0x0004) ? 'r' : '-') .
-         (($mode & 0x0002) ? 'w' : '-') .
-         (($mode & 0x0001) ?
-           (($mode & 0x0200) ? 't' : 'x' ) :
-           (($mode & 0x0200) ? 'T' : '-')
-         );
+ # Group
+
+ $string .= ($mode & 00040) ? "r" : "-";
+ $string .= ($mode & 00020) ? "w" : "-";
+ $string .= ($mode & 00010) ? (($mode & 02000) ? "s" : "x") :
+                               ($mode & 02000) ? "S" : "-";
+
+ # Other
+
+ $string .= ($mode & 00004) ? "r" : "-";
+ $string .= ($mode & 00002) ? "w" : "-";
+ $string .= ($mode & 00001) ? (($mode & 01000) ? "t" : "x") :
+                               ($mode & 01000) ? "T" : "-";
 
  return $string;
 }
