@@ -69,7 +69,7 @@ sub check_path($$)
 
  # Check if the path is above the root directory
 
- return if(index($path,$root) == -1);
+ return if(index($path,$root) != 0);
  return if($first eq $root && $last =~ m!^(/|\\)?\.\.(/|\\)?$!);
 
  # Create short path name
