@@ -24,7 +24,7 @@ use base qw(Exporter);
 #
 # Read the configuration files of Dev-Editor
 #
-# Params: Path to configuration file
+# Params: Path to main configuration file
 #
 # Return: Configuration (Hash Reference)
 
