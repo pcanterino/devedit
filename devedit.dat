@@ -1,0 +1,13 @@
+# This is the configuration file of Dev-Editor
+# All the settings are explained in the ReadMe file
+#
+# Please don't use quotation marks around the keys and values!
+
+fileroot     = D:/Server/WWW/dokumente/devedit-test
+httproot     = /devedit-test/
+timeformat   = %d.%m.%Y %H:%M
+uselist_file = uselist
+lock_file    = uselist.lock
+lock_timeout = 10
+
+# End of configuration file

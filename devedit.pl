@@ -6,34 +6,27 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-12-02
+# Last modified: 2004-01-16
 #
 
 use strict;
 use CGI::Carp qw(fatalsToBrowser);
 
-use vars qw(%config);
-
 use lib 'modules';
 
 use CGI;
-use Command;
+use Config::DevEdit;
 use File::UseList;
+
+use Command;
 use Output;
 use Tool;
 
-### Settings ###
+use constant CONFIGFILE => 'devedit.dat';
 
-%config = (
-           fileroot     => 'D:/Server/WWW/dokumente/devedit-test',
-           httproot     => '/devedit-test/',
-           timeformat   => '%d.%m.%Y %H:%M',
-           uselist_file => 'uselist',
-           lock_file    => 'uselist.lock',
-           lock_timeout => '10'
-          );
+# Read the configuration file
 
-### End Settings ###
+my $config = read_config(CONFIGFILE);
 
 # Read the most important form data
 
@@ -62,14 +55,14 @@ if($newfile ne '')
 
  # ... check if the directory exists ...
 
- unless(-d clean_path($config{'fileroot'}."/".$dir))
+ unless(-d clean_path($config->{'fileroot'}."/".$dir))
  {
   abort("The directory where you want to create this file or directory doesn't exist.");
  }
 
  # ... and check if the path is above the root directory
 
- unless(($new_physical,$new_virtual) = check_path($config{'fileroot'},$dir))
+ unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
  {
   abort("You aren't allowed to create files and directories above the virtual root directory.");
  }
@@ -82,17 +75,17 @@ if($newfile ne '')
 
 # This check has to be performed first, or abs_path() will be confused
 
-if(-e clean_path($config{'fileroot'}."/".$file))
+if(-e clean_path($config->{'fileroot'}."/".$file))
 {
- if(my ($physical,$virtual) = check_path($config{'fileroot'},$file))
+ if(my ($physical,$virtual) = check_path($config->{'fileroot'},$file))
  {
   # Create a File::UseList object and load the list
 
-  my $uselist = new File::UseList(listfile => $config{'uselist_file'},
-                                  lockfile => $config{'lock_file'},
-                                  timeout  => $config{'lock_timeout'});
+  my $uselist = new File::UseList(listfile => $config->{'uselist_file'},
+                                  lockfile => $config->{'lock_file'},
+                                  timeout  => $config->{'lock_timeout'});
 
-  $uselist->lock or abort("Locking of $config{'uselist_file'} failed. Try it again in a moment. If the problem persists, ask someone to recreate the lock file ($config{'lock_file'}).");
+  $uselist->lock or abort("Locking of $config->{'uselist_file'} failed. Try it again in a moment. If the problem persists, ask someone to recreate the lock file ($config->{'lock_file'}).");
   $uselist->load;
 
   # Create a hash with data submitted by user
@@ -105,7 +98,7 @@ if(-e clean_path($config{'fileroot'}."/".$file))
               uselist      => $uselist,
               cgi          => $cgi);
 
-  my $output = exec_command($command,\%data,\%config); # Execute the command...
+  my $output = exec_command($command,\%data,$config); # Execute the command...
 
   $uselist->unlock; # ... unlock the list with files in use...
   print $$output;   # ... and print the output of the command
