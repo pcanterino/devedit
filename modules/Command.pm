@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-22
+# Last modified: 2004-07-27
 #
 
 use strict;
@@ -61,10 +61,16 @@ sub exec_command($$$)
 {
  my ($command,$data,$config) = @_;
 
- return error($config->{'errors'}->{'cmd_unknown'},'/',{COMMAND => $command}) unless($dispatch{$command});
+ foreach(keys(%dispatch))
+ {
+  if(lc($_) eq lc($command))
+  {
+   my $output = &{$dispatch{$_}}($data,$config);
+   return $output;
+  }
+ }
 
- my $output = &{$dispatch{$command}}($data,$config);
- return $output;
+ return error($config->{'errors'}->{'cmd_unknown'},'/',{COMMAND => $command});
 }
 
 # exec_show()
