@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2004-11-29
+# Last modified: 2004-12-03
 #
 
 use strict;
@@ -342,11 +342,10 @@ sub exec_endedit($$)
  my $content        = $data->{'cgi'}->param('filecontent');
  my $uselist        = $data->{'uselist'};
 
- # We already unlock the file at the beginning of the
- # subroutine, because if we have to abort this routine,
- # the file keeps locked.
- # Nobody else will access the file during this routine
- # because of the concept of File::UseList.
+ # We already unlock the file at the beginning of the subroutine,
+ # because if we have to abort this routine, the file keeps locked.
+ # No other user of Dev-Editor will access the file during this
+ # routine because of the concept of File::UseList.
 
  file_unlock($uselist,$virtual);
 
@@ -379,7 +378,7 @@ sub exec_endedit($$)
 
  if(file_save($physical,\$content))
  {
-  # Saving of the file was successful - so unlock it!
+  # Saving of the file was successful!
 
   return devedit_reload({command => 'show', file => $dir});
  }
@@ -544,6 +543,7 @@ sub exec_copy($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = encode_entities($data->{'virtual'});
+ my $dir            = upper_path($virtual);
  my $new_physical   = $data->{'new_physical'};
 
  return error($config->{'errors'}->{'dircopy'},upper_path($virtual)) if(-d $physical);
@@ -552,16 +552,16 @@ sub exec_copy($$)
  if($new_physical)
  {
   my $new_virtual = $data->{'new_virtual'};
-  my $dir         = upper_path($new_virtual);
+  my $new_dir     = upper_path($new_virtual);
   $new_virtual    = encode_entities($new_virtual);
 
   if(-e $new_physical)
   {
-   return error($config->{'errors'}->{'exist_edited'},$dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
 
    if(-d $new_physical)
    {
-    return error($config->{'errors'}->{'dir_replace'},$dir);
+    return error($config->{'errors'}->{'dir_replace'},$new_dir);
    }
    elsif(not $data->{'cgi'}->param('confirmed'))
    {
@@ -571,8 +571,8 @@ sub exec_copy($$)
     $tpl->fillin("FILE",$virtual);
     $tpl->fillin("NEW_FILE",$new_virtual);
     $tpl->fillin("NEW_FILENAME",file_name($new_virtual));
-    $tpl->fillin("NEW_DIR",$dir);
-    $tpl->fillin("DIR",upper_path($virtual));
+    $tpl->fillin("NEW_DIR",$new_dir);
+    $tpl->fillin("DIR",$dir);
 
     $tpl->fillin("COMMAND","copy");
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
@@ -585,8 +585,8 @@ sub exec_copy($$)
    }
   }
 
-  copy($physical,$new_physical) or return error($config->{'errors'}->{'copy_failed'},upper_path($virtual),{FILE => $virtual, NEW_FILE => $new_virtual});
-  return devedit_reload({command => 'show', file => $dir});
+  copy($physical,$new_physical) or return error($config->{'errors'}->{'copy_failed'},$dir,{FILE => $virtual, NEW_FILE => $new_virtual});
+  return devedit_reload({command => 'show', file => $new_dir});
  }
  else
  {
@@ -594,7 +594,7 @@ sub exec_copy($$)
   $tpl->read_file($config->{'templates'}->{'copyfile'});
 
   $tpl->fillin("FILE",$virtual);
-  $tpl->fillin("DIR",upper_path($virtual));
+  $tpl->fillin("DIR",$dir);
   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
   $tpl->fillin("SCRIPT",$script);
 
@@ -619,25 +619,26 @@ sub exec_rename($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
+ my $dir            = upper_path($virtual);
  my $new_physical   = $data->{'new_physical'};
 
  return error($config->{'errors'}->{'rename_root'},"/") if($virtual eq "/");
- return error($config->{'errors'}->{'no_rename'},upper_path($virtual)) unless(-w upper_path($physical));
- return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
+ return error($config->{'errors'}->{'no_rename'},$dir) unless(-w upper_path($physical));
+ return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
  if($new_physical)
  {
   my $new_virtual = $data->{'new_virtual'};
-  my $dir         = upper_path($new_virtual);
+  my $new_dir     = upper_path($new_virtual);
   $new_virtual    = encode_entities($new_virtual);
 
   if(-e $new_physical)
   {
-   return error($config->{'errors'}->{'exist_edited'},$dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
+   return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual}) if($data->{'uselist'}->in_use($data->{'new_virtual'}));
 
    if(-d $new_physical)
    {
-    return error($config->{'errors'}->{'dir_replace'},$dir);
+    return error($config->{'errors'}->{'dir_replace'},$new_dir);
    }
    elsif(not $data->{'cgi'}->param('confirmed'))
    {
@@ -647,8 +648,8 @@ sub exec_rename($$)
     $tpl->fillin("FILE",$virtual);
     $tpl->fillin("NEW_FILE",$new_virtual);
     $tpl->fillin("NEW_FILENAME",file_name($new_virtual));
-    $tpl->fillin("NEW_DIR",$dir);
-    $tpl->fillin("DIR",upper_path($virtual));
+    $tpl->fillin("NEW_DIR",$new_dir);
+    $tpl->fillin("DIR",$dir);
 
     $tpl->fillin("COMMAND","rename");
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
@@ -661,8 +662,8 @@ sub exec_rename($$)
    }
   }
 
-  rename($physical,$new_physical) or return error($config->{'errors'}->{'rename_failed'},upper_path($virtual),{FILE => $virtual, NEW_FILE => $new_virtual});
-  return devedit_reload({command => 'show', file => $dir});
+  rename($physical,$new_physical) or return error($config->{'errors'}->{'rename_failed'},$dir,{FILE => $virtual, NEW_FILE => $new_virtual});
+  return devedit_reload({command => 'show', file => $new_dir});
  }
  else
  {
@@ -670,7 +671,7 @@ sub exec_rename($$)
   $tpl->read_file($config->{'templates'}->{'renamefile'});
 
   $tpl->fillin("FILE",$virtual);
-  $tpl->fillin("DIR",upper_path($virtual));
+  $tpl->fillin("DIR",$dir);
   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
   $tpl->fillin("SCRIPT",$script);
 
@@ -695,9 +696,10 @@ sub exec_remove($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
+ my $dir            = upper_path($virtual);
 
- return error($config->{'errors'}->{'remove_root'},"/")                if($virtual eq "/");
- return error($config->{'errors'}->{'no_delete'},upper_path($virtual)) unless(-w upper_path($physical));
+ return error($config->{'errors'}->{'remove_root'},"/") if($virtual eq "/");
+ return error($config->{'errors'}->{'no_delete'},$dir)  unless(-w upper_path($physical));
 
  if(-d $physical)
  {
@@ -706,7 +708,7 @@ sub exec_remove($$)
   if($data->{'cgi'}->param('confirmed'))
   {
    rmtree($physical);
-   return devedit_reload({command => 'show', file => upper_path($virtual)});
+   return devedit_reload({command => 'show', file => $dir});
   }
   else
   {
@@ -714,7 +716,7 @@ sub exec_remove($$)
    $tpl->read_file($config->{'templates'}->{'confirm_rmdir'});
 
    $tpl->fillin("DIR",$virtual);
-   $tpl->fillin("UPPER_DIR",upper_path($virtual));
+   $tpl->fillin("UPPER_DIR",$dir);
    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
    $tpl->fillin("SCRIPT",$script);
 
@@ -728,12 +730,12 @@ sub exec_remove($$)
  {
   # Remove a file
 
-  return error($config->{'errors'}->{'in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
+  return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
   if($data->{'cgi'}->param('confirmed'))
   {
-   unlink($physical) or return error($config->{'errors'}->{'delete_failed'},upper_path($virtual),{FILE => $virtual});
-   return devedit_reload({command => 'show', file => upper_path($virtual)});
+   unlink($physical) or return error($config->{'errors'}->{'delete_failed'},$dir,{FILE => $virtual});
+   return devedit_reload({command => 'show', file => $dir});
   }
   else
   {
@@ -741,7 +743,7 @@ sub exec_remove($$)
    $tpl->read_file($config->{'templates'}->{'confirm_rmfile'});
 
    $tpl->fillin("FILE",$virtual);
-   $tpl->fillin("DIR",upper_path($virtual));
+   $tpl->fillin("DIR",$dir);
    $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
    $tpl->fillin("SCRIPT",$script);
 
@@ -803,18 +805,16 @@ sub exec_chprop($$)
    {
     # Display the form
 
-    my @stat     = stat($physical);
-
-    my $mode     = $stat[2];
-    my $mode_oct = substr(sprintf("%04o",$mode),-4);
-    my $gid      = $stat[5];
+    my @stat = stat($physical);
+    my $mode = $stat[2];
+    my $gid  = $stat[5];
 
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'chprop'});
 
     # Insert file properties into the template
 
-    $tpl->fillin("MODE_OCTAL",$mode_oct);
+    $tpl->fillin("MODE_OCTAL",substr(sprintf("%04o",$mode),-4));
     $tpl->fillin("MODE_STRING",mode_string($mode));
     $tpl->fillin("GID",$gid);
 
@@ -867,13 +867,14 @@ sub exec_unlock($$)
  my ($data,$config) = @_;
  my $virtual        = $data->{'virtual'};
  my $uselist        = $data->{'uselist'};
+ my $dir            = upper_path($virtual);
 
- return devedit_reload({command => 'show', file => upper_path($virtual)}) if($uselist->unused($virtual));
+ return devedit_reload({command => 'show', file => $dir}) if($uselist->unused($virtual));
 
  if($data->{'cgi'}->param('confirmed'))
  {
   file_unlock($uselist,$virtual);
-  return devedit_reload({command => 'show', file => upper_path($virtual)});
+  return devedit_reload({command => 'show', file => $dir});
  }
  else
  {
@@ -881,7 +882,7 @@ sub exec_unlock($$)
   $tpl->read_file($config->{'templates'}->{'confirm_unlock'});
 
   $tpl->fillin("FILE",$virtual);
-  $tpl->fillin("DIR",upper_path($virtual));
+  $tpl->fillin("DIR",$dir);
   $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
   $tpl->fillin("SCRIPT",$script);
 
