@@ -1,12 +1,12 @@
 #!C:/Programme/Perl/bin/perl.exe -w
 
 #
-# Dev-Editor 2.3
+# Dev-Editor 2.3.1
 #
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-10
+# Last modified: 2005-02-13
 #
 
 use strict;
@@ -23,7 +23,7 @@ use Command;
 use Output;
 use Tool;
 
-$VERSION = '2.3';
+$VERSION = '2.3.1';
 
 # Path to configuration file
 # Change if necessary!
@@ -74,6 +74,13 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
   abort($config->{'errors'}->{'dir_not_exist'},'/');
  }
 
+ # (don't know, why this test has to be done separately)
+
+ if(-l clean_path($config->{'fileroot'}.'/'.$dir))
+ {
+  abort($config->{'errors'}->{'dir_not_exist'},'/');
+ }
+
  # ... and check if the path is above the root directory
 
  unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
@@ -97,7 +104,7 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
 # This check has to be performed first or abs_path() will be confused
 
-if(-e clean_path($config->{'fileroot'}.'/'.$file))
+if(-e clean_path($config->{'fileroot'}.'/'.$file) || -l clean_path($config->{'fileroot'}.'/'.$file))
 {
  if(my ($physical,$virtual) = check_path($config->{'fileroot'},$file))
  {
