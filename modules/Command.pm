@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 09-23-2003
+# Last modified: 09-25-2003
 #
 
 use strict;
@@ -70,7 +70,7 @@ sub exec_show($$$)
 
   $output .= htmlhead("Directory listing of $virtual");
   $output .= equal_url($config->{'httproot'},$virtual);
-  $output .=  "<hr>\n\n<pre>\n";
+  $output .= "<hr>\n\n<pre>\n";
 
   # Create the link to the upper directory
   # (only if we are not in the root directory)
@@ -83,7 +83,7 @@ sub exec_show($$$)
    $output .= "  [SUBDIR]  ";
    $output .= strftime("%d.%m.%Y %H:%M",localtime($stat[9]));
    $output .= " " x 10;
-   $output .= "<a href=\"$script?command=show&file=".upper_path($virtual)."\">../</a>\n";
+   $output .= "<a href=\"$script?command=show&file=".encode_entities(upper_path($virtual))."\">../</a>\n";
   }
 
   # Get the longest file/directory name
@@ -106,7 +106,7 @@ sub exec_show($$$)
    $output .= "[SUBDIR]  ";
    $output .= strftime("%d.%m.%Y %H:%M",localtime($stat[9]));
    $output .= " " x 10;
-   $output .= "<a href=\"$script?command=show&file=$virtual$dir/\">".encode_entities($dir)."/</a>\n";
+   $output .= "<a href=\"$script?command=show&file=".encode_entities($virtual.$dir)."/\">".encode_entities($dir)."/</a>\n";
   }
 
   # Files
@@ -114,7 +114,7 @@ sub exec_show($$$)
   foreach my $file(@$files)
   {
    my $phys_path = $physical."/".$file; # Not exactly...
-   my $virt_path = $virtual.$file;
+   my $virt_path = encode_entities($virtual.$file);
 
    my @stat      = stat($phys_path);
    my $in_use    = $data->{'uselist'}->in_use($virtual.$file);
@@ -123,7 +123,7 @@ sub exec_show($$$)
    $output .= $stat[7];
    $output .= "  ";
    $output .= strftime("%d.%m.%Y %H:%M",localtime($stat[9]));
-   $output .= ($in_use) ? " (IN USE) " : (-B $phys_path) ? " (BINARY) " : " " x 10;
+   $output .= ($in_use) ? " (IN USE) " : (not -T $phys_path) ? " (BINARY) " : " " x 10;
    $output .= encode_entities($file);
    $output .= " " x ($max_name_len - length($file))."\t  (";
 
@@ -133,7 +133,7 @@ sub exec_show($$$)
 
    $output .= " | ";
 
-   $output .= ($in_use || -B $phys_path)
+   $output .= ($in_use || not -T $phys_path)
               ? '<span style="color:#C0C0C0">Edit</span>'
               : "<a href=\"$script?command=beginedit&file=$virt_path\">Edit</a>";
 
@@ -141,6 +141,10 @@ sub exec_show($$$)
   }
 
   $output .= "</pre>\n\n<hr>\n\n";
+
+  # Bottom of directory listing
+  # (Fields for creating files and directories)
+
   $output .= <<END;
 <table border="0">
 <tr>
@@ -162,8 +166,10 @@ END
   # View a file
 
   # Check on binary files
+  # We have to do it in this way, or empty files
+  # will be recognized as binary files
 
-  if(-B $physical)
+  unless(-T $physical)
   {
    # Binary file
 
@@ -173,7 +179,7 @@ END
   {
    # Text file
 
-   $output  = htmlhead("Contents of file $virtual");
+   $output  = htmlhead("Contents of file ".encode_entities($virtual));
    $output .= equal_url($config->{'httproot'},$virtual);
    $output .= dir_link($virtual);
 
@@ -210,7 +216,7 @@ sub exec_beginedit($$)
 
  # Check on binary files
 
- if(-B $physical)
+ unless(-T $physical)
  {
   # Binary file
 
@@ -226,8 +232,11 @@ sub exec_beginedit($$)
   my $dir     = upper_path($virtual);
   my $content = encode_entities(${file_read($physical)});
 
-  my $output = htmlhead("Edit file $virtual");
+  my $output = htmlhead("Edit file ".encode_entities($virtual));
   $output   .= equal_url($config->{'httproot'},$virtual);
+
+  $virtual = encode_entities($virtual);
+
   $output   .= <<END;
 <p><b style="color:#FF0000">Caution!</b> This file is locked for other users while you are editing it. To unlock it, click <i>Save and exit</i> or <i>Exit WITHOUT saving</i>. Please <b>don't</b> click the <i>Reload</i> button in your browser! This will confuse the editor.</p>
 
@@ -295,7 +304,7 @@ sub exec_endedit($$)
  }
  else
  {
-  return error("Saving of file '$virtual' failed'");
+  return error("Saving of file '".encode_entities($virtual)."' failed'");
  }
 }
 
@@ -343,12 +352,17 @@ sub exec_workwithfile($$)
  my $virtual        = $data->{'virtual'};
  my $unused         = $data->{'uselist'}->unused($virtual);
 
- my $output = htmlhead("Work with file $virtual");
+ my $output = htmlhead("Work with file ".encode_entities($virtual));
  $output   .= equal_url($config->{'httproot'},$virtual);
+
+ $virtual   = encode_entities($virtual);
+
  $output   .= dir_link($virtual);
  $output   .= "<p><b>Note:</b> On UNIX systems, filenames are <b>case-sensitive</b>!</p>\n\n";
 
  $output .= "<p>Someone else is currently editing this file. So not all features are available.</p>\n\n" unless($unused);
+
+ # Copying of the file as always allowed
 
  $output .= <<END;
 <hr>
@@ -449,11 +463,12 @@ sub exec_remove($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
 
+ return error("Deleting of directories is currently unsupported") if(-d $physical);
  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
 
  my $dir = upper_path($virtual);
 
- unlink($physical) or return error("Could not delete file '$virtual'.");
+ unlink($physical) or return error("Could not delete file '".encode_entities($virtual)."'.");
 
  my $output = redirect("http://$ENV{'HTTP_HOST'}$script?command=show&file=$dir");
  return \$output;
