@@ -1,13 +1,13 @@
 package File::UseList;
 
 #
-# File::UseList 1.1.1
+# File::UseList 1.2
 #
 # Run a list with files that are currently in use
 # (bases on Filing::UseList by Roland Bluethgen <calocybe@web.de>)
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2003-10-17
+# Last modified: 2003-11-21
 #
 
 use strict;
@@ -95,11 +95,8 @@ sub unlock
 
  if($self->{'locked'})
  {
-  unless(-f $lockfile)
-  {
-   open(LOCKFILE,">",$lockfile) or return;
-   close(LOCKFILE)              or return;
-  }
+  open(LOCKFILE,">$lockfile") or return;
+  close(LOCKFILE)             or return;
 
   $self->{'locked'} = 0;
   return 1;
@@ -126,9 +123,9 @@ sub load
 
  # Read out the file and split the content line-per-line
 
- open(FILE,"<",$file) or return;
+ open(FILE,"<$file") or return;
  read(FILE, my $content, -s $file);
- close(FILE)          or return;
+ close(FILE)         or return;
 
  my @files = split(/\015\012|\012|\015/,$content);
 
@@ -165,11 +162,11 @@ sub save
 
  my $data = (@$files) ? join("\n",@$files) : '';
 
- open(FILE,">",$temp) or return;
- print FILE $data     or do { close(FILE); return };
- close(FILE)          or return;
+ open(FILE,">$temp") or return;
+ print FILE $data    or do { close(FILE); return };
+ close(FILE)         or return;
 
- rename($temp,$file)  or return;
+ rename($temp,$file) or return;
 
  return 1;
 }
@@ -179,6 +176,8 @@ sub save
 # Add a file to the list
 #
 # Params: File
+#
+# Return: Status code (Boolean)
 
 sub add_file($)
 {
@@ -190,6 +189,7 @@ sub add_file($)
  return if($self->in_use($file));
 
  push(@$files,$file);
+ return 1;
 }
 
 # remove_file()
@@ -197,6 +197,8 @@ sub add_file($)
 # Remove a file from the list
 #
 # Params: File
+#
+# Return: Status code (Boolean)
 
 sub remove_file($)
 {
@@ -214,7 +216,7 @@ sub remove_file($)
   if($files->[$x] eq $file)
   {
    splice(@$files,$x,1);
-   last;
+   return 1;
   }
  }
 }
