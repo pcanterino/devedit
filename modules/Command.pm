@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-03-01
+# Last modified: 2004-03-04
 #
 
 use strict;
@@ -221,9 +221,9 @@ sub exec_beginedit($$)
  my $virtual        = $data->{'virtual'};
  my $uselist        = $data->{'uselist'};
 
- return error($config->{'err_editdir'},upper_path($virtual)) if(-d $physical);
- return error_in_use($virtual) if($uselist->in_use($virtual));
- return error($config->{'err_noedit'},upper_path($virtual)) unless(-r $physical && -w $physical);
+ return error($config->{'err_editdir'},upper_path($virtual))                   if(-d $physical);
+ return error($config->{'err_in_use'},upper_path($virtual),{FILE => $virtual}) if($uselist->in_use($virtual));
+ return error($config->{'err_noedit'},upper_path($virtual))                    unless(-r $physical && -w $physical);
 
  # Check on binary files
 
@@ -534,7 +534,7 @@ sub exec_rename($$)
  my $virtual        = $data->{'virtual'};
  my $new_physical   = $data->{'new_physical'};
 
- return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
+ return error($config->{'err_in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
  if($new_physical)
  {
@@ -635,7 +635,7 @@ sub exec_remove($$)
  {
   # Remove a file
 
-  return error_in_use($virtual) if($data->{'uselist'}->in_use($virtual));
+  return error($config->{'err_in_use'},upper_path($virtual),{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
   if($data->{'cgi'}->param('confirmed'))
   {

@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-02-23
+# Last modified: 2004-03-04
 #
 
 use strict;
@@ -92,22 +92,6 @@ sub abort($;$)
  my $output = error(shift,undef,shift);
  print $$output;
  exit;
-}
-
-# error_in_use()
-#
-# Create a message, which shows, that a
-# file is currently in use
-#
-# Params: File, which is in use
-#
-# Return: Formatted message (Scalar Reference)
-
-sub error_in_use($)
-{
- my $file = shift;
-
- return error("The file '".encode_entities($file)."' is currently edited by someone else.",upper_path($file));
 }
 
 # it's true, baby ;-)
