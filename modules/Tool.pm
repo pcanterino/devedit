@@ -149,7 +149,7 @@ sub equal_url($$)
 
 # file_name()
 #
-# Return the last path of a path
+# Return the last part of a path
 #
 # Params: Path
 #
