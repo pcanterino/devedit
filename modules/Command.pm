@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-21
+# Last modified: 2005-01-24
 #
 
 use strict;
@@ -126,7 +126,7 @@ sub exec_show($$)
    $udtpl->read_file($config->{'templates'}->{'dirlist_up'});
 
    $udtpl->fillin('UPPER_DIR',$upper_path);
-   $udtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},localtime($stat[9]))));
+   $udtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
 
    $dirlist .= $udtpl->get_template;
   }
