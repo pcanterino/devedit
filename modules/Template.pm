@@ -1,12 +1,12 @@
 package Template;
 
 #
-# Template (Version 1.4)
+# Template (Version 1.4a)
 #
 # Klasse zum Parsen von Templates
 #
 # Autor:            Patrick Canterino <patrick@patshaping.de>
-# Letzte Aenderung: 5.2.2005
+# Letzte Aenderung: 21.3.2005
 #
 
 use strict;
@@ -180,7 +180,18 @@ sub parse_if_block($$)
   my $start    = index($template,'{IF '.$name.'}');
   my $tpl_tmp  = substr($template,$start);
   my @splitted = split(/\{ENDIF\}/,$tpl_tmp);
-  push(@splitted,'') if(substr($template,-7) eq '{ENDIF}');
+
+  # Wenn sich am Ende der Zeichenkette {ENDIF} befinden, werden diese
+  # von split() ignoriert, was zu einem Verschachtelungsfehler fuehrt
+  # Die fehlenden leeren Zeichenketten muessen von Hand eingefuegt werden
+
+  my $x = 1;
+
+  while(substr($tpl_tmp,-7*$x,7) eq '{ENDIF}')
+  {
+   push(@splitted,'');
+   $x++;
+  }
 
   my $block = ''; # Kompletter bedingter Block
   my $ifs   = 0;  # IF-Zaehler (wird fuer jedes IF erhoeht und fuer jedes ENDIF erniedrigt)
