@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patshaping@gmx.net>
-# Last modified: 2004-07-11
+# Last modified: 2004-07-20
 #
 
 use strict;
@@ -81,6 +81,7 @@ sub exec_show($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
+ my $uselist        = $data->{'uselist'};
 
  my $tpl = new Template;
 
@@ -138,7 +139,7 @@ sub exec_show($$)
    my $virt_path = encode_entities($virtual.$file);
 
    my @stat      = stat($phys_path);
-   my $in_use    = $data->{'uselist'}->in_use($virtual.$file);
+   my $in_use    = $uselist->in_use($virtual.$file);
 
    my $ftpl = new Template;
    $ftpl->read_file($config->{'templates'}->{'dirlist_file'});
@@ -192,7 +193,9 @@ sub exec_show($$)
   {
    # Text file
 
-   if($config->{'max_file_size'} && (stat($physical))[7] > $config->{'max_file_size'})
+   my $size = (stat($physical))[7];
+
+   if($config->{'max_file_size'} && $size > $config->{'max_file_size'})
    {
     return error($config->{'errors'}->{'file_too_large'},upper_path($virtual),{SIZE => $config->{'max_file_size'}})
    }
@@ -208,6 +211,8 @@ sub exec_show($$)
     $tpl->fillin("URL",equal_url($config->{'httproot'},$virtual));
     $tpl->fillin("SCRIPT",$script);
     $tpl->fillin("CONTENT",encode_entities($$content));
+
+    $tpl->parse_if_block("editable",-r $physical && -w $physical && -T $physical && not ($config->{'max_file_size'} && $size > $config->{'max_file_size'}) && $uselist->unused($virtual));
    }
   }
  }
