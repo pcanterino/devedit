@@ -181,7 +181,7 @@ sub exec_show($$)
    $ftpl->parse_if_block('link',-l $phys_path);
    $ftpl->parse_if_block('no_link',not -l $phys_path);
    $ftpl->parse_if_block('not_readable',not -r $phys_path);
-   $ftpl->parse_if_block('binary_file',-B $phys_path);
+   $ftpl->parse_if_block('binary',-B $phys_path);
    $ftpl->parse_if_block('readonly',not -w $phys_path);
 
    $ftpl->parse_if_block('viewable',(-r $phys_path && -T $phys_path && not $too_large) || -l $phys_path);
