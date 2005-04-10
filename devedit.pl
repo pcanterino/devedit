@@ -119,7 +119,7 @@ if(-e $temp_path || -l $temp_path)
 
   my $output = exec_command($command,\%data,$config);
 
-  # ... and show the output of the command
+  # ... and show its output
 
   print $$output;
  }

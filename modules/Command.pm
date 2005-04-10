@@ -294,7 +294,7 @@ sub exec_beginedit($$)
 
  # ... and show the editing form
 
- my $content =  file_read($physical,1);
+ my $content =  file_read($physical);
  my $md5sum  =  md5_hex($$content);
  $$content   =~ s/\015\012|\012|\015/\n/g;
 
@@ -362,7 +362,6 @@ sub exec_endedit($$)
 
   sysopen(FILE,$physical,O_RDWR | O_CREAT) or return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual});
   file_lock(*FILE,LOCK_EX)                 or do { close(FILE); return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual}) };
-  binmode(FILE);
 
   my $md5 = new Digest::MD5;
   $md5->addfile(*FILE);
@@ -527,8 +526,8 @@ sub exec_upload($$)
    return error($config->{'errors'}->{'file_exists'},$virtual,{FILE => $file_virt})    unless($cgi->param('overwrite'));
   }
 
-  my $ascii     = $cgi->param('ascii');
-  my $handle    = $cgi->upload('uploaded_file');
+  my $ascii  = $cgi->param('ascii');
+  my $handle = $cgi->upload('uploaded_file');
 
   return error($config->{'errors'}->{'invalid_upload'},$virtual) unless($handle);
 
@@ -648,8 +647,8 @@ sub exec_rename($$)
  my $dir            = upper_path($virtual);
  my $new_physical   = $data->{'new_physical'};
 
- return error($config->{'errors'}->{'rename_root'},'/')                if($virtual eq '/');
- return error($config->{'errors'}->{'no_rename'},$dir)                 unless(-w upper_path($physical));
+ return error($config->{'errors'}->{'rename_root'},'/') if($virtual eq '/');
+ return error($config->{'errors'}->{'no_rename'},$dir)  unless(-w upper_path($physical));
 
  if($new_physical)
  {
