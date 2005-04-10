@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-19
+# Last modified: 2005-04-09
 #
 
 use strict;
@@ -17,7 +17,6 @@ use lib 'modules';
 
 use CGI;
 use Config::DevEdit;
-use File::UseList;
 
 use Command;
 use Output;
@@ -28,7 +27,7 @@ $VERSION = '2.3.1';
 # Path to configuration file
 # Change if necessary!
 
-use constant CONFIGFILE => 'devedit.dat';
+use constant CONFIGFILE => 'devedit.conf';
 
 # Read the configuration file
 
@@ -80,7 +79,7 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
  unless(($new_physical,$new_virtual) = check_path($config->{'fileroot'},$dir))
  {
-  abort($config->{'errors'}->{'create_ar'},'/');
+  abort($config->{'errors'}->{'create_above_root'},'/');
  }
 
  # Check if we have enough permissions to create a file
@@ -105,15 +104,6 @@ if(-e $temp_path || -l $temp_path)
 {
  if(my ($physical,$virtual) = check_path($config->{'fileroot'},$file))
  {
-  # Create a File::UseList object and load the list
-
-  my $uselist = new File::UseList(listfile => $config->{'uselist_file'},
-                                  lockfile => $config->{'lock_file'},
-                                  timeout  => $config->{'lock_timeout'});
-
-  $uselist->lock or abort($config->{'errors'}->{'lock_failed'},undef,{USELIST => $uselist->{'listfile'}, LOCK_FILE => $uselist->{'lockfile'}});
-  $uselist->load;
-
   # Create a hash containing data submitted by the user
   # (some other necessary information are also included)
 
@@ -121,7 +111,6 @@ if(-e $temp_path || -l $temp_path)
               virtual      => $virtual,
               new_physical => $new_physical,
               new_virtual  => $new_virtual,
-              uselist      => $uselist,
               cgi          => $cgi,
               version      => $VERSION,
               configfile   => CONFIGFILE);
@@ -130,9 +119,8 @@ if(-e $temp_path || -l $temp_path)
 
   my $output = exec_command($command,\%data,$config);
 
-  # ... unlock the list with files in use and show the output of the command
+  # ... and show the output of the command
 
-  $uselist->unlock or abort($config->{'errors'}->{'unlock_failed'},undef,{USELIST => $uselist->{'listfile'}, LOCK_FILE => $uselist->{'lockfile'}});
   print $$output;
  }
  else
@@ -142,7 +130,7 @@ if(-e $temp_path || -l $temp_path)
 }
 else
 {
- abort($config->{'errors'}->{'not_exist'},'/');
+ abort($config->{'errors'}->{'not_found'},'/');
 }
 
 #

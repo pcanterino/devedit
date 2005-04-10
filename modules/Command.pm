@@ -6,17 +6,19 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-03-18
+# Last modified: 2005-04-09
 #
 
 use strict;
 
 use vars qw(@EXPORT);
 
+use Fcntl;
 use File::Access;
 use File::Copy;
 use File::Path;
 
+use Digest::MD5 qw(md5_hex);
 use POSIX qw(strftime);
 use Tool;
 
@@ -27,12 +29,13 @@ use HTML::Entities;
 use Output;
 use Template;
 
+use Data::Dumper;
+
 my $script = encode_entities($ENV{'SCRIPT_NAME'});
 my $users  = eval('getpwuid(0)') && eval('getgrgid(0)');
 
 my %dispatch = ('show'       => \&exec_show,
                 'beginedit'  => \&exec_beginedit,
-                'canceledit' => \&exec_canceledit,
                 'endedit'    => \&exec_endedit,
                 'mkdir'      => \&exec_mkdir,
                 'mkfile'     => \&exec_mkfile,
@@ -41,7 +44,6 @@ my %dispatch = ('show'       => \&exec_show,
                 'rename'     => \&exec_rename,
                 'remove'     => \&exec_remove,
                 'chprop'     => \&exec_chprop,
-                'unlock'     => \&exec_unlock,
                 'about'      => \&exec_about
                );
 
@@ -74,7 +76,7 @@ sub exec_command($$$)
   }
  }
 
- return error($config->{'errors'}->{'cmd_unknown'},'/',{COMMAND => encode_entities($command)});
+ return error($config->{'errors'}->{'command_unknown'},'/',{COMMAND => encode_entities($command)});
 }
 
 # exec_show()
@@ -92,7 +94,6 @@ sub exec_show($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $upper_path     = encode_entities(upper_path($virtual));
- my $uselist        = $data->{'uselist'};
 
  my $tpl = new Template;
 
@@ -166,7 +167,6 @@ sub exec_show($$)
    my $virt_path = encode_entities($virtual.$file);
 
    my @stat      = lstat($phys_path);
-   my $in_use    = $uselist->in_use($virtual.$file);
    my $too_large = $config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'};
 
    my $ftpl = new Template;
@@ -181,14 +181,11 @@ sub exec_show($$)
    $ftpl->parse_if_block('link',-l $phys_path);
    $ftpl->parse_if_block('no_link',not -l $phys_path);
    $ftpl->parse_if_block('not_readable',not -r $phys_path);
-   $ftpl->parse_if_block('binary',-B $phys_path);
+   $ftpl->parse_if_block('binary_file',-B $phys_path);
    $ftpl->parse_if_block('readonly',not -w $phys_path);
 
    $ftpl->parse_if_block('viewable',(-r $phys_path && -T $phys_path && not $too_large) || -l $phys_path);
-   $ftpl->parse_if_block('editable',((-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not $in_use) && not -l $phys_path);
-
-   $ftpl->parse_if_block('in_use',$in_use);
-   $ftpl->parse_if_block('unused',not $in_use);
+   $ftpl->parse_if_block('editable',(-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not -l $phys_path);
 
    $ftpl->parse_if_block('too_large',$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
 
@@ -237,7 +234,7 @@ sub exec_show($$)
   # We have to do it in this way or empty files will be recognized
   # as binary files
 
-  return error($config->{'errors'}->{'binary'},$upper_path) unless(-T $physical);
+  return error($config->{'errors'}->{'binary_file'},$upper_path) unless(-T $physical);
 
   # Is the file too large?
 
@@ -255,7 +252,7 @@ sub exec_show($$)
   $tpl->fillin('URL',encode_entities(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
 
-  $tpl->parse_if_block('editable',-w $physical && $uselist->unused($virtual));
+  $tpl->parse_if_block('editable',-w $physical);
 
   $tpl->fillin('CONTENT',encode_entities($$content));
  }
@@ -281,29 +278,24 @@ sub exec_beginedit($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $dir            = upper_path($virtual);
- my $uselist        = $data->{'uselist'};
+ my $cgi            = $data->{'cgi'};
 
- return error($config->{'errors'}->{'link_edit'},$dir)                    if(-l $physical);
- return error($config->{'errors'}->{'dir_edit'}, $dir)                    if(-d $physical);
- return error($config->{'errors'}->{'in_use'},   $dir,{FILE => $virtual}) if($uselist->in_use($virtual));
- return error($config->{'errors'}->{'no_edit'},  $dir)                    unless(-r $physical && -w $physical);
+ return error($config->{'errors'}->{'link_edit'},$dir) if(-l $physical);
+ return error($config->{'errors'}->{'dir_edit'}, $dir) if(-d $physical);
+ return error($config->{'errors'}->{'no_edit'},  $dir) unless(-r $physical && -w $physical);
 
  # Check on binary files
 
- return error($config->{'errors'}->{'binary'},$dir) unless(-T $physical);
+ return error($config->{'errors'}->{'binary_file'},$dir) unless(-T $physical);
 
  # Is the file too large?
 
  return error($config->{'errors'}->{'file_too_large'},$dir,{SIZE => $config->{'max_file_size'}}) if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'});
 
- # Lock the file...
-
- ($uselist->add_file($virtual) and
-  $uselist->save)              or return error($config->{'errors'}->{'ul_add_failed'},$dir,{FILE => $virtual});
-
  # ... and show the editing form
 
- my $content =  file_read($physical);
+ my $content =  file_read($physical,1);
+ my $md5sum  =  md5_hex($$content);
  $$content   =~ s/\015\012|\012|\015/\n/g;
 
  my $tpl = new Template;
@@ -313,32 +305,15 @@ sub exec_beginedit($$)
  $tpl->fillin('DIR',$dir);
  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
  $tpl->fillin('SCRIPT',$script);
+ $tpl->fillin('MD5SUM',$md5sum);
  $tpl->fillin('CONTENT',encode_entities($$content));
+
+ $tpl->parse_if_block('error',0);
 
  my $output = header(-type => 'text/html');
  $output   .= $tpl->get_template;
 
  return \$output;
-}
-
-# exec_canceledit()
-#
-# Abort file editing
-#
-# Params: 1. Reference to user input hash
-#         2. Reference to config hash
-#
-# Return: Output of the command (Scalar Reference)
-
-sub exec_canceledit($$)
-{
- my ($data,$config) = @_;
- my $virtual        = $data->{'virtual'};
- my $dir            = upper_path($virtual);
- my $uselist        = $data->{'uselist'};
-
- file_unlock($uselist,$virtual) or return error($config->{'errors'}->{'ul_rm_failed'},$dir,{FILE => $virtual, USELIST => $uselist->{'listfile'}});
- return devedit_reload({command => 'show', file => $dir});
 }
 
 # exec_endedit()
@@ -356,54 +331,87 @@ sub exec_endedit($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $dir            = upper_path($virtual);
- my $content        = $data->{'cgi'}->param('filecontent');
- my $uselist        = $data->{'uselist'};
+ my $cgi            = $data->{'cgi'};
+ my $content        = $cgi->param('filecontent');
+ my $md5sum         = $cgi->param('md5sum');
+ my $output;
 
- # We already unlock the file at the beginning of the subroutine,
- # because if we have to abort this routine, the file keeps locked.
- # No other user of Dev-Editor will access the file during this
- # routine because of the concept of File::UseList.
-
- file_unlock($uselist,$virtual) or return error($config->{'errors'}->{'ul_rm_failed'},$dir,{FILE => $virtual, USELIST => $uselist->{'listfile'}});
-
- # Normalize newlines
-
- $content =~ s/\015\012|\012|\015/\n/g;
-
- if($data->{'cgi'}->param('encode_iso'))
+ if($content && $md5sum)
  {
-  # Encode all ISO-8859-1 special chars
+  # Normalize newlines
 
-  $content = encode_entities($content,"\200-\377");
+  $content =~ s/\015\012|\012|\015/\n/g;
+
+  if($cgi->param('saveas') && $data->{'new_physical'} ne '' && $data->{'new_virtual'} ne '')
+  {
+   # Create the new filename
+
+   $physical = $data->{'new_physical'};
+   $virtual  = $data->{'new_virtual'};
+  }
+
+  return error($config->{'errors'}->{'link_edit'},$dir)      if(-l $physical);
+  return error($config->{'errors'}->{'dir_edit'},$dir)       if(-d $physical);
+  return error($config->{'errors'}->{'no_edit'},$dir)        if(-e $physical && !(-r $physical && -w $physical));
+  return error($config->{'errors'}->{'text_to_binary'},$dir) if(-e $physical && not -T $physical);
+
+  # For technical reasons, we can't use file_save() for
+  # saving the file...
+
+  local *FILE;
+
+  sysopen(FILE,$physical,O_RDWR | O_CREAT) or return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual});
+  file_lock(FILE,LOCK_EX)                  or do { close(FILE); return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual}) };
+  binmode(FILE);
+
+  my $md5 = new Digest::MD5;
+  $md5->addfile(*FILE);
+
+  my $md5_new = $md5->hexdigest;
+
+  if($md5_new ne $md5sum && not $cgi->param('saveas'))
+  {
+   # The file changed meanwhile
+
+   my $tpl = new Template;
+   $tpl->read_file($config->{'templates'}->{'editfile'});
+
+   $tpl->fillin('ERROR',$config->{'errors'}->{'edit_file_changed'});
+
+   $tpl->fillin('FILE',$virtual);
+   $tpl->fillin('DIR',$dir);
+   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin('SCRIPT',$script);
+   $tpl->fillin('MD5SUM',$md5_new);
+   $tpl->fillin('CONTENT',encode_entities($content));
+
+   $tpl->parse_if_block('error',1);
+
+   my $data = header(-type => 'text/html');
+   $data   .= $tpl->get_template;
+
+   $output  = \$data;
+  }
+  else
+  {
+   # The file was saved successfully!
+
+   seek(FILE,0,0);
+   truncate(FILE,0);
+
+   print FILE $content;
+
+   $output = devedit_reload({command => 'show', file => $dir});
+
+   #return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual});
+  }
+
+  close(FILE);
+
+  return $output;
  }
 
- if($data->{'cgi'}->param('saveas') && $data->{'new_physical'} ne '' && $data->{'new_virtual'} ne '')
- {
-  # Create the new filename
-
-  $physical = $data->{'new_physical'};
-  $virtual  = $data->{'new_virtual'};
-
-  # Check if someone else is editing the new file
-
-  return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($uselist->in_use($virtual));
- }
-
- return error($config->{'errors'}->{'link_edit'},$dir)      if(-l $physical);
- return error($config->{'errors'}->{'dir_edit'},$dir)       if(-d $physical);
- return error($config->{'errors'}->{'no_edit'},$dir)        if(-e $physical && !(-r $physical && -w $physical));
- return error($config->{'errors'}->{'text_to_binary'},$dir) if(-e $physical && not -T $physical);
-
- if(file_save($physical,\$content))
- {
-  # The file was successfully saved!
-
-  return devedit_reload({command => 'show', file => $dir});
- }
- else
- {
-  return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual});
- }
+ return devedit_reload({command => 'beginedit', file => $virtual});
 }
 
 # exec_mkfile()
@@ -511,8 +519,6 @@ sub exec_upload($$)
   my $file_phys = $physical.'/'.$filename;
   my $file_virt = $virtual.$filename;
 
-  return error($config->{'errors'}->{'in_use'},$virtual,{FILE => $file_virt}) if($data->{'uselist'}->in_use($file_virt));
-
   if(-e $file_phys)
   {
    return error($config->{'errors'}->{'link_replace'},$virtual)                        if(-l $file_phys);
@@ -579,7 +585,6 @@ sub exec_copy($$)
 
   if(-e $new_physical)
   {
-   return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual})   if($data->{'uselist'}->in_use($data->{'new_virtual'}));
    return error($config->{'errors'}->{'link_replace'},$new_dir)                          if(-l $new_physical);
    return error($config->{'errors'}->{'dir_replace'},$new_dir)                           if(-d $new_physical);
    return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual}) unless(-w $new_physical);
@@ -645,7 +650,6 @@ sub exec_rename($$)
 
  return error($config->{'errors'}->{'rename_root'},'/')                if($virtual eq '/');
  return error($config->{'errors'}->{'no_rename'},$dir)                 unless(-w upper_path($physical));
- return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
 
  if($new_physical)
  {
@@ -655,7 +659,6 @@ sub exec_rename($$)
 
   if(-e $new_physical)
   {
-   return error($config->{'errors'}->{'exist_edited'},$new_dir,{FILE => $new_virtual})   if($data->{'uselist'}->in_use($data->{'new_virtual'}));
    return error($config->{'errors'}->{'dir_replace'},$new_dir)                           if(-d $new_physical && not -l $new_physical);
    return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual}) unless(-w $new_physical);
 
@@ -749,8 +752,6 @@ sub exec_remove($$)
  {
   # Remove a file
 
-  return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual}) if($data->{'uselist'}->in_use($virtual));
-
   if($data->{'cgi'}->param('confirmed'))
   {
    unlink($physical) or return error($config->{'errors'}->{'delete_failed'},$dir,{FILE => $virtual});
@@ -794,7 +795,6 @@ sub exec_chprop($$)
  return error($config->{'errors'}->{'chprop_root'},'/')                   if($virtual eq '/');
  return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual}) unless(-o $physical);
  return error($config->{'errors'}->{'chprop_link'},$dir)                  if(-l $physical);
- return error($config->{'errors'}->{'in_use'},$dir,{FILE => $virtual})    if($data->{'uselist'}->in_use($virtual));
 
  my $cgi   = $data->{'cgi'};
  my $mode  = $cgi->param('mode');
@@ -847,47 +847,6 @@ sub exec_chprop($$)
   }
 
   # Insert other information
-
-  $tpl->fillin('FILE',$virtual);
-  $tpl->fillin('DIR',$dir);
-  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
-  $tpl->fillin('SCRIPT',$script);
-
-  my $output = header(-type => 'text/html');
-  $output   .= $tpl->get_template;
-
-  return \$output;
- }
-}
-
-# exec_unlock()
-#
-# Remove a file from the list of used files and
-# return to directory view
-#
-# Params: 1. Reference to user input hash
-#         2. Reference to config hash
-#
-# Return: Output of the command (Scalar Reference)
-
-sub exec_unlock($$)
-{
- my ($data,$config) = @_;
- my $virtual        = $data->{'virtual'};
- my $uselist        = $data->{'uselist'};
- my $dir            = upper_path($virtual);
-
- return devedit_reload({command => 'show', file => $dir}) if($uselist->unused($virtual));
-
- if($data->{'cgi'}->param('confirmed'))
- {
-  file_unlock($uselist,$virtual) or return error($config->{'errors'}->{'ul_rm_failed'},$dir,{FILE => $virtual, USELIST => $uselist->{'listfile'}});
-  return devedit_reload({command => 'show', file => $dir});
- }
- else
- {
-  my $tpl = new Template;
-  $tpl->read_file($config->{'templates'}->{'confirm_unlock'});
 
   $tpl->fillin('FILE',$virtual);
   $tpl->fillin('DIR',$dir);

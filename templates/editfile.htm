@@ -12,31 +12,20 @@
 
 <p>(equals <a href="{URL}" target="_blank">{URL}</a>)</p>
 
-<p><b style="color:#FF0000">Caution!</b> This file is locked for other users while you are editing it. To unlock it, click <i>Save and exit</i> or <i>Exit WITHOUT saving</i>. Please <b>don't</b> click the <i>Reload</i> button in your browser! This will confuse the editor.</p>
+<p><a href="{SCRIPT}?command=show&amp;file={DIR}">Back to {DIR}</a></p>{IF error}
 
-<form action="{SCRIPT}" method="get">
-<input type="hidden" name="command" value="canceledit">
-<input type="hidden" name="file" value="{FILE}">
-<p><input type="submit" value="Exit WITHOUT saving"></p>
-</form>
+<p>{ERROR}</p>{ENDIF}
 
 <form action="{SCRIPT}" method="post">
 <input type="hidden" name="command" value="endedit">
 <input type="hidden" name="file" value="{FILE}">
+<input type="hidden" name="md5sum" value="{MD5SUM}">
 
-<table width="100%" border="1">
-<tr>
-<td width="50%" align="center">
-<input type="checkbox" name="saveas" id="newfile" value="1"><label for="newfile"> Save as new file: {DIR} </label><input type="text" name="newfile" value="" onchange="if(this.form.newfile.value != '') this.form.saveas.checked = true; else this.form.saveas.checked = false;"></td>
-<td width="50%" align="center"><input type="checkbox" name="encode_iso" id="encode_iso" value="1"><label for="encode_iso"> Encode ISO-8859-1 special chars</label></td>
-</tr>
-<tr>
-<td align="center"><input type="reset" value="Reset form"></td>
-<td align="center"><input type="submit" value="Save and exit"></td>
-</tr>
-</table>
+<p><textarea name="filecontent" rows="25" cols="120">{CONTENT}</textarea></p>
 
-<textarea name="filecontent" rows="25" cols="120">{CONTENT}</textarea>
+<p><input type="checkbox" name="saveas" id="newfile" value="1"><label for="newfile"> Save as new file: {DIR} </label><input type="text" name="newfile" value="" onchange="if(this.form.newfile.value != '') this.form.saveas.checked = true; else this.form.saveas.checked = false;"></p>
+
+<p><input type="submit" value="Save file"> <input type="reset" value="Discard changes"></p>
 </form>
 
 </body>

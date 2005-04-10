@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-16
+# Last modified: 2005-04-09
 #
 
 use strict;
@@ -27,7 +27,6 @@ use base qw(Exporter);
              file_lock
              file_read
              file_save
-             file_unlock
 
              LOCK_SH
              LOCK_EX
@@ -179,25 +178,6 @@ sub file_save($$;$)
  print FILE $$content                             or do { close(FILE); return };
 
  close(FILE)                                      or return;
-
- return 1;
-}
-
-# file_unlock()
-#
-# Remove a file from the list of files in use
-#
-# Params: 1. File::UseList object
-#         2. File to remove
-#
-# Return: Status code (Boolean)
-
-sub file_unlock($$)
-{
- my ($uselist,$file) = @_;
-
- $uselist->remove_file($file) or return;
- $uselist->save               or return;
 
  return 1;
 }
