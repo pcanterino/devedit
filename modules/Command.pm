@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-09
+# Last modified: 2005-04-10
 #
 
 use strict;
@@ -336,7 +336,7 @@ sub exec_endedit($$)
  my $md5sum         = $cgi->param('md5sum');
  my $output;
 
- if($content && $md5sum)
+ if(defined $content && $md5sum)
  {
   # Normalize newlines
 
@@ -361,7 +361,7 @@ sub exec_endedit($$)
   local *FILE;
 
   sysopen(FILE,$physical,O_RDWR | O_CREAT) or return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual});
-  file_lock(FILE,LOCK_EX)                  or do { close(FILE); return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual}) };
+  file_lock(*FILE,LOCK_EX)                 or do { close(FILE); return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual}) };
   binmode(FILE);
 
   my $md5 = new Digest::MD5;
