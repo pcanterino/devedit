@@ -29,8 +29,6 @@ use HTML::Entities;
 use Output;
 use Template;
 
-use Data::Dumper;
-
 my $script = encode_entities($ENV{'SCRIPT_NAME'});
 my $users  = eval('getpwuid(0)') && eval('getgrgid(0)');
 
@@ -104,7 +102,7 @@ sub exec_show($$)
   return error($config->{'errors'}->{'no_dir_access'},$upper_path) unless(-r $physical && -x $physical);
 
   my $direntries = dir_read($physical);
-  return error($config->{'dir_read_fail'},$upper_path,{DIR => encode_entities($virtual)}) unless($direntries);
+  return error($config->{'errors'}->{'dir_read_fail'},$upper_path,{DIR => encode_entities($virtual)}) unless($direntries);
 
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
@@ -394,8 +392,6 @@ sub exec_endedit($$)
   }
   else
   {
-   # The file was saved successfully!
-
    if($md5data ne $md5file)
    {
     seek(FILE,0,0);
@@ -405,8 +401,6 @@ sub exec_endedit($$)
    }
 
    $output = devedit_reload({command => 'show', file => $dir});
-
-   #return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual});
   }
 
   close(FILE);
