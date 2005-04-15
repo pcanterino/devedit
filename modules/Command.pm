@@ -107,8 +107,6 @@ sub exec_show($$)
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
 
-  my $dir_writeable = -w $physical;
-
   my $dirlist = '';
 
   my $filter1 = $data->{'cgi'}->param('filter') || '*';        # The real wildcard
@@ -203,7 +201,7 @@ sub exec_show($$)
   $tpl->fillin('FILTER_URL',escape($filter2));
 
   $tpl->parse_if_block('empty',$dirlist eq '');
-  $tpl->parse_if_block('dir_writeable',$dir_writeable);
+  $tpl->parse_if_block('dir_writeable',-w $physical);
   $tpl->parse_if_block('filter',$filter2);
   $tpl->parse_if_block('gmt',$config->{'use_gmt'});
  }
