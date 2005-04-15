@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-10
+# Last modified: 2005-04-15
 #
 
 use strict;
@@ -366,9 +366,10 @@ sub exec_endedit($$)
   my $md5 = new Digest::MD5;
   $md5->addfile(*FILE);
 
-  my $md5_new = $md5->hexdigest;
+  my $md5file = $md5->hexdigest;
+  my $md5data = md5_hex($content);
 
-  if($md5_new ne $md5sum && not $cgi->param('saveas'))
+  if($md5file ne $md5sum && $md5data ne $md5file && not $cgi->param('saveas'))
   {
    # The file changed meanwhile
 
@@ -381,7 +382,7 @@ sub exec_endedit($$)
    $tpl->fillin('DIR',$dir);
    $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
    $tpl->fillin('SCRIPT',$script);
-   $tpl->fillin('MD5SUM',$md5_new);
+   $tpl->fillin('MD5SUM',$md5file);
    $tpl->fillin('CONTENT',encode_entities($content));
 
    $tpl->parse_if_block('error',1);
@@ -395,10 +396,13 @@ sub exec_endedit($$)
   {
    # The file was saved successfully!
 
-   seek(FILE,0,0);
-   truncate(FILE,0);
+   if($md5data ne $md5file)
+   {
+    seek(FILE,0,0);
+    truncate(FILE,0);
 
-   print FILE $content;
+    print FILE $content;
+   }
 
    $output = devedit_reload({command => 'show', file => $dir});
 
