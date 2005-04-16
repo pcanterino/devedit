@@ -1,12 +1,12 @@
 #!C:/Programme/Perl/bin/perl.exe -w
 
 #
-# Dev-Editor 2.3.1
+# Dev-Editor 3.0 (CVS)
 #
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-09
+# Last modified: 2005-04-16
 #
 
 use strict;
@@ -22,7 +22,7 @@ use Command;
 use Output;
 use Tool;
 
-$VERSION = '2.3.1';
+$VERSION = '3.0 (CVS)';
 
 # Path to configuration file
 # Change if necessary!
