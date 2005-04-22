@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-21
+# Last modified: 2005-04-22
 #
 
 use strict;
@@ -36,6 +36,8 @@ use base qw(Exporter);
              multi_string
              upper_path);
 
+use Carp qw(croak);
+
 # check_path()
 #
 # Check if a virtual path is above a virtual root directory
@@ -63,6 +65,7 @@ sub check_path($$)
  # We extract the last part of the path and create the absolute path
 
  my $first = upper_path($path);
+ $first    = File::Spec->canonpath($first);
  $first    = abs_path($first);
 
  my $last  = file_name($path);
