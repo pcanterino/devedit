@@ -6,16 +6,18 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-06
+# Last modified: 2005-04-22
 #
 
 use strict;
 
 use vars qw(@EXPORT);
 
-use CGI qw(header);
-use HTML::Entities;
+use CGI qw(header
+           escape);
+
 use Template;
+use Tool;
 
 ### Export ###
 
@@ -45,6 +47,7 @@ sub error_template($)
 #
 # Params: 1. Error message
 #         2. Display a link to this path at the bottom of the page (optional)
+#            Please use the unencoded form of the string!
 #         3. Hash reference: Template variables (optional)
 #
 # Return: Formatted message (Scalar Reference)
@@ -58,7 +61,8 @@ sub error($;$$)
 
  $tpl->fillin('ERROR',$message);
  $tpl->fillin('BACK',$path);
- $tpl->fillin('SCRIPT',encode_entities($ENV{'SCRIPT_NAME'}));
+ $tpl->fillin('BACK_URL',escape($path));
+ $tpl->fillin('SCRIPT',encode_html($ENV{'SCRIPT_NAME'}));
 
  $tpl->parse_if_block('dir',defined $path);
 

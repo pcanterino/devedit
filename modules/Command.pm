@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-15
+# Last modified: 2005-04-22
 #
 
 use strict;
@@ -25,11 +25,10 @@ use Tool;
 use CGI qw(header
            escape);
 
-use HTML::Entities;
 use Output;
 use Template;
 
-my $script = encode_entities($ENV{'SCRIPT_NAME'});
+my $script = encode_html($ENV{'SCRIPT_NAME'});
 my $users  = eval('getpwuid(0)') && eval('getgrgid(0)');
 
 my %dispatch = ('show'       => \&exec_show,
@@ -74,7 +73,7 @@ sub exec_command($$$)
   }
  }
 
- return error($config->{'errors'}->{'command_unknown'},'/',{COMMAND => encode_entities($command)});
+ return error($config->{'errors'}->{'command_unknown'},'/',{COMMAND => encode_html($command)});
 }
 
 # exec_show()
@@ -91,7 +90,7 @@ sub exec_show($$)
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
- my $upper_path     = encode_entities(upper_path($virtual));
+ my $upper_path     = multi_string(upper_path($virtual));
 
  my $tpl = new Template;
 
@@ -99,10 +98,10 @@ sub exec_show($$)
  {
   # Create directory listing
 
-  return error($config->{'errors'}->{'no_dir_access'},$upper_path) unless(-r $physical && -x $physical);
+  return error($config->{'errors'}->{'no_dir_access'},$upper_path->{'normal'}) unless(-r $physical && -x $physical);
 
   my $direntries = dir_read($physical);
-  return error($config->{'errors'}->{'dir_read_fail'},$upper_path,{DIR => encode_entities($virtual)}) unless($direntries);
+  return error($config->{'errors'}->{'dir_read_fail'},$upper_path->{'normal'},{DIR => encode_html($virtual)}) unless($direntries);
 
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
@@ -122,8 +121,9 @@ sub exec_show($$)
    my $udtpl = new Template;
    $udtpl->read_file($config->{'templates'}->{'dirlist_up'});
 
-   $udtpl->fillin('UPPER_DIR',$upper_path);
-   $udtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
+   $udtpl->fillin('UPPER_DIR',$upper_path->{'html'});
+   $udtpl->fillin('UPPER_DIR_URL',$upper_path->{'url'});
+   $udtpl->fillin('DATE',encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
 
    $dirlist .= $udtpl->get_template;
   }
@@ -135,17 +135,18 @@ sub exec_show($$)
    next unless(dos_wildcard_match($filter1,$dir));
 
    my $phys_path = $physical.'/'.$dir;
-   my $virt_path = encode_entities($virtual.$dir.'/');
+   my $virt_path = multi_string($virtual.$dir.'/');
 
    my @stat      = stat($phys_path);
 
    my $dtpl = new Template;
    $dtpl->read_file($config->{'templates'}->{'dirlist_dir'});
 
-   $dtpl->fillin('DIR',$virt_path);
-   $dtpl->fillin('DIR_NAME',encode_entities($dir));
-   $dtpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
-   $dtpl->fillin('URL',equal_url(encode_entities($config->{'httproot'}),$virt_path));
+   $dtpl->fillin('DIR',$virt_path->{'html'});
+   $dtpl->fillin('DIR_URL',$virt_path->{'url'});
+   $dtpl->fillin('DIR_NAME',encode_html($dir));
+   $dtpl->fillin('DATE',encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
+   $dtpl->fillin('URL',equal_url(encode_html($config->{'httproot'}),$virt_path->{'html'}));
 
    $dtpl->parse_if_block('readable',-r $phys_path && -x $phys_path);
    $dtpl->parse_if_block('users',$users && -o $phys_path);
@@ -160,7 +161,7 @@ sub exec_show($$)
    next unless(dos_wildcard_match($filter1,$file));
 
    my $phys_path = $physical.'/'.$file;
-   my $virt_path = encode_entities($virtual.$file);
+   my $virt_path = multi_string($virtual.$file);
 
    my @stat      = lstat($phys_path);
    my $too_large = $config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'};
@@ -168,11 +169,13 @@ sub exec_show($$)
    my $ftpl = new Template;
    $ftpl->read_file($config->{'templates'}->{'dirlist_file'});
 
-   $ftpl->fillin('FILE',$virt_path);
-   $ftpl->fillin('FILE_NAME',encode_entities($file));
+   $ftpl->fillin('FILE',$virt_path->{'html'});
+   $ftpl->fillin('FILE_URL',$virt_path->{'url'});
+   $ftpl->fillin('FILE_NAME',encode_html($file));
+   $ftpl->fillin('FILE_URL',$virt_path->{'url'});
    $ftpl->fillin('SIZE',$stat[7]);
-   $ftpl->fillin('DATE',encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
-   $ftpl->fillin('URL',equal_url(encode_entities($config->{'httproot'}),$virt_path));
+   $ftpl->fillin('DATE',encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
+   $ftpl->fillin('URL',equal_url(encode_html($config->{'httproot'}),$virt_path->{'html'}));
 
    $ftpl->parse_if_block('link',-l $phys_path);
    $ftpl->parse_if_block('no_link',not -l $phys_path);
@@ -193,11 +196,12 @@ sub exec_show($$)
   $tpl->read_file($config->{'templates'}->{'dirlist'});
 
   $tpl->fillin('DIRLIST',$dirlist);
-  $tpl->fillin('DIR',encode_entities($virtual));
+  $tpl->fillin('DIR',encode_html($virtual));
+  $tpl->fillin('DIR_URL',escape($virtual));
   $tpl->fillin('SCRIPT',$script);
-  $tpl->fillin('URL',encode_entities(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
 
-  $tpl->fillin('FILTER',encode_entities($filter2));
+  $tpl->fillin('FILTER',encode_html($filter2));
   $tpl->fillin('FILTER_URL',escape($filter2));
 
   $tpl->parse_if_block('empty',$dirlist eq '');
@@ -213,28 +217,29 @@ sub exec_show($$)
 
   $tpl->read_file($config->{'templates'}->{'viewlink'});
 
-  $tpl->fillin('FILE',encode_entities($virtual));
-  $tpl->fillin('DIR',$upper_path);
-  $tpl->fillin('URL',encode_entities(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('FILE',encode_html($virtual));
+  $tpl->fillin('DIR',$upper_path->{'html'});
+  $tpl->fillin('DIR_URL',$upper_path->{'url'});
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
 
-  $tpl->fillin('LINK_TARGET',encode_entities($link_target));
+  $tpl->fillin('LINK_TARGET',encode_html($link_target));
  }
  else
  {
   # View a file
 
-  return error($config->{'errors'}->{'no_view'},$upper_path) unless(-r $physical);
+  return error($config->{'errors'}->{'no_view'},$upper_path->{'normal'}) unless(-r $physical);
 
   # Check on binary files
   # We have to do it in this way or empty files will be recognized
   # as binary files
 
-  return error($config->{'errors'}->{'binary_file'},$upper_path) unless(-T $physical);
+  return error($config->{'errors'}->{'binary_file'},$upper_path->{'normal'}) unless(-T $physical);
 
   # Is the file too large?
 
-  return error($config->{'errors'}->{'file_too_large'},$upper_path,{SIZE => $config->{'max_file_size'}}) if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'});
+  return error($config->{'errors'}->{'file_too_large'},$upper_path->{'normal'},{SIZE => $config->{'max_file_size'}}) if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'});
 
   # View the file
 
@@ -243,14 +248,16 @@ sub exec_show($$)
 
   $tpl->read_file($config->{'templates'}->{'viewfile'});
 
-  $tpl->fillin('FILE',encode_entities($virtual));
-  $tpl->fillin('DIR',$upper_path);
-  $tpl->fillin('URL',encode_entities(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('FILE',encode_html($virtual));
+  $tpl->fillin('FILE_URL',escape($virtual));
+  $tpl->fillin('DIR',$upper_path->{'html'});
+  $tpl->fillin('DIR_URL',$upper_path->{'url'});
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
 
   $tpl->parse_if_block('editable',-w $physical);
 
-  $tpl->fillin('CONTENT',encode_entities($$content));
+  $tpl->fillin('CONTENT',encode_html($$content));
  }
 
  my $output  = header(-type => 'text/html');
@@ -297,12 +304,14 @@ sub exec_beginedit($$)
  my $tpl = new Template;
  $tpl->read_file($config->{'templates'}->{'editfile'});
 
- $tpl->fillin('FILE',$virtual);
- $tpl->fillin('DIR',$dir);
+ $tpl->fillin('FILE',encode_html($virtual));
+ $tpl->fillin('FILE_URL',escape($virtual));
+ $tpl->fillin('DIR',encode_html($dir));
+ $tpl->fillin('DIR_URL',escape($dir));
  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
  $tpl->fillin('SCRIPT',$script);
  $tpl->fillin('MD5SUM',$md5sum);
- $tpl->fillin('CONTENT',encode_entities($$content));
+ $tpl->fillin('CONTENT',encode_html($$content));
 
  $tpl->parse_if_block('error',0);
 
@@ -374,12 +383,14 @@ sub exec_endedit($$)
 
    $tpl->fillin('ERROR',$config->{'errors'}->{'edit_file_changed'});
 
-   $tpl->fillin('FILE',$virtual);
-   $tpl->fillin('DIR',$dir);
+   $tpl->fillin('FILE',encode_html($virtual));
+   $tpl->fillin('FILE_URL',escape($virtual));
+   $tpl->fillin('DIR',encode_html($dir));
+   $tpl->fillin('DIR_URL',escape($dir));
    $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
    $tpl->fillin('SCRIPT',$script);
    $tpl->fillin('MD5SUM',$md5file);
-   $tpl->fillin('CONTENT',encode_entities($content));
+   $tpl->fillin('CONTENT',encode_html($content));
 
    $tpl->parse_if_block('error',1);
 
@@ -424,7 +435,7 @@ sub exec_mkfile($$)
  my $new_physical   = $data->{'new_physical'};
  my $new_virtual    = $data->{'new_virtual'};
  my $dir            = upper_path($new_virtual);
- $new_virtual       = encode_entities($new_virtual);
+ $new_virtual       = encode_html($new_virtual);
 
  if($new_physical)
  {
@@ -463,7 +474,7 @@ sub exec_mkdir($$)
  my $new_physical   = $data->{'new_physical'};
  my $new_virtual    = $data->{'new_virtual'};
  my $dir            = upper_path($new_virtual);
- $new_virtual       = encode_entities($new_virtual);
+ $new_virtual       = encode_html($new_virtual);
 
  if($new_physical)
  {
@@ -512,7 +523,7 @@ sub exec_upload($$)
 
   my $filename  = file_name($uploaded_file);
   my $file_phys = $physical.'/'.$filename;
-  my $file_virt = $virtual.$filename;
+  my $file_virt = encode_html($virtual.$filename);
 
   if(-e $file_phys)
   {
@@ -540,7 +551,8 @@ sub exec_upload($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'upload'});
 
-  $tpl->fillin('DIR',$virtual);
+  $tpl->fillin('DIR',encode_html($virtual));
+  $tpl->fillin('DIR_URL',escape($virtual));
   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
   $tpl->fillin('SCRIPT',$script);
 
@@ -564,7 +576,7 @@ sub exec_copy($$)
 {
  my ($data,$config) = @_;
  my $physical       = $data->{'physical'};
- my $virtual        = encode_entities($data->{'virtual'});
+ my $virtual        = $data->{'virtual'};
  my $dir            = upper_path($virtual);
  my $new_physical   = $data->{'new_physical'};
 
@@ -574,26 +586,26 @@ sub exec_copy($$)
 
  if($new_physical)
  {
-  my $new_virtual = $data->{'new_virtual'};
-  my $new_dir     = upper_path($new_virtual);
-  $new_virtual    = encode_entities($new_virtual);
+  my $new_virtual = multi_string($data->{'new_virtual'});
+  my $new_dir     = upper_path($new_virtual->{'normal'});
 
   if(-e $new_physical)
   {
-   return error($config->{'errors'}->{'link_replace'},$new_dir)                          if(-l $new_physical);
-   return error($config->{'errors'}->{'dir_replace'},$new_dir)                           if(-d $new_physical);
-   return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual}) unless(-w $new_physical);
+   return error($config->{'errors'}->{'link_replace'},$new_dir)                                    if(-l $new_physical);
+   return error($config->{'errors'}->{'dir_replace'},$new_dir)                                     if(-d $new_physical);
+   return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual->{'html'}}) unless(-w $new_physical);
 
    if(not $data->{'cgi'}->param('confirmed'))
    {
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
-    $tpl->fillin('FILE',$virtual);
-    $tpl->fillin('NEW_FILE',$new_virtual);
-    $tpl->fillin('NEW_FILENAME',file_name($new_virtual));
-    $tpl->fillin('NEW_DIR',$new_dir);
-    $tpl->fillin('DIR',$dir);
+    $tpl->fillin('FILE',encode_html($virtual));
+    $tpl->fillin('NEW_FILE',$new_virtual->{'html'});
+    $tpl->fillin('NEW_FILENAME',file_name($new_virtual->{'html'}));
+    $tpl->fillin('NEW_DIR',encode_html($new_dir));
+    $tpl->fillin('DIR',encode_html($dir));
+    $tpl->fillin('DIR_URL',escape($dir));
 
     $tpl->fillin('COMMAND','copy');
     $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
@@ -614,9 +626,10 @@ sub exec_copy($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'copyfile'});
 
-  $tpl->fillin('FILE',$virtual);
-  $tpl->fillin('DIR',$dir);
-  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('FILE',encode_html($virtual));
+  $tpl->fillin('DIR',encode_html($dir));
+  $tpl->fillin('DIR_URL',escape($dir));
+  $tpl->fillin('URL',equal_url($config->{'httproot'},encode_html($virtual)));
   $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
@@ -650,7 +663,7 @@ sub exec_rename($$)
  {
   my $new_virtual = $data->{'new_virtual'};
   my $new_dir     = upper_path($new_virtual);
-  $new_virtual    = encode_entities($new_virtual);
+  $new_virtual    = encode_html($new_virtual);
 
   if(-e $new_physical)
   {
@@ -688,7 +701,8 @@ sub exec_rename($$)
   $tpl->read_file($config->{'templates'}->{'renamefile'});
 
   $tpl->fillin('FILE',$virtual);
-  $tpl->fillin('DIR',$dir);
+  $tpl->fillin('DIR',encode_html($dir));
+  $tpl->fillin('DIR_URL',escape($dir));
   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
   $tpl->fillin('SCRIPT',$script);
 
@@ -732,9 +746,11 @@ sub exec_remove($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmdir'});
 
-   $tpl->fillin('DIR',$virtual);
-   $tpl->fillin('UPPER_DIR',$dir);
-   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin('DIR',encode_html($virtual));
+   $tpl->fillin('DIR_URL',escape($virtual));
+   $tpl->fillin('UPPER_DIR',encode_html($dir));
+   $tpl->fillin('UPPER_DIR_URL',escape($dir));
+   $tpl->fillin('URL',equal_url($config->{'httproot'},encode_html($virtual)));
    $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
@@ -757,9 +773,11 @@ sub exec_remove($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmfile'});
 
-   $tpl->fillin('FILE',$virtual);
-   $tpl->fillin('DIR',$dir);
-   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin('FILE',encode_html($virtual));
+   $tpl->fillin('FILE_URL',escape($virtual));
+   $tpl->fillin('DIR',encode_html($dir));
+   $tpl->fillin('DIR_URL',escape($dir));
+   $tpl->fillin('URL',equal_url($config->{'httproot'},encode_html($virtual)));
    $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
@@ -786,9 +804,9 @@ sub exec_chprop($$)
  my $virtual        = $data->{'virtual'};
  my $dir            = upper_path($virtual);
 
- return error($config->{'errors'}->{'no_users'},$dir,{FILE => $virtual})  unless($users);
+ return error($config->{'errors'}->{'no_users'},$dir,{FILE => encode_html($virtual)})  unless($users);
  return error($config->{'errors'}->{'chprop_root'},'/')                   if($virtual eq '/');
- return error($config->{'errors'}->{'not_owner'},$dir,{FILE => $virtual}) unless(-o $physical);
+ return error($config->{'errors'}->{'not_owner'},$dir,{FILE => encode_html($virtual)}) unless(-o $physical);
  return error($config->{'errors'}->{'chprop_link'},$dir)                  if(-l $physical);
 
  my $cgi   = $data->{'cgi'};
@@ -808,7 +826,7 @@ sub exec_chprop($$)
   {
    # Change the group using the `chgrp` system command
 
-   return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_entities($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
+   return error($config->{'errors'}->{'invalid_group'},$dir,{GROUP => encode_html($group)}) unless($group =~ /^[a-z0-9_]+[a-z0-9_-]*$/i);
    system('chgrp',$group,$physical);
   }
 
@@ -833,7 +851,7 @@ sub exec_chprop($$)
 
   if(my $group = getgrgid($gid))
   {
-   $tpl->fillin('GROUP',encode_entities($group));
+   $tpl->fillin('GROUP',encode_html($group));
    $tpl->parse_if_block('group_detected',1);
   }
   else
@@ -843,9 +861,11 @@ sub exec_chprop($$)
 
   # Insert other information
 
-  $tpl->fillin('FILE',$virtual);
-  $tpl->fillin('DIR',$dir);
-  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('FILE',encode_html($virtual));
+  $tpl->fillin('FILE_URL',escape($virtual));
+  $tpl->fillin('DIR',encode_html($dir));
+  $tpl->fillin('DIR_URL',escape($dir));
+  $tpl->fillin('URL',equal_url($config->{'httproot'},encode_html($virtual)));
   $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
@@ -879,21 +899,21 @@ sub exec_about($$)
 
  # Some path information
 
- $tpl->fillin('SCRIPT_PHYS',encode_entities($ENV{'SCRIPT_FILENAME'}));
- $tpl->fillin('CONFIG_PATH',encode_entities($data->{'configfile'}));
- $tpl->fillin('FILE_ROOT',  encode_entities($config->{'fileroot'}));
- $tpl->fillin('HTTP_ROOT',  encode_entities($config->{'httproot'}));
+ $tpl->fillin('SCRIPT_PHYS',encode_html($ENV{'SCRIPT_FILENAME'}));
+ $tpl->fillin('CONFIG_PATH',encode_html($data->{'configfile'}));
+ $tpl->fillin('FILE_ROOT',  encode_html($config->{'fileroot'}));
+ $tpl->fillin('HTTP_ROOT',  encode_html($config->{'httproot'}));
 
  # Perl
 
- $tpl->fillin('PERL_PROG',encode_entities($^X));
+ $tpl->fillin('PERL_PROG',encode_html($^X));
  $tpl->fillin('PERL_VER', sprintf('%vd',$^V));
 
  # Information about the server
 
- $tpl->fillin('HTTPD',encode_entities($ENV{'SERVER_SOFTWARE'}));
- $tpl->fillin('OS',   encode_entities($^O));
- $tpl->fillin('TIME', encode_entities(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime : localtime)));
+ $tpl->fillin('HTTPD',encode_html($ENV{'SERVER_SOFTWARE'}));
+ $tpl->fillin('OS',   encode_html($^O));
+ $tpl->fillin('TIME', encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime : localtime)));
 
  $tpl->parse_if_block('gmt',$config->{'use_gmt'});
 
@@ -923,7 +943,7 @@ sub exec_about($$)
 
   if(my $user = getpwuid($uid))
   {
-   $tpl->fillin('USER',encode_entities($user));
+   $tpl->fillin('USER',encode_html($user));
    $tpl->parse_if_block('user_detected',1);
   }
   else
@@ -933,7 +953,7 @@ sub exec_about($$)
 
   if(my $group = getgrgid($gid))
   {
-   $tpl->fillin('GROUP',encode_entities($group));
+   $tpl->fillin('GROUP',encode_html($group));
    $tpl->parse_if_block('group_detected',1);
   }
   else

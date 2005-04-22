@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-02-13
+# Last modified: 2005-04-21
 #
 
 use strict;
@@ -29,9 +29,11 @@ use base qw(Exporter);
              clean_path
              devedit_reload
              dos_wildcard_match
+             encode_html
              equal_url
              file_name
              mode_string
+             multi_string
              upper_path);
 
 # check_path()
@@ -189,6 +191,26 @@ sub dos_wildcard_match($$)
  return ($string =~ m|^$pattern$|is);
 }
 
+# encode_html()
+#
+# Encode HTML control characters (< > " &)
+#
+# Params: String to encode
+#
+# Return: Encoded string
+
+sub encode_html($)
+{
+ my $string = shift;
+
+ $string =~ s/&/&amp;/g;
+ $string =~ s/</&lt;/g;
+ $string =~ s/>/&gt;/g;
+ $string =~ s/"/&quot;/g;
+
+ return $string;
+}
+
 # equal_url()
 #
 # Create URL equal to a file or directory
@@ -268,6 +290,29 @@ sub mode_string($)
                                ($mode & 01000) ? 'T' : '-';
 
  return $string;
+}
+
+# multi_string()
+#
+# Create a Hash Reference containing three forms of a string
+#
+# Params: String
+#
+# Return: Hash Reference:
+#         normal => Normal form of the string
+#         html   => HTML encoded form (see encode_html())
+#         url    => URL encoded form
+
+sub multi_string($)
+{
+ my $string = shift;
+ my %multi;
+
+ $multi{'normal'} = $string;
+ $multi{'html'}   = encode_html($string);
+ $multi{'url'}    = escape($string);
+
+ return \%multi;
 }
 
 # upper_path()
