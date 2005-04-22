@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-16
+# Last modified: 2005-04-22
 #
 
 use strict;
@@ -87,7 +87,7 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
  unless(-r $new_physical && -w $new_physical && -x $new_physical)
  {
-  abort($config->{'errors'}->{'dir_no_create'},'/',{DIR => $new_virtual});
+  abort($config->{'errors'}->{'dir_no_create'},'/',{DIR => encode_html($new_virtual)});
  }
 
  # Create the physical and the virtual path

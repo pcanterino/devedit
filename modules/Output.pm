@@ -60,7 +60,7 @@ sub error($;$$)
  $tpl->read_file($tpl_error);
 
  $tpl->fillin('ERROR',$message);
- $tpl->fillin('BACK',$path);
+ $tpl->fillin('BACK',encode_html($path));
  $tpl->fillin('BACK_URL',escape($path));
  $tpl->fillin('SCRIPT',encode_html($ENV{'SCRIPT_NAME'}));
 

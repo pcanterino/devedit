@@ -281,7 +281,6 @@ sub exec_beginedit($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $dir            = upper_path($virtual);
- my $cgi            = $data->{'cgi'};
 
  return error($config->{'errors'}->{'link_edit'},$dir) if(-l $physical);
  return error($config->{'errors'}->{'dir_edit'}, $dir) if(-d $physical);
@@ -618,7 +617,7 @@ sub exec_copy($$)
    }
   }
 
-  copy($physical,$new_physical) or return error($config->{'errors'}->{'copy_failed'},$dir,{FILE => $virtual, NEW_FILE => $new_virtual});
+  copy($physical,$new_physical) or return error($config->{'errors'}->{'copy_failed'},$dir,{FILE => encode_html($virtual), NEW_FILE => $new_virtual->{'html'}});
   return devedit_reload({command => 'show', file => $new_dir});
  }
  else
