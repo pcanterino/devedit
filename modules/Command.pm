@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-03-18
+# Last modified: 2005-04-22
 #
 
 use strict;
@@ -103,7 +103,7 @@ sub exec_show($$)
   return error($config->{'errors'}->{'no_dir_access'},$upper_path) unless(-r $physical && -x $physical);
 
   my $direntries = dir_read($physical);
-  return error($config->{'dir_read_fail'},$upper_path,{DIR => encode_entities($virtual)}) unless($direntries);
+  return error($config->{'errors'}->{'dir_read_fail'},$upper_path,{DIR => encode_entities($virtual)}) unless($direntries);
 
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
