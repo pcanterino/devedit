@@ -36,8 +36,6 @@ use base qw(Exporter);
              multi_string
              upper_path);
 
-use Carp qw(croak);
-
 # check_path()
 #
 # Check if a virtual path is above a virtual root directory
