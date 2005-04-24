@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-22
+# Last modified: 2005-04-23
 #
 
 use strict;
@@ -294,7 +294,7 @@ sub exec_beginedit($$)
 
  return error($config->{'errors'}->{'file_too_large'},$dir,{SIZE => $config->{'max_file_size'}}) if($config->{'max_file_size'} && -s $physical > $config->{'max_file_size'});
 
- # ... and show the editing form
+ # Show the editing form
 
  my $content =  file_read($physical);
  my $md5sum  =  md5_hex($$content);
@@ -804,9 +804,9 @@ sub exec_chprop($$)
  my $dir            = upper_path($virtual);
 
  return error($config->{'errors'}->{'no_users'},$dir,{FILE => encode_html($virtual)})  unless($users);
- return error($config->{'errors'}->{'chprop_root'},'/')                   if($virtual eq '/');
+ return error($config->{'errors'}->{'chprop_root'},'/')                                if($virtual eq '/');
  return error($config->{'errors'}->{'not_owner'},$dir,{FILE => encode_html($virtual)}) unless(-o $physical);
- return error($config->{'errors'}->{'chprop_link'},$dir)                  if(-l $physical);
+ return error($config->{'errors'}->{'chprop_link'},$dir)                               if(-l $physical);
 
  my $cgi   = $data->{'cgi'};
  my $mode  = $cgi->param('mode');
