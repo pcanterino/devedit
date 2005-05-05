@@ -178,9 +178,9 @@ sub exec_show($$)
    $ftpl->fillin('URL',equal_url(encode_html($config->{'httproot'}),$virt_path->{'html'}));
 
    $ftpl->parse_if_block('link',-l $phys_path);
-   $ftpl->parse_if_block('not_readable',not -r $phys_path);
+   $ftpl->parse_if_block('readable',-r $phys_path);
+   $ftpl->parse_if_block('writeable',-w $phys_path);
    $ftpl->parse_if_block('binary',-B $phys_path);
-   $ftpl->parse_if_block('readonly',not -w $phys_path);
 
    $ftpl->parse_if_block('viewable',(-r $phys_path && -T $phys_path && not $too_large) || -l $phys_path);
    $ftpl->parse_if_block('editable',(-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not -l $phys_path);
