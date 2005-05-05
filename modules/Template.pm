@@ -1,12 +1,12 @@
 package Template;
 
 #
-# Template (Version 1.4a)
+# Template (Version 1.5)
 #
 # Klasse zum Parsen von Templates
 #
 # Autor:            Patrick Canterino <patrick@patshaping.de>
-# Letzte Aenderung: 21.3.2005
+# Letzte Aenderung: 4.5.2005
 #
 
 use strict;
@@ -160,13 +160,15 @@ sub to_file($)
 # Parameter: 1. Name des IF-Blocks (das, was nach dem IF steht)
 #            2. Status-Code (true  => Inhalt anzeigen
 #                            false => Inhalt nicht anzeigen
+#            3. true  => Verneinten Block nicht parsen
+#               false => Verneinten Block parsen (Standard)
 #
 # Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
 
-sub parse_if_block($$)
+sub parse_if_block($$;$)
 {
- my ($self,$name,$state) = @_;
- my $template            = $self->get_template;
+ my ($self,$name,$state,$no_negate) = @_;
+ my $template                       = $self->get_template;
 
  my $count = 0;
 
@@ -257,6 +259,13 @@ sub parse_if_block($$)
  }
 
  $self->set_template($template);
+
+ # Evtl. verneinte Form parsen
+
+ unless($no_negate)
+ {
+  $self->parse_if_block('!'.$name,not($state),1);
+ }
 }
 
 # parse_condtag()
@@ -304,22 +313,18 @@ sub parse_includes
  my $self     = shift;
  my $template = $self->get_template;
 
- while($template =~ /(\{INCLUDE (\S+?)\})/)
+ while($template =~ /(\{INCLUDE (\S+?)\})/g)
  {
   my ($directive,$file) = ($1,$2);
   my $qm_directive      = quotemeta($directive);
-  my $replacement       = '';
 
   if(-f $file)
   {
-   local *FILE;
+   my $inc = new Template;
+   $inc->read_file($file);
 
-   open(FILE,'<'.$file) or croak "Open $file: $!";
-   read(FILE, $replacement, -s $file);
-   close(FILE) or croak "Closing $file: $!";
+   $template =~ s/$qm_directive/$inc->get_template/eg;
   }
-
-  $template =~ s/$qm_directive/$replacement/g;
  }
 
  $self->set_template($template);
@@ -355,25 +360,10 @@ sub substr_count($$)
 #  Alias-Funktionen
 # ==================
 
-sub addtext($)
-{
- shift->add_text(shift);
-}
-
-sub as_string
-{
- return shift->get_template;
-}
-
-sub condtag($$)
-{
- shift->parse_condtag(@_);
-}
-
-sub readin($)
-{
- shift->read_file(shift);
-}
+*addtext   = \&add_text;
+*as_string = \&get_template;
+*condtag   = \&parse_condtag;
+*readin    = \&read_file;
 
 # it's true, baby ;-)
 
