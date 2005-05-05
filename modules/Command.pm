@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-23
+# Last modified: 2005-05-05
 #
 
 use strict;
@@ -178,7 +178,6 @@ sub exec_show($$)
    $ftpl->fillin('URL',equal_url(encode_html($config->{'httproot'}),$virt_path->{'html'}));
 
    $ftpl->parse_if_block('link',-l $phys_path);
-   $ftpl->parse_if_block('no_link',not -l $phys_path);
    $ftpl->parse_if_block('not_readable',not -r $phys_path);
    $ftpl->parse_if_block('binary',-B $phys_path);
    $ftpl->parse_if_block('readonly',not -w $phys_path);
