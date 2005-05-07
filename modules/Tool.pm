@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-22
+# Last modified: 2005-05-07
 #
 
 use strict;
@@ -67,9 +67,8 @@ sub check_path($$)
  $first    = abs_path($first);
 
  my $last  = file_name($path);
- $last     = '' if($last eq '.');
 
- if($last eq '..' || ($^O eq 'MSWin32' && $last =~ m!^\.\.\.+$!))
+ if(-d $first.'/'.$last && not -l $first.'/'.$last)
  {
   $first = abs_path($first.'/'.$last);
   $last  = '';
