@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-05-05
+# Last modified: 2005-05-15
 #
 
 use strict;
@@ -101,7 +101,7 @@ sub exec_show($$)
   return error($config->{'errors'}->{'no_dir_access'},$upper_path->{'normal'}) unless(-r $physical && -x $physical);
 
   my $direntries = dir_read($physical);
-  return error($config->{'errors'}->{'dir_read_fail'},$upper_path->{'normal'},{DIR => encode_html($virtual)}) unless($direntries);
+  return error($config->{'errors'}->{'dir_read_failed'},$upper_path->{'normal'},{DIR => encode_html($virtual)}) unless($direntries);
 
   my $files = $direntries->{'files'};
   my $dirs  = $direntries->{'dirs'};
@@ -817,6 +817,7 @@ sub exec_chprop($$)
   {
    # Change the mode
 
+   return error($config->{'errors'}->{'invalid_mode'},$dir) unless($mode =~ /^[0-7]{3,}$/);
    chmod(oct($mode),$physical);
   }
 
