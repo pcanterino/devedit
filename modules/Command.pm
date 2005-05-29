@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-05-15
+# Last modified: 2005-05-29
 #
 
 use strict;
@@ -31,17 +31,17 @@ use Template;
 my $script = encode_html($ENV{'SCRIPT_NAME'});
 my $users  = eval('getpwuid(0)') && eval('getgrgid(0)');
 
-my %dispatch = ('show'       => \&exec_show,
-                'beginedit'  => \&exec_beginedit,
-                'endedit'    => \&exec_endedit,
-                'mkdir'      => \&exec_mkdir,
-                'mkfile'     => \&exec_mkfile,
-                'upload'     => \&exec_upload,
-                'copy'       => \&exec_copy,
-                'rename'     => \&exec_rename,
-                'remove'     => \&exec_remove,
-                'chprop'     => \&exec_chprop,
-                'about'      => \&exec_about
+my %dispatch = ('show'      => \&exec_show,
+                'beginedit' => \&exec_beginedit,
+                'endedit'   => \&exec_endedit,
+                'mkdir'     => \&exec_mkdir,
+                'mkfile'    => \&exec_mkfile,
+                'upload'    => \&exec_upload,
+                'copy'      => \&exec_copy,
+                'rename'    => \&exec_rename,
+                'remove'    => \&exec_remove,
+                'chprop'    => \&exec_chprop,
+                'about'     => \&exec_about
                );
 
 ### Export ###
