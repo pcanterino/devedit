@@ -1,0 +1,494 @@
+Change Log for Dev-Editor
+=========================
+
+New in version 2.3.2 (2005-04-23)
+---------------------------------
+
+ Copying a file out of a directory:
+ ----------------------------------
+ Fixed a really strange bug occuring only on Windows systems.
+ Dev-Editor was not able to copy (or move) a file out of a directory if the
+ path, the user entered in the corresponding dialogue, was beginning with "../".
+
+ Empty root directory causes incomplete HTML table:
+ --------------------------------------------------
+ Dev-Editor now does not create an incomplete HTML table if the root directory
+ is completely empty or no files are matching against the current wildcard.
+
+ move() instead of rename():
+ ---------------------------
+ Dev-Editor now uses the move() function from the File::Copy module to move or
+ rename files and directories. move() is more reliable than the rename()
+ function.
+
+ No error message if reading of a directory failed:
+ --------------------------------------------------
+ If reading of a directory failed, no error message was shown. I thought this
+ bug was fixed...
+
+ Template class updated:
+ -----------------------
+ The template class was updated to version 1.4a.
+
+New in version 2.3.1 (2005-02-19)
+---------------------------------
+
+ Handling of symbolic links changed:
+ -----------------------------------
+ For security reasons, I completely changed the handling of symbolic links:
+ Symbolic links are now treated as files, no matter where they point to. The
+ user is just allowed to see the path where the link points to, he is allowed to
+ delete the link, to rename it and to overwrite it by renaming an other file.
+ Nothing else is allowed.
+ Accessing a symbolic link pointing to a directory caused also a very strange
+ effect: It was possible to access this directory, but you could not access
+ the objects in it.
+ I had to do it in this way because of the very stupid behaviour of abs_path()
+ from the Cwd module: This function is just able to detect the absolute path of
+ directories.
+ Hard links are not affected by this, because it is not possible to detect them
+ (at least I don't know how to detect them).
+
+ Root directory must not be a symbolic link:
+ -------------------------------------------
+ Now, the root directory must not be a symbolic link.
+ Sorry for this, I really would have liked to allow the root directory to be a
+ symbolic link, but if I would allow this, Dev-Editor would not be able to
+ create files in the root directory. I'm looking for an alternative...
+
+ Use Greenwich Mean Time:
+ ------------------------
+ You may now use Greenwich Mean Time (GMT/UTC) in dates instead of the local
+ time.
+ I don't know if anyone needs this, but it could be useful.
+
+ Handle errors produced by File::UseList:
+ ----------------------------------------
+ - Check if unlocking of the list of files in use was successful
+ - Check if a file could be successfully added to the list of files in use
+ - Check if a file could be successfully removed from the list of files in use
+
+ Saving to non-existing files:
+ -----------------------------
+ The file saving process was aborted if the user wanted to write text data using
+ the edit function into a file that does not exists.
+ The reason was that Dev-Editor thought that this non-existing file was a binary
+ file.
+
+ Template class updated:
+ -----------------------
+ The template class was updated to version 1.4.
+ This fixes the problem of the infinitive loops produced by incorrectly nested
+ {IF} blocks.
+
+ Small changes:
+ --------------
+ - Files locked with the flock() function are now unlocked by the close()
+   function due to security reasons (see
+   http://forum.de.selfhtml.org/?t=101375&m=622582)
+ - Changed the names of two error messages:
+   dircopy -> dir_copy
+   editdir -> dir_edit
+ - Fixed various small errors in some template files
+ - The regular expression used by file_name() and upper_path() to detect Windows
+   drive letters was not case-insensitive
+
+New in version 2.3 (2005-01-08)
+-------------------------------
+
+ Filter directory listing:
+ -------------------------
+ Dev-Editor is now able to filter the directory listing using DOS-style
+ wildcards.
+ I think that is a little bit incomplete, Dev-Editor should be able to
+ "remember" the filter wildcard during the actions.
+ The code for parsing DOS-style wildcards is from the File::DosGlob module by
+ Gurusamy Sarathy.
+
+ flock():
+ --------
+ Dev-Editor now uses flock().
+ flock() is called using a wrapper function which checks if it is really
+ available.
+
+ check_path() broken on Windows:
+ -------------------------------
+ On Windows systems the check_path() routine was heavily broken (this routine
+ checks if someone tries to access a path above the virtual root directory). It
+ was possible to access files above the root directory by accessing a path with
+ "..." or "...." or something like that as the last path component. This bug was
+ caused by the rewrite of check_path() in Dev-Editor 2.2.
+
+ "." or ".." as end of a path:
+ -----------------------------
+ If you enter a path with "." or ".." as the last path component, Dev-Editor
+ showed a really strange behaviour by allowing to enter a path like
+ "something/." or "something/..". This was also caused by the (poor) rewrite of
+ check_path(). The problem is fixed now.
+
+ Paths beginning with "/../" caused problems:
+ --------------------------------------------
+ When composing the temporary virtual path for a new file, don't call
+ clean_path(). It is unnecessary and it also caused a problem if this path would
+ begin with /../, because on UNIX systems, canonpath() removes /../ at the
+ beginning of a path. So if a user wanted to create the file /../file.ext (but
+ he wasn't allowed to), he created /file.ext.
+
+ Deny changing file properties in some cases:
+ --------------------------------------------
+ - Do not allow to change the properties of the root directory
+ - Do not allow to change the properties of a file in use
+
+ Deny overwriting files:
+ -----------------------
+ - While processing a file upload, check if the user wants to replace a
+   directory or overwrite a write-protected file
+ - If the user wants to copy or rename a file, check if he wants to overwrite a
+   write-protected file
+ - Do not allow to upload a file if a file with the same virtual name is
+   currently in use
+
+ Validate file uploads:
+ ----------------------
+ Dev-Editor now tries to validate a file upload by checking the handle created
+ by the CGI module.
+
+ Improved configuration file parser:
+ -----------------------------------
+ - The parser now ignores lines like that:
+      = Value
+   Such lines could lead to properties with empty keys in the configuration
+   hash.
+ - Allow configuration options with empty values
+ - If a option is defined twice, the line number of the second one is shown in
+   the error message
+
+ Output changes:
+ ---------------
+ - More encoding of HTML entities
+ - In directory listing, the "Edit" link of files in use were not greyed (very
+   nasty)
+ - Show the name of the lock file in error messages even if it has not been
+   defined in the configuration file
+
+ Small internal changes:
+ -----------------------
+ - The file saving process is now completely centralized in File::Access
+ - When generating a redirection header, check if we really have to create a
+   query string
+ - Fixed a bug occuring if the "curdir" CGI parameter had no trailing slash and
+   the "newfile" parameter had no leading slash
+ - Dev-Editor now takes more care of Windows drive letters
+ - Trying to increase speed of the script by surrounding static values by single
+   quotes
+ - Code cleaning
+
+New in version 2.2a (2004-11-29)
+--------------------------------
+
+ File uploads did not work:
+ --------------------------
+ Dev-Editor normally tests if it has enough permissions to upload a file to a
+ directory. But the condition was missing and so Dev-Editor always aborted file
+ uploads and didn't even display the dialogue.
+
+New in version 2.2 (2004-11-27)
+-------------------------------
+
+ `chgrp` system command and numerical group names:
+ -------------------------------------------------
+ When changing the group, Dev-Editor is now using the `chgrp` system command.
+ This allows to use numerical group names. Before, Dev-Editor handled numerical
+ values as group IDs.
+
+ Checking root directory:
+ ------------------------
+ Dev-Editor now checks if the root directory exists and if it may be accessed.
+ This fixed also bug where it was possible to access the physical root directory
+ if Dev-Editor could not enter the virtual root directory.
+
+ Checking directory permissions:
+ -------------------------------
+ Dev-Editor does some simple checks of directory permissions now:
+ - Inaccessible directories are greyed in directory listing. You cannot access
+   them, but the actions are not disabled, because they may work.
+ - Actions needing write access to a directory are aborted if Dev-Editor has no
+   write access.
+
+ Access a directory structure similar to the root directory:
+ -----------------------------------------------------------
+ The path the user wants to access must now BEGIN with the root directory. The
+ old check made it possible to access a directory structure outside the root
+ directory similar to the root directory.
+
+ Changing mode of a directory with mode 000:
+ -------------------------------------------
+ It was not possible to change the mode of a directory with mode 000.
+
+ Upload only to directories:
+ ---------------------------
+ Dev-Editor now checks if the user really uploads a file to a directory.
+
+ Improved About dialogue:
+ ------------------------
+ - Dev-Editor now only shows the main group ID of the process user.
+ - Dev-Editor also shows the current umask of the process.
+ - Special chars in most values are now encoded to entities.
+
+ Added <label> tags:
+ -------------------
+ For a better usability in some browsers, I added <label> tags for the
+ checkboxes and radio buttons in file edit and file upload dialogue.
+
+ Directory links in error messages:
+ ----------------------------------
+ Some error messages generated by the main program now contain a link to the
+ root directory.
+
+ Bugs in HTML generation:
+ ------------------------
+ - If Dev-Editor could not read a directory, it did neither display an error
+   message nor a directory link.
+ - Some error messages had problems with {DIR} variables. Thus the variable in
+   error.htm which will be replaced by a back link is now called "{BACK}".
+ - When viewing a file, Dev-Editor inserts the contents of the file into the
+   viewfile.htm template file AFTER parsing the "editable" {IF}-block, because
+   Dev-Editor showed a very ugly behaviour when viewing this template file.
+
+ Code cleaning:
+ --------------
+ I tried to clean the source code of Dev-Editor a little bit. Some parts of the
+ code were optimized.
+
+New in version 2.1a (2004-10-22)
+--------------------------------
+
+ Changed file saving error handling:
+ -----------------------------------
+ Now we already unlock the file saving process, because if an error occurs
+ during this process, the file keeps locked.
+ This is not a perfect solution, there are still problems. I have to figure out
+ another one.
+
+New in version 2.1 (2004-10-14)
+-------------------------------
+
+ Overwrite files during file upload:
+ -----------------------------------
+ In file upload dialogue, there is a new checkbox which allows to overwrite
+ files during file upload if they already exist.
+
+ Improved file saving:
+ ---------------------
+ The process of file saving has been improved:
+ - Saving even works if the file has to be created first.
+ - Dev-Editor is now checking if the user wants to write text data into a binary
+   file.
+ - If the user just entered spaces as filename (detection works for other
+   commands using the "newfile" CGI parameter too), we use the original
+   filename.
+
+ Don't copy a directory:
+ -----------------------
+ Dev-Editor now denies copying a directory.
+
+ Check before manually unlocking:
+ --------------------------------
+ Dev-Editor now checks if the file is really locked before displaying the
+ dialogue for manually unlocking a file. If it is not locked, Dev-Editor returns
+ to directory view. Dev-Editor also behaves in this way if it is trying to
+ unlock a file.
+
+ Wrong error messages:
+ ---------------------
+ Something definitely went wrong when I remade the copy and the rename
+ functions: They printed a wrong error message if the destination already
+ existed and if it was a file.
+
+New in version 2.0 (2004-08-10)
+-------------------------------
+
+ File uploads:
+ -------------
+ Dev-Editor is now able to process HTTP file uploads. The files may be
+ transferred in ASCII or binary mode (similar to FTP).
+
+ Change mode and group:
+ ----------------------
+ Dev-Editor is now able to change the mode and the group of a file or a
+ directory.
+
+ HTTPS support and non-default ports:
+ ------------------------------------
+ Dev-Editor is now able to detect a HTTPS connection and if the web server
+ doesn't listen on the default ports (necessary for reloading Dev-Editor).
+
+ Do not allow removing or renaming the root directory:
+ -----------------------------------------------------
+ Dev-Editor now denies removing or renaming the root directory.
+
+ Renaming files outside the root directory:
+ ------------------------------------------
+ There was a bug which caused Dev-Editor not to rename files outside the root
+ directory if they already exist.
+
+ Improved file editing:
+ ----------------------
+ When the user wants to save an edited file using a different file name,
+ Dev-Editor now unlocks the original file and checks if a file with this
+ different name already exists and if it is locked.
+
+ Improved file creating:
+ -----------------------
+ The routine which creates empty files had a race condition which could set
+ files to 0 if they already exist.
+
+ Maximum size for files:
+ -----------------------
+ The administrator may now define a maximum size for files in the main
+ configuration file. If the user wants to view or edit a file larger than this
+ defined size, Dev-Editor denies file access (but the file can still be copied,
+ renamed or removed).
+
+ Form for creating new files or directories:
+ -------------------------------------------
+ In directory listing, when clicking on the buttons next to the fields for
+ creating new files and directories without entering a file or directory name,
+ the user got an error message which is a little bit strange.
+ Now, the user will see a form for creating new files or directories.
+
+ Newlines are converted while reading:
+ -------------------------------------
+ Whenever Dev-Editor now reads a file for output, it converts any line separator
+ to the system specific one.
+
+ Case-insensitive commands:
+ --------------------------
+ The commands are now case-insensitive, so the command "ShOw" is the same as
+ "show".
+
+ About screen:
+ -------------
+ There is now a small "About" screen which shows some more or less useful
+ information about Dev-Editor and the system.
+
+ Improvements for user interface:
+ --------------------------------
+ Made a lot of improvements for the user interface:
+ - The directory listing is now built using tables.
+ - When editing a file and the user wants to save a file using a different file
+   name, the checkbox for saving the file using a different file name is
+   activated using JavaScript.
+ - In directory listing or when viewing a file, there is a new field for quickly
+   jumping to a file or to a directory.
+ - Separated "Work with directory" and "Work with file" into different options
+   in directory listing ("Copy", "Rename", "Delete", "Unlock"). The options also
+   have their own dialogues.
+ - In directory listing, there is a new link for viewing a file or a directory
+   in the browser.
+ - When viewing a file and if the file is editable, there is a new link to edit
+   this  file.
+ - Files and directories in directory listing are now sorted case-insensitively.
+
+ Configuration files:
+ --------------------
+ The settings of Dev-Editor are now stored in extern configuration files: There
+ is one file for general settings, one for the error messages and one for the
+ paths to the template files.
+
+ Templates:
+ ----------
+ The output of Dev-Editor is now controlled by template files. The source code
+ became much cleaner :-)
+
+New in version 1.2 (2003-12-29)
+-------------------------------
+
+ Removing directories:
+ ---------------------
+ Dev-Editor is now able to completely remove a directory.
+
+ "Work with directories":
+ ------------------------
+ In directory listing, next do a directory, there is a new link called "Work
+ with directory". When you select this link, you get a form to remove or
+ rename/move the directory.
+ Additionally, the link "Do other stuff" was renamed to "Work with file".
+
+ Overwriting existing files:
+ ---------------------------
+ If you want to copy a file, and the destination file already exists, you will
+ be asked to overwrite the file. If the destination points to a directory,
+ copying will be aborted completely.
+ If you want to rename a file or a directory, and the destination file already
+ exists, you will be asked to overwrite the file. If the destination points to a
+ directory, renaming will be aborted completely.
+
+ Confirmation for removing files:
+ --------------------------------
+ If you want to remove a file, a confirmation dialog will be displayed first.
+
+ Fixed open() calls:
+ -------------------
+ It seems that some systems don't support the FILEHANDLE,MODE,FILENAME version
+ of open(). Now we don't use it any more.
+
+ Default permissions for mkdir():
+ --------------------------------
+ Set the permissions for mkdir() to 0777. I thought it is optional (as described
+ in "perlfunc"), but some systems need it.
+
+New in version 1.1 (2003-11-15)
+-------------------------------
+
+ Newlines are converted:
+ -----------------------
+ Any line seperator will now be converted to the system specific line seperator
+ if you save a text file.
+
+ File permissions are checked:
+ -----------------------------
+ Dev-Editor now runs some simple checks on the file permissions when it creates
+ a directory listing, tries to view or edit a file and when it copies a file.
+
+ Tool tips for file status:
+ --------------------------
+ In directory listing, when a file cannot be viewed or edited, a tool tip on the
+ "View" or "Edit" link will show the reason why it is so.
+
+ File permissions are saved:
+ ---------------------------
+ When the user saves a text file, the file permissions were destroyed. The
+ reason was that a temporary file was used, which was renamed to the originally
+ file. Now this is fixed, but if saving of the file now fails, the file could be
+ damaged...
+
+ Links in error messages:
+ ------------------------
+ Some error messages now contain a link to go back to the directory containing
+ the file which caused the error.
+
+ Typos fixed:
+ ------------
+ There were a lot of typos in the output, the comments and the ReadMe file.
+
+ Dates fixed:
+ ------------
+ The dates of the last modification in the head comment of the files had the
+ wrong format. They had the format MM-DD-YYYY, but they should have YYYY-MM-DD.
+ Sorry, that was VERY embarassing...
+
+New in version 1.0 (2003-10-08)
+-------------------------------
+
+ First public release:
+ ---------------------
+ This is the first public release of Dev-Editor.
+
+------------------------------------------------
+
+(C) 1999-2000 Roland Bluethgen, Frank Schoenmann
+(C) 2003-2005 Patrick Canterino
+
+E-Mail: patrick@patshaping.de
+WWW:    http://devedit.sourceforge.net/

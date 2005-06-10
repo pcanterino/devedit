@@ -1,0 +1,117 @@
+ReadMe for Dev-Editor 3.0 (CVS)
+===============================
+
+Description
+-----------
+
+Dev-Editor is a simple CGI based editor written in Perl and licensed under the
+terms of the Artistic License, which allows remote changes to files and
+directory structures on a web server. That's useful if you aren't able to access
+the files on your homepage directly, for example if you are on holiday.
+
+Installation
+------------
+
+First, you have to copy the files into a directory on your web server where you
+are able to execute scripts (in most cases, this is "cgi-bin"). I suggest to
+create a sub directory for Dev-Editor.
+Then, you have to change the first line of devedit.pl: Just replace
+/usr/bin/perl by the path to your Perl interpreter.
+If you are on a UNIX based system, you have to set devedit.pl as executable
+(chmod 755 in most cases).
+You will also need to configure Dev-Editor. See the next section for details.
+
+Note, that the directory where you installed Dev-Editor should be protected by
+HTTP Authentication. If you don't do that, everybody will be able to access
+Dev-Editor and use it for evil purposes.
+
+Configuration
+-------------
+
+Open the file devedit.conf. This file contains keys and values separated by a
+"=" sign.
+Here is a list of the configuration options currently available:
+
+Option                   Description
+------                   -----------
+
+fileroot                 The root directory Dev-Editor is allowed to access.
+                         Nobody is allowed to access the files and directories
+                         above this directory. Dev-Editor needs write access to
+                         this directory and to the sub directories.
+
+httproot                 This is the equivalent HTTP URL to the root directory.
+                         It's just used for visual output, so it doesn't need to
+                         be correct.
+
+max_file_size            Here you may define a maximum size for files (Bytes).
+                         If the user wants to view or edit a file larger than
+                         this defined size, Dev-Editor denies file access (but
+                         the file can still be copied, renamed or removed).
+                         If this is empty or 0, any file can be viewed or
+                         edited.
+
+timeformat               The format of the time shown in directory listings.
+                         These are the most important placeholders:
+
+                         %a - short day name (Sun to Sat)
+                         %A - long day name (Sunday to Saturday)
+                         %b - short month name (Jan to Dec)
+                         %B - long month name (January to December)
+                         %d - day of the month (01 to 31)
+                         %H - hour in 24 hour clock (00 to 23)
+                         %I - hour in 12 hour clock (01 to 12)
+                         %m - month of the year (01 to 12)
+                         %M - minutes (00 to 59)
+                         %p - AM or PM
+                         %S - seconds (00 to 59)
+                         %y - two digit year (03)
+                         %Y - four digit year (2003)
+                         %% - percent sign
+
+                         There are a lot of other placeholders. A complete list
+                         is found at:
+                         http://www.opengroup.org/onlinepubs/7908799/xsh/strftime.html
+                         Note that some systems don't support some of the
+                         placeholders (for example %T on Windows).
+
+                         This format is also used to format the system time in
+                         the About dialogue.
+
+use_gmt                  Set this option to 1 if you want to use Greenwich Mean
+                         Time (GMT/UTC) in directory listing and in the About
+                         dialogue instead of the local time.
+
+forbidden                Specify . The filenames have to be separated by space characters.
+                         If a filename contains space characters, you have to
+                         put it into double quotation marks ("/filename").
+
+error_file               The path to the file which defines the error messages.
+                         The file has the same format as this one.
+
+template_file            The path to the file which defines the paths to the
+                         template files. The file has the same format as this
+                         one.
+
+Notes
+-----
+
+Symbolic links are treated as files, no matter where they point to. The user is
+just allowed to see the path where the link points to, he is allowed to delete
+the link, to rename it and to overwrite it by renaming an other file. Nothing
+else is allowed.
+Accessing a symbolic link pointing to a directory also caused a very strange
+effect: It was possible to access this directory, but you could not access the
+objects in it.
+I had to do it in this way because of the very stupid behaviour of abs_path()
+from the Cwd module: This function is just able to detect the absolute path of
+directories.
+Hard links are not affected by this.
+
+------------------------------------------------
+
+(C) 1999-2000 Roland Bluethgen, Frank Schoenmann
+(C) 2003-2005 Patrick Canterino
+
+E-Mail: patrick@patshaping.de
+WWW:    http://devedit.sourceforge.net/

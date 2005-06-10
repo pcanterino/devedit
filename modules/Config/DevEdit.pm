@@ -6,13 +6,15 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-01-06
+# Last modified: 2005-06-09
 #
 
 use strict;
 
 use vars qw(@EXPORT);
 use Carp qw(croak);
+
+use Text::ParseWords;
 
 ### Export ###
 
@@ -36,6 +38,25 @@ sub read_config($)
 
  $config->{'errors'}    = parse_config($config->{'error_file'});
  $config->{'templates'} = parse_config($config->{'template_file'});
+
+ # Parse list of forbidden files
+
+ if($config->{'forbidden'})
+ {
+  my @files;
+
+  foreach my $file(parse_line('\s+',0,$config->{'forbidden'}))
+  {
+   $file =~ tr!\\!/!;
+
+   $file =  '/'.$file unless($file =~ m!^/!);
+   $file =~ s!/+$!!g;
+
+   push(@files,$file);
+  }
+
+  $config->{'forbidden'} = \@files;
+ }
 
  return $config;
 }

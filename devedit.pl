@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-22
+# Last modified: 2005-06-09
 #
 
 use strict;
@@ -94,6 +94,13 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
 
  $new_physical = File::Spec->canonpath($new_physical.'/'.$file);
  $new_virtual .= $file;
+
+ # Check if the file is denied by configuration
+
+ if(is_forbidden_file($config->{'forbidden'},$new_virtual))
+ {
+  abort($config->{'errors'}->{'forbidden_file'},'/');
+ }
 }
 
 # This check has to be performed first or abs_path() will be confused
@@ -104,24 +111,31 @@ if(-e $temp_path || -l $temp_path)
 {
  if(my ($physical,$virtual) = check_path($config->{'fileroot'},$file))
  {
-  # Create a hash containing data submitted by the user
-  # (some other necessary information are also included)
+  if(is_forbidden_file($config->{'forbidden'},$virtual))
+  {
+   abort($config->{'errors'}->{'forbidden_file'},'/');
+  }
+  else
+  {
+   # Create a hash containing data submitted by the user
+   # (some other necessary information are also included)
 
-  my %data = (physical     => $physical,
-              virtual      => $virtual,
-              new_physical => $new_physical,
-              new_virtual  => $new_virtual,
-              cgi          => $cgi,
-              version      => $VERSION,
-              configfile   => CONFIGFILE);
+   my %data = (physical     => $physical,
+               virtual      => $virtual,
+               new_physical => $new_physical,
+               new_virtual  => $new_virtual,
+               cgi          => $cgi,
+               version      => $VERSION,
+               configfile   => CONFIGFILE);
 
-  # Execute the command...
+   # Execute the command...
 
-  my $output = exec_command($command,\%data,$config);
+   my $output = exec_command($command,\%data,$config);
 
-  # ... and show its output
+   # ... and show its output
 
-  print $$output;
+   print $$output;
+  }
  }
  else
  {

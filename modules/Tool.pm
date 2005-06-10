@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-05-07
+# Last modified: 2005-06-10
 #
 
 use strict;
@@ -32,6 +32,7 @@ use base qw(Exporter);
              encode_html
              equal_url
              file_name
+             is_forbidden_file
              mode_string
              multi_string
              upper_path);
@@ -252,6 +253,29 @@ sub file_name($)
  }
 
  return $path;
+}
+
+# is_forbidden_file()
+#
+# Check if a file is in the list of forbidden files
+#
+# Params: 1. Array Reference containing the list
+#         2. Filename to check
+#
+# Return: Status code (Boolean)
+
+sub is_forbidden_file($$)
+{
+ my ($list,$file) = @_;
+ $file =~ s!/+$!!g;
+
+ foreach my $entry(@$list)
+ {
+  return 1 if($file eq $entry);
+  return 1 if(index($file,$entry.'/') == 0);
+ }
+
+ return;
 }
 
 # mode_string()

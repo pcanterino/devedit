@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-05-29
+# Last modified: 2005-06-09
 #
 
 use strict;
@@ -148,6 +148,7 @@ sub exec_show($$)
    $dtpl->fillin('DATE',encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime($stat[9]) : localtime($stat[9]))));
    $dtpl->fillin('URL',equal_url(encode_html($config->{'httproot'}),$virt_path->{'html'}));
 
+   $dtpl->parse_if_block('forbidden',is_forbidden_file($config->{'forbidden'},$virt_path->{'normal'}));
    $dtpl->parse_if_block('readable',-r $phys_path && -x $phys_path);
    $dtpl->parse_if_block('users',$users && -o $phys_path);
 
@@ -182,6 +183,7 @@ sub exec_show($$)
    $ftpl->parse_if_block('writeable',-w $phys_path);
    $ftpl->parse_if_block('binary',-B $phys_path);
 
+   $ftpl->parse_if_block('forbidden',is_forbidden_file($config->{'forbidden'},$virt_path->{'normal'}));
    $ftpl->parse_if_block('viewable',(-r $phys_path && -T $phys_path && not $too_large) || -l $phys_path);
    $ftpl->parse_if_block('editable',(-r $phys_path && -w $phys_path && -T $phys_path && not $too_large) && not -l $phys_path);
 
