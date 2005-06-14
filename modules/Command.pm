@@ -308,7 +308,7 @@ sub exec_beginedit($$)
  $tpl->fillin('FILE_URL',escape($virtual));
  $tpl->fillin('DIR',encode_html($dir));
  $tpl->fillin('DIR_URL',escape($dir));
- $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+ $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
  $tpl->fillin('SCRIPT',$script);
  $tpl->fillin('MD5SUM',$md5sum);
  $tpl->fillin('CONTENT',encode_html($$content));
@@ -365,8 +365,8 @@ sub exec_endedit($$)
 
   local *FILE;
 
-  sysopen(FILE,$physical,O_RDWR | O_CREAT) or return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual});
-  file_lock(*FILE,LOCK_EX)                 or do { close(FILE); return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => $virtual}) };
+  sysopen(FILE,$physical,O_RDWR | O_CREAT) or return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => encode_html($virtual)});
+  file_lock(*FILE,LOCK_EX)                 or do { close(FILE); return error($config->{'errors'}->{'edit_failed'},$dir,{FILE => encode_html($virtual)}) };
 
   my $md5 = new Digest::MD5;
   $md5->addfile(*FILE);
@@ -387,7 +387,7 @@ sub exec_endedit($$)
    $tpl->fillin('FILE_URL',escape($virtual));
    $tpl->fillin('DIR',encode_html($dir));
    $tpl->fillin('DIR_URL',escape($dir));
-   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
    $tpl->fillin('SCRIPT',$script);
    $tpl->fillin('MD5SUM',$md5file);
    $tpl->fillin('CONTENT',encode_html($content));
@@ -553,7 +553,7 @@ sub exec_upload($$)
 
   $tpl->fillin('DIR',encode_html($virtual));
   $tpl->fillin('DIR_URL',escape($virtual));
-  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
@@ -608,7 +608,7 @@ sub exec_copy($$)
     $tpl->fillin('DIR_URL',escape($dir));
 
     $tpl->fillin('COMMAND','copy');
-    $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
     $tpl->fillin('SCRIPT',$script);
 
     my $output = header(-type => 'text/html');
@@ -629,7 +629,7 @@ sub exec_copy($$)
   $tpl->fillin('FILE',encode_html($virtual));
   $tpl->fillin('DIR',encode_html($dir));
   $tpl->fillin('DIR_URL',escape($dir));
-  $tpl->fillin('URL',equal_url($config->{'httproot'},encode_html($virtual)));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
@@ -681,7 +681,7 @@ sub exec_rename($$)
     $tpl->fillin('DIR',encode_html($dir));
 
     $tpl->fillin('COMMAND','rename');
-    $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+    $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
     $tpl->fillin('SCRIPT',$script);
 
     my $output = header(-type => 'text/html');
@@ -702,7 +702,7 @@ sub exec_rename($$)
   $tpl->fillin('FILE',encode_html($virtual));
   $tpl->fillin('DIR',encode_html($dir));
   $tpl->fillin('DIR_URL',escape($dir));
-  $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
@@ -749,7 +749,7 @@ sub exec_remove($$)
    $tpl->fillin('DIR_URL',escape($virtual));
    $tpl->fillin('UPPER_DIR',encode_html($dir));
    $tpl->fillin('UPPER_DIR_URL',escape($dir));
-   $tpl->fillin('URL',equal_url($config->{'httproot'},encode_html($virtual)));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
    $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
@@ -776,7 +776,7 @@ sub exec_remove($$)
    $tpl->fillin('FILE_URL',escape($virtual));
    $tpl->fillin('DIR',encode_html($dir));
    $tpl->fillin('DIR_URL',escape($dir));
-   $tpl->fillin('URL',equal_url($config->{'httproot'},encode_html($virtual)));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
    $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
@@ -865,7 +865,7 @@ sub exec_chprop($$)
   $tpl->fillin('FILE_URL',escape($virtual));
   $tpl->fillin('DIR',encode_html($dir));
   $tpl->fillin('DIR_URL',escape($dir));
-  $tpl->fillin('URL',equal_url($config->{'httproot'},encode_html($virtual)));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
