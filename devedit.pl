@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-06-09
+# Last modified: 2005-06-14
 #
 
 use strict;
@@ -95,7 +95,7 @@ if($newfile ne '' && $newfile !~ /^\s+$/)
  $new_physical = File::Spec->canonpath($new_physical.'/'.$file);
  $new_virtual .= $file;
 
- # Check if the file is denied by configuration
+ # Check if accessing this file is forbidden
 
  if(is_forbidden_file($config->{'forbidden'},$new_virtual))
  {
