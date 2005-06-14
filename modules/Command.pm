@@ -514,8 +514,8 @@ sub exec_upload($$)
  my $virtual        = $data->{'virtual'};
  my $cgi            = $data->{'cgi'};
 
- return error($config->{'errors'}->{'no_directory'},upper_path($virtual),{FILE => $virtual}) unless(-d $physical && not -l $physical);
- return error($config->{'errors'}->{'dir_no_create'},$virtual,{DIR => $virtual})             unless(-w $physical);
+ return error($config->{'errors'}->{'no_directory'},upper_path($virtual),{FILE => encode_html($virtual)}) unless(-d $physical && not -l $physical);
+ return error($config->{'errors'}->{'dir_no_create'},$virtual,{DIR => encode_html($virtual)})             unless(-w $physical);
 
  if(my $uploaded_file = $cgi->param('uploaded_file'))
  {
