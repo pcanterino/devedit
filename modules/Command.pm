@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-06-09
+# Last modified: 2005-06-14
 #
 
 use strict;
@@ -661,9 +661,8 @@ sub exec_rename($$)
 
  if($new_physical)
  {
-  my $new_virtual = $data->{'new_virtual'};
-  my $new_dir     = upper_path($new_virtual);
-  $new_virtual    = encode_html($new_virtual);
+  my $new_virtual = multi_string($data->{'new_virtual'});
+  my $new_dir     = upper_path($new_virtual->{'normal'});
 
   if(-e $new_physical)
   {
@@ -675,11 +674,11 @@ sub exec_rename($$)
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
-    $tpl->fillin('FILE',$virtual);
-    $tpl->fillin('NEW_FILE',$new_virtual);
-    $tpl->fillin('NEW_FILENAME',file_name($new_virtual));
-    $tpl->fillin('NEW_DIR',$new_dir);
-    $tpl->fillin('DIR',$dir);
+    $tpl->fillin('FILE',encode_html($virtual));
+    $tpl->fillin('NEW_FILE',$new_virtual->{'html'});
+    $tpl->fillin('NEW_FILENAME',file_name($new_virtual->{'html'}));
+    $tpl->fillin('NEW_DIR',encode_html($new_dir));
+    $tpl->fillin('DIR',encode_html($dir));
 
     $tpl->fillin('COMMAND','rename');
     $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
@@ -692,7 +691,7 @@ sub exec_rename($$)
    }
   }
 
-  move($physical,$new_physical) or return error($config->{'errors'}->{'rename_failed'},$dir,{FILE => $virtual, NEW_FILE => $new_virtual});
+  move($physical,$new_physical) or return error($config->{'errors'}->{'rename_failed'},$dir,{FILE => encode_html($virtual), NEW_FILE => $new_virtual->{'html'}});
   return devedit_reload({command => 'show', file => $new_dir});
  }
  else
@@ -700,7 +699,7 @@ sub exec_rename($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'renamefile'});
 
-  $tpl->fillin('FILE',$virtual);
+  $tpl->fillin('FILE',encode_html($virtual));
   $tpl->fillin('DIR',encode_html($dir));
   $tpl->fillin('DIR_URL',escape($dir));
   $tpl->fillin('URL',equal_url($config->{'httproot'},$virtual));
