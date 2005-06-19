@@ -29,7 +29,7 @@ Configuration
 -------------
 
 Open the file devedit.conf. This file contains keys and values separated by a
-"=" sign.
+"=" sign. Lines beginning with a "#" sign are ignored.
 Here is a list of the configuration options currently available:
 
 Option                   Description
