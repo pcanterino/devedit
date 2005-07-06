@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<title>Copy directory {FILE}</title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<h1>Copy directory {FILE}</h1>
+
+<p>(equals <a href="{URL}" target="_blank">{URL}</a>)</p>
+
+<p><a href="{SCRIPT}?command=show&amp;file={DIR_URL}">Back to {DIR}</a></p>
+
+<hr>
+
+<form action="{SCRIPT}" method="post">
+<input type="hidden" name="command" value="copy">
+<input type="hidden" name="file" value="{FILE}">
+
+<p>Copy directory '{FILE}' to:<br>
+{DIR} <input type="text" name="newfile"></p>
+
+<p><input type="submit" value="Copy directory!"></p>
+</form>
+
+<p><b>Note:</b><br>
+The target you want this directory to copy to must not exist!</p>
+
+<hr>
+
+<p align="right"><a href="{SCRIPT}?command=about" target="_blank"><i>About Dev-Editor</i></a></p>
+</body>
+</html>

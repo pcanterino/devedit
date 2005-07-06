@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-09
+# Last modified: 2005-07-05
 #
 
 use strict;
@@ -18,11 +18,14 @@ use vars qw(@EXPORT
 use Fcntl qw(:DEFAULT
              :flock);
 
+use File::Copy;
+
 ### Export ###
 
 use base qw(Exporter);
 
-@EXPORT = qw(dir_read
+@EXPORT = qw(dir_copy
+             dir_read
              file_create
              file_lock
              file_read
@@ -37,6 +40,49 @@ use base qw(Exporter);
 # I found this piece of code somewhere in the internet
 
 $has_flock = eval { local $SIG{'__DIE__'}; flock(STDOUT,0); 1 };
+
+# dir_copy()
+#
+# Copy a directory
+#
+# Params: 1. Directory to copy
+#         2. Target
+#
+# Return: Status code (Boolean)
+
+sub dir_copy($$)
+{
+ my ($dir,$target) = @_;
+
+ return unless(-d $dir);
+
+ my $entries = dir_read($dir) or return;
+
+ my $dirs    = $entries->{'dirs'};
+ my $files   = $entries->{'files'};
+
+ mkdir($target,0777) unless(-d $target);
+
+ foreach my $directory(@$dirs)
+ {
+  unless(-d $target.'/'.$directory)
+  {
+   mkdir($target.'/'.$directory,0777) or next;
+  }
+
+  if(-r $target.'/'.$directory && -x $target.'/'.$directory)
+  {
+   dir_copy($dir.'/'.$directory,$target.'/'.$directory) or next;
+  }
+ }
+
+ foreach my $file(@$files)
+ {
+  copy($dir.'/'.$file,$target.'/'.$file) or next;
+ }
+
+ return 1;
+}
 
 # dir_read()
 #

@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-06-14
+# Last modified: 2005-07-06
 #
 
 use strict;
@@ -581,61 +581,90 @@ sub exec_copy($$)
  my $new_physical   = $data->{'new_physical'};
 
  return error($config->{'errors'}->{'link_copy'},$dir) if(-l $physical);
- return error($config->{'errors'}->{'dir_copy'},$dir)  if(-d $physical);
- return error($config->{'errors'}->{'no_copy'},$dir)   unless(-r $physical);
 
  if($new_physical)
  {
   my $new_virtual = multi_string($data->{'new_virtual'});
   my $new_dir     = upper_path($new_virtual->{'normal'});
 
-  if(-e $new_physical)
+  if(-d $physical)
   {
-   return error($config->{'errors'}->{'link_replace'},$new_dir)                                    if(-l $new_physical);
-   return error($config->{'errors'}->{'dir_replace'},$new_dir)                                     if(-d $new_physical);
-   return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual->{'html'}}) unless(-w $new_physical);
+   return error($config->{'errors'}->{'no_copy'},$dir)                                      unless(-x $physical);
+   return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual->{'html'}}) if(-e $new_physical);
+   return error($config->{'errors'}->{'dir_copy_self'},$dir)                                if(index($new_virtual->{'normal'},$virtual) == 0);
 
-   if(not $data->{'cgi'}->param('confirmed'))
-   {
-    my $tpl = new Template;
-    $tpl->read_file($config->{'templates'}->{'confirm_replace'});
-
-    $tpl->fillin('FILE',encode_html($virtual));
-    $tpl->fillin('NEW_FILE',$new_virtual->{'html'});
-    $tpl->fillin('NEW_FILENAME',file_name($new_virtual->{'html'}));
-    $tpl->fillin('NEW_DIR',encode_html($new_dir));
-    $tpl->fillin('DIR',encode_html($dir));
-    $tpl->fillin('DIR_URL',escape($dir));
-
-    $tpl->fillin('COMMAND','copy');
-    $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-    $tpl->fillin('SCRIPT',$script);
-
-    my $output = header(-type => 'text/html');
-    $output   .= $tpl->get_template;
-
-    return \$output;
-   }
+   dir_copy($physical,$new_physical) or return error($config->{'errors'}->{'copy_failed'},$dir,{FILE => encode_html($virtual), NEW_FILE => $new_virtual->{'html'}});
+   return devedit_reload({command => 'show', file => $new_dir});
   }
+  else
+  {
+   if(-e $new_physical)
+   {
+    return error($config->{'errors'}->{'link_replace'},$new_dir)                                    if(-l $new_physical);
+    return error($config->{'errors'}->{'dir_replace'},$new_dir)                                     if(-d $new_physical);
+    return error($config->{'errors'}->{'exist_no_write'},$new_dir,{FILE => $new_virtual->{'html'}}) unless(-w $new_physical);
 
-  copy($physical,$new_physical) or return error($config->{'errors'}->{'copy_failed'},$dir,{FILE => encode_html($virtual), NEW_FILE => $new_virtual->{'html'}});
-  return devedit_reload({command => 'show', file => $new_dir});
+    if(not $data->{'cgi'}->param('confirmed'))
+    {
+     my $tpl = new Template;
+     $tpl->read_file($config->{'templates'}->{'confirm_replace'});
+
+     $tpl->fillin('FILE',encode_html($virtual));
+     $tpl->fillin('NEW_FILE',$new_virtual->{'html'});
+     $tpl->fillin('NEW_FILENAME',file_name($new_virtual->{'html'}));
+     $tpl->fillin('NEW_DIR',encode_html($new_dir));
+     $tpl->fillin('DIR',encode_html($dir));
+     $tpl->fillin('DIR_URL',escape($dir));
+
+     $tpl->fillin('COMMAND','copy');
+     $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+     $tpl->fillin('SCRIPT',$script);
+
+     my $output = header(-type => 'text/html');
+     $output   .= $tpl->get_template;
+
+     return \$output;
+    }
+   }
+
+   copy($physical,$new_physical) or return error($config->{'errors'}->{'copy_failed'},$dir,{FILE => encode_html($virtual), NEW_FILE => $new_virtual->{'html'}});
+   return devedit_reload({command => 'show', file => $new_dir});
+  }
  }
  else
  {
-  my $tpl = new Template;
-  $tpl->read_file($config->{'templates'}->{'copyfile'});
+  if(-d $physical)
+  {
+   my $tpl = new Template;
+   $tpl->read_file($config->{'templates'}->{'copydir'});
 
-  $tpl->fillin('FILE',encode_html($virtual));
-  $tpl->fillin('DIR',encode_html($dir));
-  $tpl->fillin('DIR_URL',escape($dir));
-  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-  $tpl->fillin('SCRIPT',$script);
+   $tpl->fillin('FILE',encode_html($virtual));
+   $tpl->fillin('DIR',encode_html($dir));
+   $tpl->fillin('DIR_URL',escape($dir));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->fillin('SCRIPT',$script);
 
-  my $output = header(-type => 'text/html');
-  $output   .= $tpl->get_template;
+   my $output = header(-type => 'text/html');
+   $output   .= $tpl->get_template;
 
-  return \$output;
+   return \$output;
+  }
+  else
+  {
+   my $tpl = new Template;
+   $tpl->read_file($config->{'templates'}->{'copyfile'});
+
+   $tpl->fillin('FILE',encode_html($virtual));
+   $tpl->fillin('DIR',encode_html($dir));
+   $tpl->fillin('DIR_URL',escape($dir));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->fillin('SCRIPT',$script);
+
+   my $output = header(-type => 'text/html');
+   $output   .= $tpl->get_template;
+
+   return \$output;
+  }
  }
 }
 
