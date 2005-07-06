@@ -581,6 +581,7 @@ sub exec_copy($$)
  my $new_physical   = $data->{'new_physical'};
 
  return error($config->{'errors'}->{'link_copy'},$dir) if(-l $physical);
+ return error($config->{'errors'}->{'no_copy'},$dir)   unless(-r $physical);
 
  if($new_physical)
  {
