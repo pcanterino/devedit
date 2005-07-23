@@ -68,8 +68,9 @@ sub check_path($$)
  $first    = abs_path($first);
 
  my $last  = file_name($path);
+ $last     = '' if($last eq '.');
 
- if(-d $first.'/'.$last && (not -l $first.'/'.$last) && -r $first.'/'.$last && -x $first.'/'.$last)
+ if($last eq '..' || ($^O eq 'MSWin32' && $last =~ m!^\.\.\.+$!))
  {
   $first = abs_path($first.'/'.$last);
   $last  = '';
