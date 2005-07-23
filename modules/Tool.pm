@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-06-10
+# Last modified: 2005-07-23
 #
 
 use strict;
@@ -69,7 +69,7 @@ sub check_path($$)
 
  my $last  = file_name($path);
 
- if(-d $first.'/'.$last && not -l $first.'/'.$last)
+ if(-d $first.'/'.$last && (not -l $first.'/'.$last) && -r $first.'/'.$last && -x $first.'/'.$last)
  {
   $first = abs_path($first.'/'.$last);
   $last  = '';
