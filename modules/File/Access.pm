@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-07-05
+# Last modified: 2005-08-01
 #
 
 use strict;
@@ -40,6 +40,10 @@ use base qw(Exporter);
 # I found this piece of code somewhere in the internet
 
 $has_flock = eval { local $SIG{'__DIE__'}; flock(STDOUT,0); 1 };
+
+# Predeclaration of dir_copy()
+
+sub dir_copy($$);
 
 # dir_copy()
 #

@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-07-06
+# Last modified: 2005-08-01
 #
 
 use strict;
@@ -409,7 +409,9 @@ sub exec_endedit($$)
     print FILE $content;
    }
 
-   $output = devedit_reload({command => 'show', file => $dir});
+   $output = ($cgi->param('continue'))
+           ? devedit_reload({command => 'beginedit', file => $virtual})
+           : devedit_reload({command => 'show', file => $dir});
   }
 
   close(FILE);
