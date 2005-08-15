@@ -51,7 +51,8 @@
 <table border="0">
 <tr>
 <form action="{SCRIPT}">
-<input type="hidden" name="command" value="show">
+<input type="hidden" name="command" value="show">{IF filter}
+<input type="hidden" name="filter" value="{FILTER}">{ENDIF}
 <td>Go to directory/file:</td>
 <td><input type="text" name="file" value="{DIR}"></td>
 <td><input type="submit" value="Go!"></td>
