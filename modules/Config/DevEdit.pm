@@ -6,7 +6,7 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-06-09
+# Last modified: 2005-08-24
 #
 
 use strict;
@@ -39,6 +39,28 @@ sub read_config($)
  $config->{'errors'}    = parse_config($config->{'error_file'});
  $config->{'templates'} = parse_config($config->{'template_file'});
 
+ # Check if we have to parse the user config file
+
+ if($ENV{'REMOTE_USER'} && $config->{'userconf_file'} && -f $config->{'userconf_file'})
+ {
+  my $userconf = parse_config($config->{'userconf_file'});
+
+  if($userconf->{$ENV{'REMOTE_USER'}})
+  {
+   # The current HTTP Auth user has got an individual configuration
+   # Overwrite the default values
+
+   my $new_conf = $userconf->{$ENV{'REMOTE_USER'}};
+
+   $config->{'fileroot'}  = $new_conf->{'fileroot'}  if($new_conf->{'fileroot'});
+   $config->{'httproot'}  = $new_conf->{'httproot'}  if($new_conf->{'httproot'});
+
+   $config->{'forbidden'} = $new_conf->{'forbidden'} if(defined $new_conf->{'forbidden'});
+
+   $config->{'user_config'} = 1;
+  }
+ }
+
  # Parse list of forbidden files
 
  if($config->{'forbidden'})
@@ -56,6 +78,10 @@ sub read_config($)
   }
 
   $config->{'forbidden'} = \@files;
+ }
+ else
+ {
+  $config->{'forbidden'} = [];
  }
 
  return $config;
@@ -81,26 +107,48 @@ sub parse_config($)
  my @lines  = split(/\015\012|\012|\015/,$data);
  my $config = {};
  my $count  = 0;
+ my $sect;
 
  foreach my $line(@lines)
  {
   $count++;
 
   next if($line =~ /^\s*#/);
-  next if($line !~ /^\s*\S+\s*=.*$/);
 
-  my ($key,$value) = split(/=/,$line,2);
+  if($line =~ /^\s*\[(\S+)\]\s*$/)
+  {
+   # Switch to new section
 
-  # Remove whitespaces at the beginning and at the end
+   $sect = $1;
+  }
+  elsif($line =~ /^\s*\S+\s*=.*$/)
+  {
+   # A normal "key = value" line
 
-  $key   =~ s/^\s+//g;
-  $key   =~ s/\s+$//g;
-  $value =~ s/^\s+//g;
-  $value =~ s/\s+$//g;
+   my ($key,$value) = split(/=/,$line,2);
 
-  croak "Configuration option '$key' defined twice in line $count of configuration file '$file'" if($config->{$key});
+   # Remove whitespaces at the beginning and at the end
 
-  $config->{$key} = $value;
+   $key   =~ s/^\s+//g;
+   $key   =~ s/\s+$//g;
+   $value =~ s/^\s+//g;
+   $value =~ s/\s+$//g;
+
+   if($sect)
+   {
+    $config->{$sect} = {} if(ref($config->{$sect}) ne 'HASH');
+
+    croak "Configuration option '$key' of section '$sect' defined twice in line $count of configuration file '$file'" if($config->{$sect}->{$key});
+
+    $config->{$sect}->{$key} = $value;
+   }
+   else
+   {
+    croak "Configuration option '$key' defined twice in line $count of configuration file '$file'" if($config->{$key});
+
+    $config->{$key} = $value;
+   }
+  }
  }
 
  return $config;
