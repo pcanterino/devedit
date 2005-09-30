@@ -6,7 +6,7 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-08-24
+# Last modified: 2005-09-30
 #
 
 use strict;
@@ -21,6 +21,8 @@ use Text::ParseWords;
 use base qw(Exporter);
 
 @EXPORT = qw(read_config);
+
+use Data::Dumper;
 
 # read_config()
 #
@@ -44,6 +46,20 @@ sub read_config($)
  if($ENV{'REMOTE_USER'} && $config->{'userconf_file'} && -f $config->{'userconf_file'})
  {
   my $userconf = parse_config($config->{'userconf_file'});
+
+  # Parse aliases (we use references, so we won't get a memory
+  # problem so soon...)
+
+  foreach my $user(keys(%$userconf))
+  {
+   if(my $aliases = $userconf->{$user}->{'aliases'})
+   {
+    foreach my $alias(parse_line('\s+',0,$aliases))
+    {
+     $userconf->{$alias} = $userconf->{$user} unless($userconf->{$alias});
+    }
+   }
+  }
 
   if($userconf->{$ENV{'REMOTE_USER'}})
   {
