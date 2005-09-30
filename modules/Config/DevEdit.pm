@@ -22,8 +22,6 @@ use base qw(Exporter);
 
 @EXPORT = qw(read_config);
 
-use Data::Dumper;
-
 # read_config()
 #
 # Read the configuration files of Dev-Editor
