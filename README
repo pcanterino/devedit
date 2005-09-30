@@ -89,12 +89,66 @@ forbidden                Specify a list of filenames the user is not allowed to
                          a filename contains space characters, you have to put
                          it into double quotation marks ("/filename").
 
+userconf_file            Specifies the path to a file which contains
+                         user-dependent configuration options (see next section
+                         for details).
+
 error_file               The path to the file which defines the error messages.
                          The file has the same format as this one.
 
 template_file            The path to the file which defines the paths to the
                          template files. The file has the same format as this
                          one.
+
+User-dependent configuration
+----------------------------
+
+If you have placed Dev-Editor inside a directory protected using HTTP
+authentication, you may override some default configuration values for a defined
+list of users. You may override the values for "fileroot", "httproot" and
+"forbidden".
+
+For overriding configuration values you need a special configuration file. The
+path to this file is defined using the "userconf_file" configuration option in
+the main configuration file (add the option if necessary). This file consists of
+key-value-pairs and sections, marked by a string encapsulated in square brackets
+(perhaps you know this format, it is nearly the same as the Windows INI files).
+Each section in this file describes an individual configuration, whereby the
+name of the section is the username for whom this configuration should be used.
+Here is an example:
+
+[homer]
+fileroot = /var/www/homer/htdocs
+httproot = /
+
+This sets the physical file root directory to "/var/www/homer/htdocs" and the
+virtual HTTP root to "/" - but only for the user whose HTTP authentication
+username is "homer".
+
+Using the "aliases" option, you may also define some other usernames for whom
+this configuration should be used:
+
+[homer]
+fileroot = /var/www/homer/htdocs
+httproot = /
+aliases = marge bart
+
+Using this, the users whose usernames are "marge" and "bart" use the same
+configuration as "homer". Place any number of username seperated by whitespaces
+here.
+Note: If one of the users mentioned as an alias and an individual configuration
+section for this user exists too, the one mentioned as an alias is ignored.
+
+If there are some files marked as inaccessible using the "forbidden"
+configuration option in the main configuration file, but some users should have
+access to these files, you may clear the default value of "forbidden":
+
+[homer]
+fileroot = /var/www/homer/htdocs
+httproot = /
+forbidden =
+
+Using this, "homer" has access to all files in "/var/www/homer/htdocs".
 
 Notes
 -----
