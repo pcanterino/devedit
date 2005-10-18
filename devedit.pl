@@ -1,7 +1,7 @@
 #!C:/Programme/Perl/bin/perl.exe -w
 
 #
-# Dev-Editor 3.0 (CVS)
+# Dev-Editor 3.0
 #
 # Dev-Editor's main program
 #
@@ -22,7 +22,7 @@ use Command;
 use Output;
 use Tool;
 
-$VERSION = '3.0 (CVS)';
+$VERSION = '3.0';
 
 # Path to configuration file
 # Change if necessary!

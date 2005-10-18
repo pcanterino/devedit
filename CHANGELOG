@@ -1,6 +1,87 @@
 Change Log for Dev-Editor
 =========================
 
+Version 3.0 (2005-10-18):
+=========================
+
+ Editing function changed:
+ -------------------------
+ - The concept of locking the file for other users before editing it is not very
+   good, causes some problems and makes it difficult to add new features. So I
+   decided to remove it.
+ - When Dev-Editor shows the form for editing a file, it calculates the MD5
+   checksum and places it in the editing form. Before saving the file, the MD5
+   checksum is calculated again and compared to the submitted one. If the two
+   sums don't match, Dev-Editor does not save the file and shows the editing
+   form.
+ - In the edit dialogue, there is also a new submit button allowing to continue
+   editing the file after saving it.
+ - Removed the possibility of encoding ISO-8859-1 HTML entities when saving a
+   file. I don't know if anybody used this function.
+
+ Copy directories:
+ -----------------
+ Dev-Editor is now able to copy a directory.
+
+ Forbid file access:
+ -------------------
+ The administrator may now define a list of files the user is not allowed to
+ access.
+
+ Individual configuration:
+ -------------------------
+ Now, Dev-Editor is able to switch some configuration values depending on the
+ current HTTP Auth user.
+ This is controlled by a separate configuration file containing sections like
+ Windows INI files (thus the configuration file parser is now able to parse
+ files containing sections in square brackets).
+ You may overwrite the following configuration values:
+ - fileroot
+ - httproot
+ - forbidden (you may also clear the default "forbidden" list)
+
+ Configuration files renamed:
+ ----------------------------
+ The extension of the configuration files is "conf" now.
+
+ Names of error messages changed:
+ --------------------------------
+ I changed the names of some error messages:
+ binary        -> binary_file
+ cmd_unknown   -> command_unknown
+ dir_read_fail -> dir_read_failed
+ create_ar     -> create_above_root
+ not_exist     -> not_found
+
+ File names containing a "+" sign:
+ ---------------------------------
+ If a file name contained a "+" sign, Dev-Editor was sometimes not able to
+ access the file, because the "+" was interpreted as a space.
+
+ Check octal numbers:
+ --------------------
+ Before changing the permissions of a file, Dev-Editor now checks if the user
+ entered a valid octal number.
+
+ Encoding of HTML entities:
+ --------------------------
+ - All HTML in output is now properly encoded
+ - HTML::Entities is a little bit slow and does currently not support very much
+   encodings. Now, we just encode the HTML control characters (<, >, & and ").
+   This also means that Dev-Editor now does not require any CPAN module.
+
+ Template class updated:
+ -----------------------
+ The template class was updated to version 1.5.
+
+ Small changes:
+ --------------
+ - Don't show the "Copy" link if a file is not readable
+ - Added checkboxes in the "Copy" and "Rename" dialogues for immediately
+   overwriting an existing file
+ - Preserve the directory listing filter if the user changes the directory using
+   the input field at the bottom of the directory listing
+
 New in version 2.3.2 (2005-04-23)
 ---------------------------------
 
