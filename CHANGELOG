@@ -1,6 +1,17 @@
 Change Log for Dev-Editor
 =========================
 
+Version 3.0.1 (2005-11-10):
+===========================
+
+ Accessing files above the virtual root directory:
+ -------------------------------------------------
+ It was possible to access files and directories above the virtual root
+ directory beginning with the same string as the root directory.
+ For example:
+ If your root directory is "/var/www/user1" it was possible to access
+ "/var/www/user10", "/var/www/user11" and so on.
+
 Version 3.0 (2005-10-18):
 =========================
 

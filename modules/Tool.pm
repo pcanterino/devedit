@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-07-23
+# Last modified: 2005-11-10
 #
 
 use strict;
@@ -81,6 +81,7 @@ sub check_path($$)
  # Check if the path is above the root directory
 
  return if(index($path,$root) != 0);
+ return if(substr($path,length($root)) && not File::Spec->file_name_is_absolute(substr($path,length($root))));
 
  # Create short path name
 
