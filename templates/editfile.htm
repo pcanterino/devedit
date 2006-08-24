@@ -23,7 +23,7 @@
 
 <p><textarea name="filecontent" rows="25" cols="120">{CONTENT}</textarea></p>
 
-<p><input type="checkbox" name="saveas" id="newfile" value="1"><label for="newfile">Save as new file: {DIR} </label><input type="text" name="newfile" value="" onchange="if(this.form.newfile.value != '') this.form.saveas.checked = true; else this.form.saveas.checked = false;"></p>
+<p><input type="checkbox" name="saveas" id="newfile" value="1"><label for="newfile">Save as new file: </label><input type="text" name="newfile" value="{FILE}" onchange="if(this.form.newfile.value != '') this.form.saveas.checked = true; else this.form.saveas.checked = false;"></p>
 
 <p><input type="submit" value="Save file and end editing"> <input type="submit" name="continue" value="Save file and continue editing"> <input type="reset" value="Discard changes"></p>
 </form>

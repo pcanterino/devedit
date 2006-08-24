@@ -966,7 +966,7 @@ sub exec_about($$)
 
   $tpl->parse_if_block('users',1);
 
-  # ID's of user and group
+  # IDs of user and group
 
   $tpl->fillin('UID',$uid);
   $tpl->fillin('GID',$gid);

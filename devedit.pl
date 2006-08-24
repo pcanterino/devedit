@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-06-14
+# Last modified: 2006-08-24
 #
 
 use strict;
@@ -58,7 +58,6 @@ my $new_virtual  = '';
 
 if($newfile ne '' && $newfile !~ /^\s+$/)
 {
- $curdir  = upper_path($file) if($curdir eq '');
  my $path = $curdir.'/'.$newfile;
 
  # Extract file and directory name...
