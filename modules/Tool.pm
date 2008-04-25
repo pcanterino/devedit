@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-11-10
+# Last modified: 2008-04-25
 #
 
 use strict;
@@ -182,6 +182,8 @@ sub devedit_reload(;$)
 sub dos_wildcard_match($$)
 {
  my ($pattern,$string) = @_;
+
+ return 1 if($pattern eq '*');
 
  # The following part is stolen from File::DosGlob
 
