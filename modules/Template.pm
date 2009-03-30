@@ -1,17 +1,18 @@
 package Template;
 
 #
-# Template (Version 1.5)
+# Template (Version 2.0)
 #
 # Klasse zum Parsen von Templates
 #
 # Autor:            Patrick Canterino <patrick@patshaping.de>
-# Letzte Aenderung: 4.5.2005
+# Letzte Aenderung: 31.7.2006
 #
 
 use strict;
 
 use Carp qw(croak);
+use File::Spec;
 
 # new()
 #
@@ -24,7 +25,7 @@ use Carp qw(croak);
 sub new
 {
  my $class = shift;
- my $self  = {file => '', template => ''};
+ my $self  = {file => '', template => '', original => '', vars => {}, defined_vars => [], loop_vars => {}};
  return bless($self,$class);
 }
 
@@ -51,8 +52,6 @@ sub get_template
 
 sub set_template($)
 {
- # Geht nur so...
-
  my ($self,$template) = @_;
  $self->{'template'}  = $template;
 }
@@ -95,7 +94,156 @@ sub read_file($;$)
  close(FILE) or croak "Closing $file: $!";
 
  $self->add_text($content);
+ $self->save_state;
+
  $self->parse_includes unless($not_include);
+}
+
+# set_var()
+#
+# Wert einer Variable setzen
+#
+# Parameter: 1. Name der Variable
+#            2. Wert, den die Variable erhalten soll
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub set_var($$)
+{
+ my ($self,$var,$content) = @_;
+ $self->{'vars'}->{$var} = $content;
+}
+
+# get_var()
+#
+# Wert einer Variable zurueckgeben
+#
+# Parameter: (optional) Variablenname
+#
+# Rueckgabe: Wert der Variable;
+#            wenn die Variable nicht existiert, false;
+#            wenn kein Variablenname angegeben wurde, wird ein
+#            Array mit den Variablennamen zurueckgegeben
+
+sub get_var(;$)
+{
+ my ($self,$var) = @_;
+
+ if(defined $var)
+ {
+  if($self->{'vars'}->{$var})
+  {
+   return $self->{'vars'}->{$var};
+  }
+  else
+  {
+   return undef;
+  }
+ }
+ else
+ {
+  return keys %{$self->{'vars'}};
+ }
+}
+
+# set_loop_data()
+#
+# Daten fuer eine Schleife setzen
+#
+# Parameter: 1. Name der Schleife
+#            2. Array-Referenz mit den Hash-Referenzen mit
+#               den Variablen fuer die Schleifendurchgaenge
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub set_loop_data($$)
+{
+ my ($self,$loop,$data) = @_;
+ $self->{'loop_vars'}->{$loop} = $data;
+}
+
+# add_loop_data()
+#
+# Daten fuer einen Schleifendurchgang hinzufuegen
+#
+# Parameter: 1. Name der Schleife
+#            2. Hash-Referenz mit den Variablen fuer den
+#               Schleifendurchgang
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub add_loop_data($$)
+{
+ my ($self,$loop,$data) = @_;
+
+ if($self->{'loop_vars'}->{$loop} && ref($self->{'loop_vars'}->{$loop}) eq 'ARRAY')
+ {
+  push(@{$self->{'loop_vars'}->{$loop}},$data);
+ }
+ else
+ {
+  $self->{'loop_vars'}->{$loop} = [$data];
+ }
+}
+
+# parse()
+#
+# In der Template definierte Variablen auslesen, Variablen
+# ersetzen, {IF}- und {TRIM}-Bloecke parsen
+#
+# Parameter: -nichts-
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub parse
+{
+ my $self = shift;
+
+ # Zuerst die Schleifen parsen
+
+ if($self->{'loop_vars'} && (my @loops = keys(%{$self->{'loop_vars'}})))
+ {
+  foreach my $loop(@loops)
+  {
+   $self->parse_loop($loop);
+  }
+ }
+
+ # Normale Variablen durchgehen
+
+ foreach my $var($self->get_var)
+ {
+  my $val = $self->get_var($var);
+
+  $self->parse_if_block($var,$val);
+
+  if(ref($val) eq 'ARRAY')
+  {
+   $self->fillin_array($var,$val);
+  }
+  else
+  {
+   $self->fillin($var,$val);
+  }
+ }
+
+ # Jetzt dasselbe mit denen, die direkt in der Template-Datei definiert
+ # sind, machen. Ich weiss, dass das eine ziemlich unsaubere Loesung ist,
+ # aber es funktioniert
+
+ $self->get_defined_vars;
+
+ foreach my $var(@{$self->{'defined_vars'}})
+ {
+  my $val = $self->get_var($var);
+
+  $self->parse_if_block($var,$val);
+  $self->fillin($var,$val);
+ }
+
+ # {TRIM}-Bloecke entfernen
+
+ $self->parse_trim_blocks;
 }
 
 # fillin()
@@ -111,11 +259,10 @@ sub fillin($$)
 {
  my ($self,$var,$text) = @_;
 
- $var  = quotemeta($var);
  $text = '' unless defined $text; # Um Fehler zu vermeiden
 
  my $template = $self->get_template;
- $template    =~ s/\{$var\}/$text/g;
+ $template    = str_replace('{'.$var.'}',$text,$template);
 
  $self->set_template($template);
 }
@@ -153,6 +300,269 @@ sub to_file($)
  return print $handle $self->get_template;
 }
 
+# reset()
+#
+# Den gesicherten Stand des Template-Textes sichern
+#
+# Parameter: -nichts-
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub reset
+{
+ my $self = shift;
+ $self->{'template'} = $self->{'original'};
+}
+
+# save_state()
+#
+# Aktuellen Stand des Template-Textes sichern
+# (alte Sicherung wird ueberschrieben)
+#
+# Parameter: -nichts-
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub save_state
+{
+ my $self = shift;
+ $self->{'original'} = $self->{'template'};
+}
+
+# parse_loop()
+#
+# Eine Schleife parsen
+#
+# Parameter: Name der Schleife
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub parse_loop($)
+{
+ my ($self,$name) = @_;
+
+ my $template = $self->get_template;
+ return if(index($template,'{LOOP '.$name.'}') == -1);
+
+ my $offset   = 0;
+ my $name_len = length($name);
+
+ while((my $begin = index($template,'{LOOP '.$name.'}',$offset)) != -1)
+ {
+  if((my $end = index($template,'{ENDLOOP}',$begin+6+$name_len)) != -1)
+  {
+   my $block   = substr($template,$begin,$end+9-$begin);
+   my $content = substr($block,$name_len+7,-9);
+
+   my $parsed_block = '';
+
+   for(my $x=0;$x<scalar @{$self->{'loop_vars'}->{$name}};$x++)
+   {
+    my $loop_data = $self->{'loop_vars'}->{$name}->[$x];
+    my @loop_vars = keys(%$loop_data);
+
+    my $ctpl = new Template;
+    $ctpl->set_template($content);
+
+    foreach my $loop_var(@loop_vars)
+    {
+     $ctpl->set_var($name.'.'.$loop_var,$loop_data->{$loop_var});
+    }
+
+    $ctpl->parse;
+    $parsed_block .= $ctpl->get_template;
+
+    undef($ctpl);
+   }
+
+   $template = str_replace($block,$parsed_block,$template);
+   $offset   = $begin+length($parsed_block);
+  }
+  else
+  {
+   last;
+  }
+ }
+
+ $self->set_template($template);
+}
+
+# get_defined_vars()
+#
+# In der Template-Datei definierte Variablen auslesen
+#
+# Parameter: -nichts-
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub get_defined_vars
+{
+ my $self = shift;
+
+ my $template = $self->get_template;
+ return if(index($template,'{DEFINE ') == -1);
+
+ my $offset = 0;
+
+ while(index($template,'{DEFINE ',$offset) != -1)
+ {
+  my $begin = index($template,'{DEFINE ',$offset)+8;
+  $offset   = $begin;
+
+  my $name    = '';
+  my $content = '';
+
+  my $var_open     = 0;
+  my $name_found   = 0;
+  my $define_block = 0;
+
+  for(my $x=$begin;$x<length($template);$x++)
+  {
+   if(substr($template,$x,1) eq "\012" || substr($template,$x,1) eq "\015")
+   {
+    # Wenn in einem {DEFINE}-Block ein Zeilenumbruch gefunden wird,
+    # brechen wir mit dem Parsen des Blockes ab
+
+    last;
+   }
+
+   if($var_open == 1)
+   {
+    if(substr($template,$x,1) eq '"')
+    {
+     # Der Inhalt der Variable ist hier zu Ende
+
+     $var_open = 0;
+
+     if(substr($template,$x+1,1) eq '}')
+     {
+      # Hier ist der Block zu Ende
+
+      if(not defined $self->get_var($name))
+      {
+       # Die Variable wird nur gesetzt, wenn sie nicht bereits gesetzt ist
+
+       $self->set_var($name,$content);
+       push(@{$self->{'defined_vars'}},$name);
+      }
+
+      # {DEFINE}-Block entfernen
+
+      my $pre  = substr($template,0,$begin-8);
+      my $post = substr($template,$x+2);
+
+      $template = $pre.$post;
+
+      # Fertig!
+
+      $offset = length($pre);
+      last;
+     }
+    }
+    elsif(substr($template,$x,1) eq '\\')
+    {
+     # Ein Backslash wurde gefunden, er dient zum Escapen von Zeichen
+
+     if(substr($template,$x+1,1) eq 'n')
+     {
+      # "\n" in Zeilenumbrueche umwandeln
+
+      $content .= "\n";
+     }
+     else
+     {
+      $content .= substr($template,$x+1,1);
+     }
+
+     $x++;
+    }
+    else
+    {
+     $content .= substr($template,$x,1);
+    }
+   }
+   else
+   {
+    if($name_found == 1)
+    {
+     if($var_open == 0)
+     {
+      if(substr($template,$x,1) eq '"')
+      {
+       $var_open = 1;
+      }
+      else
+      {
+       last;
+      }
+     }
+    }
+    else
+    {
+     # Variablennamen auslesen
+
+     if(substr($template,$x,1) eq '}' && $name ne '')
+     {
+      # Wir haben einen {DEFINE}-Block
+
+      $name_found   = 1;
+      $define_block = 1;
+
+      # Alles ab hier sollte mit dem Teil verbunden werden, der das
+      # {DEFINE} in einer Zeile verarbeitet
+
+      # Der Parser fuer {DEFINE}-Bloecke ist nicht rekursiv, was auch
+      # nicht noetig sein sollte
+
+      if((my $end = index($template,'{ENDDEFINE}',$x)) != -1)
+      {
+       $x++;
+
+       $content = substr($template,$x,$end-$x);
+
+       if(not defined $self->get_var($name))
+       {
+        # Die Variable wird nur gesetzt, wenn sie nicht bereits gesetzt ist
+
+        $self->set_var($name,$content);
+        push(@{$self->{'defined_vars'}},$name);
+       }
+
+       my $pre  = substr($template,0,$begin-8);
+       my $post = substr($template,$end+11);
+
+       $template = $pre.$post;
+
+       # Fertig!
+
+       $offset = length($pre);
+       last;
+      }
+      else
+      {
+       last;
+      }
+     }
+     elsif(substr($template,$x,1) ne ' ')
+     {
+      $name .= substr($template,$x,1);
+     }
+     elsif(substr($template,$x,1) ne '')
+     {
+      $name_found = 1;
+     }
+     else
+     {
+      last;
+     }
+    }
+   }
+  }
+ }
+
+ $self->set_template($template);
+}
+
 # parse_if_block()
 #
 # IF-Bloecke verarbeiten
@@ -181,19 +591,7 @@ sub parse_if_block($$;$)
 
   my $start    = index($template,'{IF '.$name.'}');
   my $tpl_tmp  = substr($template,$start);
-  my @splitted = split(/\{ENDIF\}/,$tpl_tmp);
-
-  # Wenn sich am Ende der Zeichenkette {ENDIF} befinden, werden diese
-  # von split() ignoriert, was zu einem Verschachtelungsfehler fuehrt
-  # Die fehlenden leeren Zeichenketten muessen von Hand eingefuegt werden
-
-  my $x = 1;
-
-  while(substr($tpl_tmp,-7*$x,7) eq '{ENDIF}')
-  {
-   push(@splitted,'');
-   $x++;
-  }
+  my @splitted = explode('{ENDIF}',$tpl_tmp);
 
   my $block = ''; # Kompletter bedingter Block
   my $ifs   = 0;  # IF-Zaehler (wird fuer jedes IF erhoeht und fuer jedes ENDIF erniedrigt)
@@ -223,7 +621,7 @@ sub parse_if_block($$;$)
   my $else_block = ''; # Alles ab {ELSE}
      $ifs        = 0;  # IF-Zaehler
 
-  @splitted = split(/\{ELSE\}/,$if_block);
+  @splitted = explode('{ELSE}',$if_block);
 
   for(my $x=0;$x<@splitted;$x++)
   {
@@ -253,9 +651,7 @@ sub parse_if_block($$;$)
 
   my $replacement = ($state) ? $if_block : $else_block;
 
-  my $qmblock = quotemeta($block);
-
-  $template =~ s/$qmblock/$replacement/;
+  $template = str_replace($block,$replacement,$template);
  }
 
  $self->set_template($template);
@@ -266,6 +662,50 @@ sub parse_if_block($$;$)
  {
   $self->parse_if_block('!'.$name,not($state),1);
  }
+}
+
+# parse_trim_blocks()
+#
+# {TRIM}-Bloecke parsen
+#
+# Dieser Parser ist nicht rekursiv, was auch nicht
+# noetig sein sollte.
+#
+# Parameter: -nichts-
+#
+# Rueckgabe: -nichts- (Template-Objekt wird modifiziert)
+
+sub parse_trim_blocks
+{
+ my $self = shift;
+
+ my $template = $self->get_template;
+ return if(index($template,'{TRIM}') == -1);
+
+ my $offset = 0;
+
+ while((my $begin = index($template,'{TRIM}')) >= 0)
+ {
+  if((my $end = index($template,'{ENDTRIM}',$begin+6)) >= 0)
+  {
+   my $block   = substr($template,$begin,$end+9-$begin);
+   my $content = substr($block,6,-9);
+
+   my $trimmed = $content;
+   $trimmed    =~ s/^\s+//s;
+   $trimmed    =~ s/\s+$//s;
+
+   $template   = str_replace($block,$content,$template);
+
+   $offset     = $begin+length($trimmed);
+  }
+  else
+  {
+   last;
+  }
+ }
+
+ $self->set_template($template);
 }
 
 # parse_condtag()
@@ -293,9 +733,7 @@ sub parse_condtag($$)
 
   my $replacement = ($state) ? substr($extract,length($condtag)+2,0-length($condtag)-3) : '';
 
-  $extract = quotemeta($extract);
-
-  $template =~ s/$extract/$replacement/g;                                       # Block durch neue Daten ersetzen
+  $template = str_replace($extract,$replacement,$template);                     # Block durch neue Daten ersetzen
  }
  $self->set_template($template);
 }
@@ -310,20 +748,91 @@ sub parse_condtag($$)
 
 sub parse_includes
 {
- my $self     = shift;
+ my $self = shift;
+
  my $template = $self->get_template;
+ return if(index($template,'{INCLUDE ') == -1);
 
- while($template =~ /(\{INCLUDE (\S+?)\})/g)
+ my $offset = 0;
+
+ my $y = 0;
+
+ while((my $begin = index($template,'{INCLUDE ',$offset)) != -1)
  {
-  my ($directive,$file) = ($1,$2);
-  my $qm_directive      = quotemeta($directive);
+  $y++;
 
-  if(-f $file)
+  my $start = $begin+9;
+  $offset   = $start;
+  my $long  = 0;
+
+  if(substr($template,$start,1) eq '"')
   {
-   my $inc = new Template;
-   $inc->read_file($file);
+   $long = 1;
+   $start++;
+  }
 
-   $template =~ s/$qm_directive/$inc->get_template/eg;
+  my $file = '';
+  my $skip = 0;
+
+  for(my $x=$start;$x<length($template);$x++)
+  {
+   my $c = substr($template,$x,1);
+
+   if($c eq "\012" && $c eq "\015")
+   {
+    $skip = 1;
+    last;
+   }
+   elsif($long == 0 && $c eq ' ')
+   {
+    $skip = 1;
+    last;
+   }
+   elsif($long == 1 && $c eq '"')
+   {
+    $skip = 1 if(substr($template,$x+1,1) ne '}');
+    last;
+   }
+   elsif($long == 0 && $c eq '}')
+   {
+    last;
+   }
+   else
+   {
+    $file .= $c;
+   }
+  }
+
+  next if($skip == 1);
+
+  if($file ne '')
+  {
+   my $filepath = $file;
+
+   unless(File::Spec->file_name_is_absolute($file))
+   {
+    my $dir   = (File::Spec->splitpath($self->{'file'}))[1];
+    $dir      = '.' unless($dir);
+    $filepath = File::Spec->catfile($dir,$file);
+   }
+
+   if(-f $filepath)
+   {
+    my $inc = new Template;
+    $inc->read_file($filepath);
+
+    my $end = ($long == 1)
+            ? $start + length($file) + 2
+            : $start + length($file) + 1;
+
+    my $pre  = substr($template,0,$begin);
+    my $post = substr($template,$end);
+
+    $template = $pre.$inc->get_template.$post;
+    $offset   = length($pre)+length($inc->get_template);
+
+    undef($inc);
+   }
   }
  }
 
@@ -333,6 +842,61 @@ sub parse_includes
 # ==================
 #  Private Funktion
 # ==================
+
+# explode()
+#
+# Eine Zeichenkette ohne regulaere Ausdruecke auftrennen
+# (split() hat einen Bug, deswegen verwende ich es nicht)
+#
+# Parameter: 1. Trennzeichenkette
+#            2. Zeichenkette, die aufgetrennt werden soll
+#            3. Maximale Zahl von Teilen
+#
+# Rueckgabe: Aufgetrennte Zeichenkette (Array)
+
+sub explode($$;$)
+{
+ my ($separator,$string,$limit) = @_;
+ my @splitted;
+
+ my $x       = 1;
+ my $offset  = 0;
+ my $sep_len = length($separator);
+
+ while((my $pos = index($string,$separator,$offset)) >= 0 && (!$limit || $x < $limit))
+ {
+  my $part = substr($string,$offset,$pos-$offset);
+  push(@splitted,$part);
+
+  $offset = $pos+$sep_len;
+
+  $x++;
+ }
+
+ push(@splitted,substr($string,$offset,length($string)-$offset));
+
+ return @splitted;
+}
+
+# str_replace()
+#
+# Zeichenkette durch andere ersetzen
+#
+# Parameter: 1. Zu ersetzender Text
+#            2. Ersetzender Text
+#            3. Zeichenkette, in der ersetzt werden soll
+#
+# Rueckgabe: Bearbeitete Zeichenkette (String)
+
+sub str_replace($$$)
+{
+ my ($search,$replace,$subject) = @_;
+ $search = quotemeta($search);
+
+ $subject =~ s/$search/$replace/gs;
+
+ return $subject;
+}
 
 # substr_count()
 #
@@ -355,15 +919,6 @@ sub substr_count($$)
 
  return $count;
 }
-
-# ==================
-#  Alias-Funktionen
-# ==================
-
-*addtext   = \&add_text;
-*as_string = \&get_template;
-*condtag   = \&parse_condtag;
-*readin    = \&read_file;
 
 # it's true, baby ;-)
 
