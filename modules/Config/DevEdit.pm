@@ -66,12 +66,14 @@ sub read_config($)
 
    my $new_conf = $userconf->{$ENV{'REMOTE_USER'}};
 
-   $config->{'fileroot'}  = $new_conf->{'fileroot'}  if($new_conf->{'fileroot'});
-   $config->{'httproot'}  = $new_conf->{'httproot'}  if($new_conf->{'httproot'});
+   $config->{'fileroot'}       = $new_conf->{'fileroot'}  if($new_conf->{'fileroot'});
+   $config->{'httproot'}       = $new_conf->{'httproot'}  if($new_conf->{'httproot'});
 
-   $config->{'forbidden'} = $new_conf->{'forbidden'} if(defined $new_conf->{'forbidden'});
+   $config->{'forbidden'}      = $new_conf->{'forbidden'} if(defined $new_conf->{'forbidden'});
 
-   $config->{'user_config'} = 1;
+   $config->{'hide_dot_files'} = $new_conf->{'hide_dot_files'} if(defined $new_conf->{'hide_dot_files'});
+
+   $config->{'user_config'}    = 1;
   }
  }
 

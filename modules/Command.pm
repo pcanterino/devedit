@@ -132,6 +132,7 @@ sub exec_show($$)
 
   foreach my $dir(@$dirs)
   {
+   next if($config->{'hide_dot_files'} && substr($dir,0,1) eq '.');
    next unless(dos_wildcard_match($filter1,$dir));
 
    my $phys_path = $physical.'/'.$dir;
@@ -159,6 +160,7 @@ sub exec_show($$)
 
   foreach my $file(@$files)
   {
+   next if($config->{'hide_dot_files'} && substr($file,0,1) eq '.');
    next unless(dos_wildcard_match($filter1,$file));
 
    my $phys_path = $physical.'/'.$file;
