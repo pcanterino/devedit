@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-08-01
+# Last modified: 2009-03-30
 #
 
 use strict;
@@ -521,6 +521,14 @@ sub exec_upload($$)
 
  if(my $uploaded_file = $cgi->param('uploaded_file'))
  {
+  if($cgi->param('remote_file'))
+  {
+   $uploaded_file = $cgi->param('remote_file');
+
+   $uploaded_file =~ s!/!!g;
+   $uploaded_file =~ s!\\!!g;
+  }
+
   # Process file upload
 
   my $filename  = file_name($uploaded_file);

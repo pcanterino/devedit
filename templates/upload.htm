@@ -25,6 +25,9 @@
 <p>File to upload:<br>
 <input type="file" name="uploaded_file" size="35"></p>
 
+<p>Remote name of the file (optional):<br>
+<input type="text" name="remote_file" size="35"></p>
+
 <p>Transfer mode (see below):<br>
 <input type="radio" name="ascii" id="ascii" value="1"><label for="ascii">ASCII</label> <input type="radio" name="ascii" id="binary" value="0" checked><label for="binary">Binary (default)</label></p>
 
@@ -40,6 +43,12 @@
 <ul>
 <li><b>ASCII:</b> Any line separator in the uploaded file will be converted to the system specific line separator. Use this mode for text files, HTML documents, scripts and so on.</li>
 <li><b>Binary:</b> The file will be uploaded as it is. Use this transfer mode for images, executable files and archives, for example. This is the default transfer mode.</li>
+</ul>
+
+<p><b>Note:</b></p>
+
+<ul>
+<li>If you specify an other remote name for the uploaded file, all slashes and backslashes will be removed from the entered value.</li>
 </ul>
 
 <hr>
