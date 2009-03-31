@@ -1,6 +1,38 @@
 Change Log for Dev-Editor
 =========================
 
+Version 3.x.x (200x-xx-xx):
+===========================
+
+ Better distinction of objects in directory listing:
+ ---------------------------------------------------
+ For a better distinction of the objects in directory listing, every second
+ object has a grey background now.
+
+ Prefilled form fields:
+ ----------------------
+ If you want to copy or rename/move a file or a directory or save a file using
+ a different name, the form field for the new filename is prefilled with the
+ old one. Additionally, the entered path is no more relative to the directory
+ of the original file.
+
+ Hide dot files:
+ ---------------
+ When the new configuration option "hide_dot_files" is set to 1, every file or
+ directory beginning with a "." is not shown in the directory listing. But you
+ can still access the file / directory by typing its name into the "Go to
+ directory/file" box.
+ This option is also available in the user-dependent configuration.
+
+ Copyright note:
+ ---------------
+ In the header of each file, there is a now a copyright note and a reference to
+ the Artistic License.
+
+ Template class updated:
+ -----------------------
+ The template class was updated to version 2.0.
+
 Version 3.0.1 (2005-11-10):
 ===========================
 
@@ -580,7 +612,7 @@ New in version 1.0 (2003-10-08)
 ------------------------------------------------
 
 (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
-(C) 2003-2005 Patrick Canterino
+(C) 2003-2009 Patrick Canterino
 
 E-Mail: patrick@patshaping.de
 WWW:    http://devedit.sourceforge.net/
