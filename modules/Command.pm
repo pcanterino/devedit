@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2009-03-30
+# Last modified: 2009-03-31
 #
 
 use strict;
@@ -108,6 +108,8 @@ sub exec_show($$)
 
   my $dirlist = '';
 
+  my $count = 0;
+
   my $filter1 = $data->{'cgi'}->param('filter') || '*';        # The real wildcard
   my $filter2 = ($filter1 && $filter1 ne '*') ? $filter1 : ''; # Wildcard for output
 
@@ -116,6 +118,8 @@ sub exec_show($$)
 
   unless($virtual eq '/')
   {
+   $count++;
+
    my @stat  = stat($physical.'/..');
 
    my $udtpl = new Template;
@@ -135,6 +139,8 @@ sub exec_show($$)
    next if($config->{'hide_dot_files'} && substr($dir,0,1) eq '.');
    next unless(dos_wildcard_match($filter1,$dir));
 
+   $count++;
+
    my $phys_path = $physical.'/'.$dir;
    my $virt_path = multi_string($virtual.$dir.'/');
 
@@ -152,6 +158,7 @@ sub exec_show($$)
    $dtpl->parse_if_block('forbidden',is_forbidden_file($config->{'forbidden'},$virt_path->{'normal'}));
    $dtpl->parse_if_block('readable',-r $phys_path && -x $phys_path);
    $dtpl->parse_if_block('users',$users && -o $phys_path);
+   $dtpl->parse_if_block('even',($count % 2) == 0);
 
    $dirlist .= $dtpl->get_template;
   }
@@ -162,6 +169,8 @@ sub exec_show($$)
   {
    next if($config->{'hide_dot_files'} && substr($file,0,1) eq '.');
    next unless(dos_wildcard_match($filter1,$file));
+
+   $count++;
 
    my $phys_path = $physical.'/'.$file;
    my $virt_path = multi_string($virtual.$file);
@@ -192,6 +201,8 @@ sub exec_show($$)
    $ftpl->parse_if_block('too_large',$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
 
    $ftpl->parse_if_block('users',$users && -o $phys_path);
+
+   $ftpl->parse_if_block('even',($count % 2) == 0);
 
    $dirlist .= $ftpl->get_template;
   }
