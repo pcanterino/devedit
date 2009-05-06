@@ -14,8 +14,18 @@
 
 <hr>
 
-{IF empty}<p><i>This directory is empty or nothing is matching against your wildcard</i></p>{ELSE}<table border="0" style="font-family:'Courier New',Courier,monospace;font-size:10pt;">
-{DIRLIST}</table>{ENDIF}
+{IF empty}<p><i>This directory is empty or nothing is matching against your wildcard</i></p>{ELSE}<form>
+<input type="hidden" name="command" value="remove_multi">
+<input type="hidden" name="file" value="{DIR}">
+
+<table border="0" style="font-family:'Courier New',Courier,monospace;font-size:10pt;">
+{DIRLIST}</table>
+
+<hr>
+
+<p><input type="submit" value="Delete selected files"></p>
+
+</form>{ENDIF}
 
 <hr>
 

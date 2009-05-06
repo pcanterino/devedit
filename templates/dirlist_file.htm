@@ -1,4 +1,5 @@
 <tr{IF even} style="background-color:#EEEEEE"{ENDIF}>
+<td><input type="checkbox" name="files" value="{FILE_NAME}"></td>
 <td align="right" style="white-space:nowrap">{SIZE}</td>
 <td style="padding-left:15pt;white-space:nowrap;">{DATE}{IF gmt} (GMT){ENDIF}</td>
 <td style="padding-left:15pt;white-space:nowrap;">{IF forbidden}<span style="color:#C0C0C0" title="File access forbidden by Dev-Editor's configuration">{FILE_NAME}</span>{ELSE}{FILE_NAME}{ENDIF}</td>

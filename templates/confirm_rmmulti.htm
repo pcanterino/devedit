@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<title>Remove files</title>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<h1>Remove files</h1>
+
+<p>Do you really want to remove these files?</p>
+
+<ul>{LOOP FILES}
+<li>{FILES.FILE_PATH}</li>{ENDLOOP}
+</ul>
+
+<form action="{SCRIPT}" method="get">
+<input type="hidden" name="command" value="remove_multi">
+<input type="hidden" name="file" value="{DIR}">
+<input type="hidden" name="confirmed" value="1">
+{LOOP FILES}
+<input type="hidden" name="files" value="{FILES.FILE}">{ENDLOOP}
+
+<p><input type="submit" value="Yes"></p>
+</form>
+
+<form action="{SCRIPT}" method="get">
+<input type="hidden" name="command" value="show">
+<input type="hidden" name="file" value="{DIR}">
+
+<p><input type="submit" value="No"></p>
+</form>
+
+</body>
+</html>

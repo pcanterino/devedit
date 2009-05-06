@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2009-03-31
+# Last modified: 2009-05-04
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -39,17 +39,18 @@ use Template;
 my $script = encode_html($ENV{'SCRIPT_NAME'});
 my $users  = eval('getpwuid(0)') && eval('getgrgid(0)');
 
-my %dispatch = ('show'      => \&exec_show,
-                'beginedit' => \&exec_beginedit,
-                'endedit'   => \&exec_endedit,
-                'mkdir'     => \&exec_mkdir,
-                'mkfile'    => \&exec_mkfile,
-                'upload'    => \&exec_upload,
-                'copy'      => \&exec_copy,
-                'rename'    => \&exec_rename,
-                'remove'    => \&exec_remove,
-                'chprop'    => \&exec_chprop,
-                'about'     => \&exec_about
+my %dispatch = ('show'         => \&exec_show,
+                'beginedit'    => \&exec_beginedit,
+                'endedit'      => \&exec_endedit,
+                'mkdir'        => \&exec_mkdir,
+                'mkfile'       => \&exec_mkfile,
+                'upload'       => \&exec_upload,
+                'copy'         => \&exec_copy,
+                'rename'       => \&exec_rename,
+                'remove'       => \&exec_remove,
+                'remove_multi' => \&exec_remove_multi,
+                'chprop'       => \&exec_chprop,
+                'about'        => \&exec_about
                );
 
 ### Export ###
@@ -845,6 +846,163 @@ sub exec_remove($$)
 
    return \$output;
   }
+ }
+}
+
+# exec_remove_multi()
+#
+# Remove a file or a directory and return to directory view
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_remove_multi($$)
+{
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = $data->{'virtual'};
+ my $cgi            = $data->{'cgi'};
+ 
+ my @files = $cgi->param('files');
+ my $x = 0; 
+ 
+ if(@files)
+ {
+  foreach my $file(@files)
+  {
+   # Filter out some "bad" files (e.g. files going up in the
+   # directory hierarchy or files containing slashes (it's too
+   # dangerous...)
+  
+   splice(@files,$x,1) if($file =~ m!^\.+$!);
+   splice(@files,$x,1) if($file =~ m!/!);
+   splice(@files,$x,1) if($file =~ m!\\!);
+   
+   $x++;
+  }
+ }
+ 
+ if(@files)
+ {
+  if($cgi->param('confirmed'))
+  {
+   #die 'Noch nicht!';
+   
+   my @success;
+   my @failed;
+   
+   foreach my $file(@files)
+   {
+    my $file_path = clean_path($physical.'/'.$file);
+    
+    if(-e $file_path)
+    {
+     if(-d $file_path && not -l $file_path)
+     {
+      # Remove a directory
+      
+      if(rmtree($file_path))
+      {
+       push(@success,clean_path($file));
+      }
+      else
+      {
+       push(@failed,clean_path($file));
+      }
+     }
+     else
+     {
+      # Remove a file
+      
+      if(unlink($file_path))
+      {
+       push(@success,clean_path($file));
+      }
+      else
+      {
+       push(@failed,clean_path($file));
+      }
+     }
+    }
+    else
+    {
+     push(@failed,clean_path($file));
+    }
+   }
+   
+   my $tpl = new Template;
+   $tpl->read_file($config->{'templates'}->{'rmmulti'});
+
+   if(scalar(@success) > 0)
+   {
+    $tpl->parse_if_block('success',1);
+   
+    foreach my $file_success(@success)
+    {
+     $tpl->add_loop_data('SUCCESS',{FILE => encode_html($file_success),
+                                    FILE_PATH => encode_html(clean_path($virtual.'/'.$file_success))});
+    }
+   }
+   else
+   {
+    $tpl->parse_if_block('success',0);
+   }
+   
+   if(scalar(@failed) > 0)
+   {
+    $tpl->parse_if_block('failed',1);
+
+    foreach my $file_failed(@failed)
+    {
+     $tpl->add_loop_data('FAILED',{FILE => encode_html($file_failed),
+                                   FILE_PATH => encode_html(clean_path($virtual.'/'.$file_failed))});
+    }
+   }
+   else
+   {
+    $tpl->parse_if_block('failed',0);
+   }
+   
+   
+   $tpl->set_var('DIR',encode_html($virtual));
+   $tpl->set_var('SCRIPT',$script);
+   
+   $tpl->parse;
+
+   my $output = header(-type => 'text/html');
+   $output   .= $tpl->get_template;
+
+   return \$output;
+  }
+  else
+  {
+   my $tpl = new Template;
+   $tpl->read_file($config->{'templates'}->{'confirm_rmmulti'});
+
+   foreach my $file(@files)
+   {
+    $tpl->add_loop_data('FILES',{FILE => encode_html($file),
+                                 FILE_PATH => encode_html(clean_path($virtual.'/'.$file))});
+   }
+   
+   $tpl->set_var('COUNT',encode_html($x));
+   
+   $tpl->set_var('DIR',encode_html($virtual));
+   $tpl->set_var('SCRIPT',$script);
+   
+   $tpl->parse;
+
+   my $output = header(-type => 'text/html');
+   $output   .= $tpl->get_template;
+
+   return \$output;
+  }
+ }
+ else
+ {
+  return devedit_reload({command => 'show', file => $virtual});
  }
 }
 
