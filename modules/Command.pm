@@ -864,10 +864,10 @@ sub exec_remove_multi($$)
  my $physical       = $data->{'physical'};
  my $virtual        = $data->{'virtual'};
  my $cgi            = $data->{'cgi'};
- 
- my @files = $cgi->param('files');
- my $x = 0; 
- 
+
+ my @files = $cgi->param('files');#
+ my @new_files;
+
  if(@files)
  {
   foreach my $file(@files)
@@ -875,34 +875,32 @@ sub exec_remove_multi($$)
    # Filter out some "bad" files (e.g. files going up in the
    # directory hierarchy or files containing slashes (it's too
    # dangerous...)
-  
-   splice(@files,$x,1) if($file =~ m!^\.+$!);
-   splice(@files,$x,1) if($file =~ m!/!);
-   splice(@files,$x,1) if($file =~ m!\\!);
-   
-   $x++;
+
+   next if($file =~ m!^\.+$!);
+   next if($file =~ m!/!);
+   next if($file =~ m!\\!);
+
+   push(@new_files,$file);
   }
  }
- 
- if(@files)
+
+ if(@new_files)
  {
   if($cgi->param('confirmed'))
   {
-   #die 'Noch nicht!';
-   
    my @success;
    my @failed;
-   
-   foreach my $file(@files)
+
+   foreach my $file(@new_files)
    {
     my $file_path = clean_path($physical.'/'.$file);
-    
+
     if(-e $file_path)
     {
      if(-d $file_path && not -l $file_path)
      {
       # Remove a directory
-      
+
       if(rmtree($file_path))
       {
        push(@success,clean_path($file));
@@ -915,7 +913,7 @@ sub exec_remove_multi($$)
      else
      {
       # Remove a file
-      
+
       if(unlink($file_path))
       {
        push(@success,clean_path($file));
@@ -931,14 +929,14 @@ sub exec_remove_multi($$)
      push(@failed,clean_path($file));
     }
    }
-   
+
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'rmmulti'});
 
    if(scalar(@success) > 0)
    {
     $tpl->parse_if_block('success',1);
-   
+
     foreach my $file_success(@success)
     {
      $tpl->add_loop_data('SUCCESS',{FILE => encode_html($file_success),
@@ -949,7 +947,7 @@ sub exec_remove_multi($$)
    {
     $tpl->parse_if_block('success',0);
    }
-   
+
    if(scalar(@failed) > 0)
    {
     $tpl->parse_if_block('failed',1);
@@ -964,11 +962,11 @@ sub exec_remove_multi($$)
    {
     $tpl->parse_if_block('failed',0);
    }
-   
-   
+
+
    $tpl->set_var('DIR',encode_html($virtual));
    $tpl->set_var('SCRIPT',$script);
-   
+
    $tpl->parse;
 
    my $output = header(-type => 'text/html');
@@ -981,17 +979,17 @@ sub exec_remove_multi($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmmulti'});
 
-   foreach my $file(@files)
+   foreach my $file(@new_files)
    {
     $tpl->add_loop_data('FILES',{FILE => encode_html($file),
                                  FILE_PATH => encode_html(clean_path($virtual.'/'.$file))});
    }
-   
-   $tpl->set_var('COUNT',encode_html($x));
-   
+
+   $tpl->set_var('COUNT',scalar(@new_files));
+
    $tpl->set_var('DIR',encode_html($virtual));
    $tpl->set_var('SCRIPT',$script);
-   
+
    $tpl->parse;
 
    my $output = header(-type => 'text/html');
