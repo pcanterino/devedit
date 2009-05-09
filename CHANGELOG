@@ -13,6 +13,10 @@ Version 3.x.x (200x-xx-xx):
  ---------------------------------------------------
  For a better distinction of the objects in directory listing, every second
  object has a grey background now.
+ 
+ Remote name for uploaded files:
+ -------------------------------
+ When uploading a file, you can now specify a name for the file on the server.
 
  Prefilled form fields:
  ----------------------
