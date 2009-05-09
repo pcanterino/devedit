@@ -807,12 +807,14 @@ sub exec_remove($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmdir'});
 
-   $tpl->fillin('DIR',encode_html($virtual));
-   $tpl->fillin('DIR_URL',escape($virtual));
-   $tpl->fillin('UPPER_DIR',encode_html($dir));
-   $tpl->fillin('UPPER_DIR_URL',escape($dir));
-   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-   $tpl->fillin('SCRIPT',$script);
+   $tpl->set_var('DIR',encode_html($virtual));
+   $tpl->set_var('DIR_URL',escape($virtual));
+   $tpl->set_var('UPPER_DIR',encode_html($dir));
+   $tpl->set_var('UPPER_DIR_URL',escape($dir));
+   $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->set_var('SCRIPT',$script);
+
+   $tpl->parse;
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -834,12 +836,14 @@ sub exec_remove($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmfile'});
 
-   $tpl->fillin('FILE',encode_html($virtual));
-   $tpl->fillin('FILE_URL',escape($virtual));
-   $tpl->fillin('DIR',encode_html($dir));
-   $tpl->fillin('DIR_URL',escape($dir));
-   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-   $tpl->fillin('SCRIPT',$script);
+   $tpl->set_var('FILE',encode_html($virtual));
+   $tpl->set_var('FILE_URL',escape($virtual));
+   $tpl->set_var('DIR',encode_html($dir));
+   $tpl->set_var('DIR_URL',escape($dir));
+   $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->set_var('SCRIPT',$script);
+
+   $tpl->parse;
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -865,7 +869,7 @@ sub exec_remove_multi($$)
  my $virtual        = $data->{'virtual'};
  my $cgi            = $data->{'cgi'};
 
- my @files = $cgi->param('files');#
+ my @files = $cgi->param('files');
  my @new_files;
 
  if(@files)
@@ -958,7 +962,7 @@ sub exec_remove_multi($$)
    if(scalar(@failed) > 0)
    {
     $tpl->parse_if_block('failed',1);
- 
+
     foreach my $file_failed(@failed)
     {
      $tpl->add_loop_data('FAILED',{FILE => encode_html($file_failed),
@@ -1069,13 +1073,13 @@ sub exec_chprop($$)
 
   # Insert file properties into the template
 
-  $tpl->fillin('MODE_OCTAL',substr(sprintf('%04o',$mode),-4));
-  $tpl->fillin('MODE_STRING',mode_string($mode));
-  $tpl->fillin('GID',$gid);
+  $tpl->set_var('MODE_OCTAL',substr(sprintf('%04o',$mode),-4));
+  $tpl->set_var('MODE_STRING',mode_string($mode));
+  $tpl->set_var('GID',$gid);
 
   if(my $group = getgrgid($gid))
   {
-   $tpl->fillin('GROUP',encode_html($group));
+   $tpl->set_var('GROUP',encode_html($group));
    $tpl->parse_if_block('group_detected',1);
   }
   else
@@ -1085,12 +1089,14 @@ sub exec_chprop($$)
 
   # Insert other information
 
-  $tpl->fillin('FILE',encode_html($virtual));
-  $tpl->fillin('FILE_URL',escape($virtual));
-  $tpl->fillin('DIR',encode_html($dir));
-  $tpl->fillin('DIR_URL',escape($dir));
-  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-  $tpl->fillin('SCRIPT',$script);
+  $tpl->set_var('FILE',encode_html($virtual));
+  $tpl->set_var('FILE_URL',escape($virtual));
+  $tpl->set_var('DIR',encode_html($dir));
+  $tpl->set_var('DIR_URL',escape($dir));
+  $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+  $tpl->set_var('SCRIPT',$script);
+
+  $tpl->parse;
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -1115,35 +1121,35 @@ sub exec_about($$)
  my $tpl = new Template;
  $tpl->read_file($config->{'templates'}->{'about'});
 
- $tpl->fillin('SCRIPT',$script);
+ $tpl->set_var('SCRIPT',$script);
 
  # Dev-Editor's version number
 
- $tpl->fillin('VERSION',$data->{'version'});
+ $tpl->set_var('VERSION',$data->{'version'});
 
  # Some path information
 
- $tpl->fillin('SCRIPT_PHYS',encode_html($ENV{'SCRIPT_FILENAME'}));
- $tpl->fillin('CONFIG_PATH',encode_html($data->{'configfile'}));
- $tpl->fillin('FILE_ROOT',  encode_html($config->{'fileroot'}));
- $tpl->fillin('HTTP_ROOT',  encode_html($config->{'httproot'}));
+ $tpl->set_var('SCRIPT_PHYS',encode_html($ENV{'SCRIPT_FILENAME'}));
+ $tpl->set_var('CONFIG_PATH',encode_html($data->{'configfile'}));
+ $tpl->set_var('FILE_ROOT',  encode_html($config->{'fileroot'}));
+ $tpl->set_var('HTTP_ROOT',  encode_html($config->{'httproot'}));
 
  # Perl
 
- $tpl->fillin('PERL_PROG',encode_html($^X));
- $tpl->fillin('PERL_VER', sprintf('%vd',$^V));
+ $tpl->set_var('PERL_PROG',encode_html($^X));
+ $tpl->set_var('PERL_VER', sprintf('%vd',$^V));
 
  # Information about the server
 
- $tpl->fillin('HTTPD',encode_html($ENV{'SERVER_SOFTWARE'}));
- $tpl->fillin('OS',   encode_html($^O));
- $tpl->fillin('TIME', encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime : localtime)));
+ $tpl->set_var('HTTPD',encode_html($ENV{'SERVER_SOFTWARE'}));
+ $tpl->set_var('OS',   encode_html($^O));
+ $tpl->set_var('TIME', encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime : localtime)));
 
  $tpl->parse_if_block('gmt',$config->{'use_gmt'});
 
  # Process information
 
- $tpl->fillin('PID',$$);
+ $tpl->set_var('PID',$$);
 
  # The following information is only available on systems supporting
  # users and groups
@@ -1160,14 +1166,14 @@ sub exec_about($$)
 
   # IDs of user and group
 
-  $tpl->fillin('UID',$uid);
-  $tpl->fillin('GID',$gid);
+  $tpl->set_var('UID',$uid);
+  $tpl->set_var('GID',$gid);
 
   # Names of user and group
 
   if(my $user = getpwuid($uid))
   {
-   $tpl->fillin('USER',encode_html($user));
+   $tpl->set_var('USER',encode_html($user));
    $tpl->parse_if_block('user_detected',1);
   }
   else
@@ -1177,7 +1183,7 @@ sub exec_about($$)
 
   if(my $group = getgrgid($gid))
   {
-   $tpl->fillin('GROUP',encode_html($group));
+   $tpl->set_var('GROUP',encode_html($group));
    $tpl->parse_if_block('group_detected',1);
   }
   else
@@ -1187,12 +1193,14 @@ sub exec_about($$)
 
   # Process umask
 
-  $tpl->fillin('UMASK',sprintf('%04o',umask));
+  $tpl->set_var('UMASK',sprintf('%04o',umask));
  }
  else
  {
   $tpl->parse_if_block('users',0);
  }
+
+ $tpl->parse;
 
  my $output = header(-type => 'text/html');
  $output   .= $tpl->get_template;

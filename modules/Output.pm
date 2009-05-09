@@ -82,7 +82,7 @@ sub error($;$$)
   }
  }
 
- $tpl->parse();
+ $tpl->parse;
 
  my $output = header(-type => 'text/html');
  $output   .= $tpl->get_template;
