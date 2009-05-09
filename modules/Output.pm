@@ -6,7 +6,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-04-22
+# Last modified: 2005-05-09
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -67,10 +67,10 @@ sub error($;$$)
  my $tpl = new Template;
  $tpl->read_file($tpl_error);
 
- $tpl->fillin('ERROR',$message);
- $tpl->fillin('BACK',encode_html($path));
- $tpl->fillin('BACK_URL',escape($path));
- $tpl->fillin('SCRIPT',encode_html($ENV{'SCRIPT_NAME'}));
+ $tpl->set_var('ERROR',$message);
+ $tpl->set_var('BACK',encode_html($path));
+ $tpl->set_var('BACK_URL',escape($path));
+ $tpl->set_var('SCRIPT',encode_html($ENV{'SCRIPT_NAME'}));
 
  $tpl->parse_if_block('dir',defined $path);
 
@@ -78,9 +78,11 @@ sub error($;$$)
  {
   while(my ($key,$value) = each(%$vars))
   {
-   $tpl->fillin($key,$value);
+   $tpl->set_var($key,$value);
   }
  }
+
+ $tpl->parse();
 
  my $output = header(-type => 'text/html');
  $output   .= $tpl->get_template;
