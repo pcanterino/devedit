@@ -146,8 +146,8 @@ httproot = /
 aliases = marge bart
 
 Using this, the users whose usernames are "marge" and "bart" use the same
-configuration as "homer". Place any number of username seperated by whitespaces
-here.
+configuration as "homer". You can place an arbitrary number of usernames
+seperated by whitespaces here.
 Note: If one of the users mentioned as an alias and an individual configuration
 section for this user exists too, the one mentioned as an alias is ignored.
 
