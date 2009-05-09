@@ -4,6 +4,11 @@ Change Log for Dev-Editor
 Version 3.x.x (200x-xx-xx):
 ===========================
 
+ Removing multiple files:
+ ------------------------
+ In the directory listing, there are now checkboxes for selecting files and a
+ button for removing them.
+
  Better distinction of objects in directory listing:
  ---------------------------------------------------
  For a better distinction of the objects in directory listing, every second
