@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2009-05-04
+# Last modified: 2009-05-09
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -935,12 +935,19 @@ sub exec_remove_multi($$)
 
    if(scalar(@success) > 0)
    {
-    $tpl->parse_if_block('success',1);
-
-    foreach my $file_success(@success)
+    if(scalar(@success) == scalar(@new_files) && scalar(@failed) == 0)
     {
-     $tpl->add_loop_data('SUCCESS',{FILE => encode_html($file_success),
-                                    FILE_PATH => encode_html(clean_path($virtual.'/'.$file_success))});
+     return devedit_reload({command => 'show', file => $virtual});
+    }
+    else
+    {
+     $tpl->parse_if_block('success',1);
+
+     foreach my $file_success(@success)
+     {
+      $tpl->add_loop_data('SUCCESS',{FILE => encode_html($file_success),
+                                     FILE_PATH => encode_html(clean_path($virtual.'/'.$file_success))});
+     }
     }
    }
    else
@@ -951,7 +958,7 @@ sub exec_remove_multi($$)
    if(scalar(@failed) > 0)
    {
     $tpl->parse_if_block('failed',1);
-
+ 
     foreach my $file_failed(@failed)
     {
      $tpl->add_loop_data('FAILED',{FILE => encode_html($file_failed),
