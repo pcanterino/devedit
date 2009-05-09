@@ -82,9 +82,12 @@ use_gmt                  Set this option to 1 if you want to use Greenwich Mean
                          Time (GMT/UTC) in directory listing and in the About
                          dialogue instead of the local time.
 
-hide_dot_files           Set this option to 1 if you want to hide files
-                         beginning with a dot (e.g. ".htaccess") in directory
-                         listing.
+hide_dot_files           Set this option to 1 if you want to hide files or
+                         directories beginning with a dot (e.g. ".htaccess") in
+                         directory listing.
+                         The files are just hidden in the directory listing,
+                         you can still access them typing the name into the
+                         "Go to directory/file" box.
 
 forbidden                Specify a list of filenames the user is not allowed to
                          access. The filenames have to be relative to the
@@ -109,8 +112,13 @@ User-dependent configuration
 
 If you have placed Dev-Editor inside a directory protected using HTTP
 authentication, you may override some default configuration values for a defined
-list of users. You may override the values for "fileroot", "httproot" and
-"forbidden".
+list of users. You may override the values for the following configuration
+options:
+
+- fileroot
+- httproot
+- hide_dot_files
+- forbidden
 
 For overriding configuration values you need a special configuration file. The
 path to this file is defined using the "userconf_file" configuration option in
