@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2009-05-09
+# Last modified: 2009-05-10
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -473,8 +473,10 @@ sub exec_mkfile($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'mkfile'});
 
-  $tpl->fillin('DIR','/');
-  $tpl->fillin('SCRIPT',$script);
+  $tpl->set_var('DIR','/');
+  $tpl->set_var('SCRIPT',$script);
+
+  $tpl->parse;
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -512,8 +514,10 @@ sub exec_mkdir($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'mkdir'});
 
-  $tpl->fillin('DIR','/');
-  $tpl->fillin('SCRIPT',$script);
+  $tpl->set_var('DIR','/');
+  $tpl->set_var('SCRIPT',$script);
+
+  $tpl->parse;
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -583,10 +587,12 @@ sub exec_upload($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'upload'});
 
-  $tpl->fillin('DIR',encode_html($virtual));
-  $tpl->fillin('DIR_URL',escape($virtual));
-  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-  $tpl->fillin('SCRIPT',$script);
+  $tpl->set_var('DIR',encode_html($virtual));
+  $tpl->set_var('DIR_URL',escape($virtual));
+  $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+  $tpl->set_var('SCRIPT',$script);
+
+  $tpl->parse;
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -642,16 +648,18 @@ sub exec_copy($$)
      my $tpl = new Template;
      $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
-     $tpl->fillin('FILE',encode_html($virtual));
-     $tpl->fillin('NEW_FILE',$new_virtual->{'html'});
-     $tpl->fillin('NEW_FILENAME',file_name($new_virtual->{'html'}));
-     $tpl->fillin('NEW_DIR',encode_html($new_dir));
-     $tpl->fillin('DIR',encode_html($dir));
-     $tpl->fillin('DIR_URL',escape($dir));
+     $tpl->set_var('FILE',encode_html($virtual));
+     $tpl->set_var('NEW_FILE',$new_virtual->{'html'});
+     $tpl->set_var('NEW_FILENAME',file_name($new_virtual->{'html'}));
+     $tpl->set_var('NEW_DIR',encode_html($new_dir));
+     $tpl->set_var('DIR',encode_html($dir));
+     $tpl->set_var('DIR_URL',escape($dir));
 
-     $tpl->fillin('COMMAND','copy');
-     $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-     $tpl->fillin('SCRIPT',$script);
+     $tpl->set_var('COMMAND','copy');
+     $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+     $tpl->set_var('SCRIPT',$script);
+
+     $tpl->parse;
 
      my $output = header(-type => 'text/html');
      $output   .= $tpl->get_template;
@@ -671,11 +679,13 @@ sub exec_copy($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'copydir'});
 
-   $tpl->fillin('FILE',encode_html($virtual));
-   $tpl->fillin('DIR',encode_html($dir));
-   $tpl->fillin('DIR_URL',escape($dir));
-   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-   $tpl->fillin('SCRIPT',$script);
+   $tpl->set_var('FILE',encode_html($virtual));
+   $tpl->set_var('DIR',encode_html($dir));
+   $tpl->set_var('DIR_URL',escape($dir));
+   $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->set_var('SCRIPT',$script);
+
+   $tpl->parse;
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -687,11 +697,13 @@ sub exec_copy($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'copyfile'});
 
-   $tpl->fillin('FILE',encode_html($virtual));
-   $tpl->fillin('DIR',encode_html($dir));
-   $tpl->fillin('DIR_URL',escape($dir));
-   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-   $tpl->fillin('SCRIPT',$script);
+   $tpl->set_var('FILE',encode_html($virtual));
+   $tpl->set_var('DIR',encode_html($dir));
+   $tpl->set_var('DIR_URL',escape($dir));
+   $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->set_var('SCRIPT',$script);
+
+   $tpl->parse;
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -736,15 +748,17 @@ sub exec_rename($$)
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
-    $tpl->fillin('FILE',encode_html($virtual));
-    $tpl->fillin('NEW_FILE',$new_virtual->{'html'});
-    $tpl->fillin('NEW_FILENAME',file_name($new_virtual->{'html'}));
-    $tpl->fillin('NEW_DIR',encode_html($new_dir));
-    $tpl->fillin('DIR',encode_html($dir));
+    $tpl->set_var('FILE',encode_html($virtual));
+    $tpl->set_var('NEW_FILE',$new_virtual->{'html'});
+    $tpl->set_var('NEW_FILENAME',file_name($new_virtual->{'html'}));
+    $tpl->set_var('NEW_DIR',encode_html($new_dir));
+    $tpl->set_var('DIR',encode_html($dir));
 
-    $tpl->fillin('COMMAND','rename');
-    $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-    $tpl->fillin('SCRIPT',$script);
+    $tpl->set_var('COMMAND','rename');
+    $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+    $tpl->set_var('SCRIPT',$script);
+
+    $tpl->parse;
 
     my $output = header(-type => 'text/html');
     $output   .= $tpl->get_template;
@@ -761,11 +775,13 @@ sub exec_rename($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'renamefile'});
 
-  $tpl->fillin('FILE',encode_html($virtual));
-  $tpl->fillin('DIR',encode_html($dir));
-  $tpl->fillin('DIR_URL',escape($dir));
-  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-  $tpl->fillin('SCRIPT',$script);
+  $tpl->set_var('FILE',encode_html($virtual));
+  $tpl->set_var('DIR',encode_html($dir));
+  $tpl->set_var('DIR_URL',escape($dir));
+  $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+  $tpl->set_var('SCRIPT',$script);
+
+  $tpl->parse;
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;

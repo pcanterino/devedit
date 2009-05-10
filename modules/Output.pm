@@ -1,3 +1,4 @@
+
 package Output;
 
 #
@@ -6,7 +7,7 @@ package Output;
 # HTML generating routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-05-09
+# Last modified: 2005-05-10
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -67,7 +68,8 @@ sub error($;$$)
  my $tpl = new Template;
  $tpl->read_file($tpl_error);
 
- $tpl->set_var('ERROR',$message);
+ $tpl->fillin('ERROR',$message);
+
  $tpl->set_var('BACK',encode_html($path));
  $tpl->set_var('BACK_URL',escape($path));
  $tpl->set_var('SCRIPT',encode_html($ENV{'SCRIPT_NAME'}));
