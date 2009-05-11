@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2009-05-10
+# Last modified: 2005-05-11
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -473,10 +473,8 @@ sub exec_mkfile($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'mkfile'});
 
-  $tpl->set_var('DIR','/');
-  $tpl->set_var('SCRIPT',$script);
-
-  $tpl->parse;
+  $tpl->fillin('DIR','/');
+  $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -514,10 +512,8 @@ sub exec_mkdir($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'mkdir'});
 
-  $tpl->set_var('DIR','/');
-  $tpl->set_var('SCRIPT',$script);
-
-  $tpl->parse;
+  $tpl->fillin('DIR','/');
+  $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -587,12 +583,10 @@ sub exec_upload($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'upload'});
 
-  $tpl->set_var('DIR',encode_html($virtual));
-  $tpl->set_var('DIR_URL',escape($virtual));
-  $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-  $tpl->set_var('SCRIPT',$script);
-
-  $tpl->parse;
+  $tpl->fillin('DIR',encode_html($virtual));
+  $tpl->fillin('DIR_URL',escape($virtual));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -648,18 +642,16 @@ sub exec_copy($$)
      my $tpl = new Template;
      $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
-     $tpl->set_var('FILE',encode_html($virtual));
-     $tpl->set_var('NEW_FILE',$new_virtual->{'html'});
-     $tpl->set_var('NEW_FILENAME',file_name($new_virtual->{'html'}));
-     $tpl->set_var('NEW_DIR',encode_html($new_dir));
-     $tpl->set_var('DIR',encode_html($dir));
-     $tpl->set_var('DIR_URL',escape($dir));
+     $tpl->fillin('FILE',encode_html($virtual));
+     $tpl->fillin('NEW_FILE',$new_virtual->{'html'});
+     $tpl->fillin('NEW_FILENAME',file_name($new_virtual->{'html'}));
+     $tpl->fillin('NEW_DIR',encode_html($new_dir));
+     $tpl->fillin('DIR',encode_html($dir));
+     $tpl->fillin('DIR_URL',escape($dir));
 
-     $tpl->set_var('COMMAND','copy');
-     $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-     $tpl->set_var('SCRIPT',$script);
-
-     $tpl->parse;
+     $tpl->fillin('COMMAND','copy');
+     $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+     $tpl->fillin('SCRIPT',$script);
 
      my $output = header(-type => 'text/html');
      $output   .= $tpl->get_template;
@@ -679,13 +671,11 @@ sub exec_copy($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'copydir'});
 
-   $tpl->set_var('FILE',encode_html($virtual));
-   $tpl->set_var('DIR',encode_html($dir));
-   $tpl->set_var('DIR_URL',escape($dir));
-   $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-   $tpl->set_var('SCRIPT',$script);
-
-   $tpl->parse;
+   $tpl->fillin('FILE',encode_html($virtual));
+   $tpl->fillin('DIR',encode_html($dir));
+   $tpl->fillin('DIR_URL',escape($dir));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -697,13 +687,11 @@ sub exec_copy($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'copyfile'});
 
-   $tpl->set_var('FILE',encode_html($virtual));
-   $tpl->set_var('DIR',encode_html($dir));
-   $tpl->set_var('DIR_URL',escape($dir));
-   $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-   $tpl->set_var('SCRIPT',$script);
-
-   $tpl->parse;
+   $tpl->fillin('FILE',encode_html($virtual));
+   $tpl->fillin('DIR',encode_html($dir));
+   $tpl->fillin('DIR_URL',escape($dir));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -748,17 +736,15 @@ sub exec_rename($$)
     my $tpl = new Template;
     $tpl->read_file($config->{'templates'}->{'confirm_replace'});
 
-    $tpl->set_var('FILE',encode_html($virtual));
-    $tpl->set_var('NEW_FILE',$new_virtual->{'html'});
-    $tpl->set_var('NEW_FILENAME',file_name($new_virtual->{'html'}));
-    $tpl->set_var('NEW_DIR',encode_html($new_dir));
-    $tpl->set_var('DIR',encode_html($dir));
+    $tpl->fillin('FILE',encode_html($virtual));
+    $tpl->fillin('NEW_FILE',$new_virtual->{'html'});
+    $tpl->fillin('NEW_FILENAME',file_name($new_virtual->{'html'}));
+    $tpl->fillin('NEW_DIR',encode_html($new_dir));
+    $tpl->fillin('DIR',encode_html($dir));
 
-    $tpl->set_var('COMMAND','rename');
-    $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-    $tpl->set_var('SCRIPT',$script);
-
-    $tpl->parse;
+    $tpl->fillin('COMMAND','rename');
+    $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+    $tpl->fillin('SCRIPT',$script);
 
     my $output = header(-type => 'text/html');
     $output   .= $tpl->get_template;
@@ -775,13 +761,11 @@ sub exec_rename($$)
   my $tpl = new Template;
   $tpl->read_file($config->{'templates'}->{'renamefile'});
 
-  $tpl->set_var('FILE',encode_html($virtual));
-  $tpl->set_var('DIR',encode_html($dir));
-  $tpl->set_var('DIR_URL',escape($dir));
-  $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-  $tpl->set_var('SCRIPT',$script);
-
-  $tpl->parse;
+  $tpl->fillin('FILE',encode_html($virtual));
+  $tpl->fillin('DIR',encode_html($dir));
+  $tpl->fillin('DIR_URL',escape($dir));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -823,14 +807,12 @@ sub exec_remove($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmdir'});
 
-   $tpl->set_var('DIR',encode_html($virtual));
-   $tpl->set_var('DIR_URL',escape($virtual));
-   $tpl->set_var('UPPER_DIR',encode_html($dir));
-   $tpl->set_var('UPPER_DIR_URL',escape($dir));
-   $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-   $tpl->set_var('SCRIPT',$script);
-
-   $tpl->parse;
+   $tpl->fillin('DIR',encode_html($virtual));
+   $tpl->fillin('DIR_URL',escape($virtual));
+   $tpl->fillin('UPPER_DIR',encode_html($dir));
+   $tpl->fillin('UPPER_DIR_URL',escape($dir));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -852,14 +834,12 @@ sub exec_remove($$)
    my $tpl = new Template;
    $tpl->read_file($config->{'templates'}->{'confirm_rmfile'});
 
-   $tpl->set_var('FILE',encode_html($virtual));
-   $tpl->set_var('FILE_URL',escape($virtual));
-   $tpl->set_var('DIR',encode_html($dir));
-   $tpl->set_var('DIR_URL',escape($dir));
-   $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-   $tpl->set_var('SCRIPT',$script);
-
-   $tpl->parse;
+   $tpl->fillin('FILE',encode_html($virtual));
+   $tpl->fillin('FILE_URL',escape($virtual));
+   $tpl->fillin('DIR',encode_html($dir));
+   $tpl->fillin('DIR_URL',escape($dir));
+   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+   $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -885,7 +865,7 @@ sub exec_remove_multi($$)
  my $virtual        = $data->{'virtual'};
  my $cgi            = $data->{'cgi'};
 
- my @files = $cgi->param('files');
+ my @files = $cgi->param('files');#
  my @new_files;
 
  if(@files)
@@ -968,6 +948,8 @@ sub exec_remove_multi($$)
       $tpl->add_loop_data('SUCCESS',{FILE => encode_html($file_success),
                                      FILE_PATH => encode_html(clean_path($virtual.'/'.$file_success))});
      }
+     
+     $tpl->parse_loop('SUCCESS');
     }
    }
    else
@@ -978,12 +960,14 @@ sub exec_remove_multi($$)
    if(scalar(@failed) > 0)
    {
     $tpl->parse_if_block('failed',1);
-
+ 
     foreach my $file_failed(@failed)
     {
      $tpl->add_loop_data('FAILED',{FILE => encode_html($file_failed),
                                    FILE_PATH => encode_html(clean_path($virtual.'/'.$file_failed))});
     }
+    
+    $tpl->parse_loop('FAILED');
    }
    else
    {
@@ -991,10 +975,8 @@ sub exec_remove_multi($$)
    }
 
 
-   $tpl->set_var('DIR',encode_html($virtual));
-   $tpl->set_var('SCRIPT',$script);
-
-   $tpl->parse;
+   $tpl->fillin('DIR',encode_html($virtual));
+   $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -1011,13 +993,13 @@ sub exec_remove_multi($$)
     $tpl->add_loop_data('FILES',{FILE => encode_html($file),
                                  FILE_PATH => encode_html(clean_path($virtual.'/'.$file))});
    }
+   
+   $tpl->parse_loop('FILES');
 
-   $tpl->set_var('COUNT',scalar(@new_files));
+   $tpl->fillin('COUNT',scalar(@new_files));
 
-   $tpl->set_var('DIR',encode_html($virtual));
-   $tpl->set_var('SCRIPT',$script);
-
-   $tpl->parse;
+   $tpl->fillin('DIR',encode_html($virtual));
+   $tpl->fillin('SCRIPT',$script);
 
    my $output = header(-type => 'text/html');
    $output   .= $tpl->get_template;
@@ -1089,13 +1071,13 @@ sub exec_chprop($$)
 
   # Insert file properties into the template
 
-  $tpl->set_var('MODE_OCTAL',substr(sprintf('%04o',$mode),-4));
-  $tpl->set_var('MODE_STRING',mode_string($mode));
-  $tpl->set_var('GID',$gid);
+  $tpl->fillin('MODE_OCTAL',substr(sprintf('%04o',$mode),-4));
+  $tpl->fillin('MODE_STRING',mode_string($mode));
+  $tpl->fillin('GID',$gid);
 
   if(my $group = getgrgid($gid))
   {
-   $tpl->set_var('GROUP',encode_html($group));
+   $tpl->fillin('GROUP',encode_html($group));
    $tpl->parse_if_block('group_detected',1);
   }
   else
@@ -1105,14 +1087,12 @@ sub exec_chprop($$)
 
   # Insert other information
 
-  $tpl->set_var('FILE',encode_html($virtual));
-  $tpl->set_var('FILE_URL',escape($virtual));
-  $tpl->set_var('DIR',encode_html($dir));
-  $tpl->set_var('DIR_URL',escape($dir));
-  $tpl->set_var('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
-  $tpl->set_var('SCRIPT',$script);
-
-  $tpl->parse;
+  $tpl->fillin('FILE',encode_html($virtual));
+  $tpl->fillin('FILE_URL',escape($virtual));
+  $tpl->fillin('DIR',encode_html($dir));
+  $tpl->fillin('DIR_URL',escape($dir));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('SCRIPT',$script);
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -1137,35 +1117,35 @@ sub exec_about($$)
  my $tpl = new Template;
  $tpl->read_file($config->{'templates'}->{'about'});
 
- $tpl->set_var('SCRIPT',$script);
+ $tpl->fillin('SCRIPT',$script);
 
  # Dev-Editor's version number
 
- $tpl->set_var('VERSION',$data->{'version'});
+ $tpl->fillin('VERSION',$data->{'version'});
 
  # Some path information
 
- $tpl->set_var('SCRIPT_PHYS',encode_html($ENV{'SCRIPT_FILENAME'}));
- $tpl->set_var('CONFIG_PATH',encode_html($data->{'configfile'}));
- $tpl->set_var('FILE_ROOT',  encode_html($config->{'fileroot'}));
- $tpl->set_var('HTTP_ROOT',  encode_html($config->{'httproot'}));
+ $tpl->fillin('SCRIPT_PHYS',encode_html($ENV{'SCRIPT_FILENAME'}));
+ $tpl->fillin('CONFIG_PATH',encode_html($data->{'configfile'}));
+ $tpl->fillin('FILE_ROOT',  encode_html($config->{'fileroot'}));
+ $tpl->fillin('HTTP_ROOT',  encode_html($config->{'httproot'}));
 
  # Perl
 
- $tpl->set_var('PERL_PROG',encode_html($^X));
- $tpl->set_var('PERL_VER', sprintf('%vd',$^V));
+ $tpl->fillin('PERL_PROG',encode_html($^X));
+ $tpl->fillin('PERL_VER', sprintf('%vd',$^V));
 
  # Information about the server
 
- $tpl->set_var('HTTPD',encode_html($ENV{'SERVER_SOFTWARE'}));
- $tpl->set_var('OS',   encode_html($^O));
- $tpl->set_var('TIME', encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime : localtime)));
+ $tpl->fillin('HTTPD',encode_html($ENV{'SERVER_SOFTWARE'}));
+ $tpl->fillin('OS',   encode_html($^O));
+ $tpl->fillin('TIME', encode_html(strftime($config->{'timeformat'},($config->{'use_gmt'}) ? gmtime : localtime)));
 
  $tpl->parse_if_block('gmt',$config->{'use_gmt'});
 
  # Process information
 
- $tpl->set_var('PID',$$);
+ $tpl->fillin('PID',$$);
 
  # The following information is only available on systems supporting
  # users and groups
@@ -1182,14 +1162,14 @@ sub exec_about($$)
 
   # IDs of user and group
 
-  $tpl->set_var('UID',$uid);
-  $tpl->set_var('GID',$gid);
+  $tpl->fillin('UID',$uid);
+  $tpl->fillin('GID',$gid);
 
   # Names of user and group
 
   if(my $user = getpwuid($uid))
   {
-   $tpl->set_var('USER',encode_html($user));
+   $tpl->fillin('USER',encode_html($user));
    $tpl->parse_if_block('user_detected',1);
   }
   else
@@ -1199,7 +1179,7 @@ sub exec_about($$)
 
   if(my $group = getgrgid($gid))
   {
-   $tpl->set_var('GROUP',encode_html($group));
+   $tpl->fillin('GROUP',encode_html($group));
    $tpl->parse_if_block('group_detected',1);
   }
   else
@@ -1209,14 +1189,12 @@ sub exec_about($$)
 
   # Process umask
 
-  $tpl->set_var('UMASK',sprintf('%04o',umask));
+  $tpl->fillin('UMASK',sprintf('%04o',umask));
  }
  else
  {
   $tpl->parse_if_block('users',0);
  }
-
- $tpl->parse;
 
  my $output = header(-type => 'text/html');
  $output   .= $tpl->get_template;
