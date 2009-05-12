@@ -1,7 +1,7 @@
 #!C:/Programme/Perl/bin/perl.exe -w
 
 #
-# Dev-Editor 3.0.1
+# Dev-Editor 3.1
 #
 # Dev-Editor's main program
 #
@@ -30,7 +30,7 @@ use Command;
 use Output;
 use Tool;
 
-$VERSION = '3.0.1';
+$VERSION = '3.1';
 
 # Path to configuration file
 # Change if necessary!

@@ -948,7 +948,7 @@ sub exec_remove_multi($$)
       $tpl->add_loop_data('SUCCESS',{FILE => encode_html($file_success),
                                      FILE_PATH => encode_html(clean_path($virtual.'/'.$file_success))});
      }
-     
+
      $tpl->parse_loop('SUCCESS');
     }
    }
@@ -960,13 +960,13 @@ sub exec_remove_multi($$)
    if(scalar(@failed) > 0)
    {
     $tpl->parse_if_block('failed',1);
- 
+
     foreach my $file_failed(@failed)
     {
      $tpl->add_loop_data('FAILED',{FILE => encode_html($file_failed),
                                    FILE_PATH => encode_html(clean_path($virtual.'/'.$file_failed))});
     }
-    
+
     $tpl->parse_loop('FAILED');
    }
    else
@@ -993,7 +993,7 @@ sub exec_remove_multi($$)
     $tpl->add_loop_data('FILES',{FILE => encode_html($file),
                                  FILE_PATH => encode_html(clean_path($virtual.'/'.$file))});
    }
-   
+
    $tpl->parse_loop('FILES');
 
    $tpl->fillin('COUNT',scalar(@new_files));
