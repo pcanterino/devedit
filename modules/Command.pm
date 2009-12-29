@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-05-11
+# Last modified: 2009-12-29
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -42,6 +42,7 @@ my $users  = eval('getpwuid(0)') && eval('getgrgid(0)');
 my %dispatch = ('show'         => \&exec_show,
                 'beginedit'    => \&exec_beginedit,
                 'endedit'      => \&exec_endedit,
+                'download'     => \&exec_download,
                 'mkdir'        => \&exec_mkdir,
                 'mkfile'       => \&exec_mkfile,
                 'upload'       => \&exec_upload,
@@ -442,6 +443,32 @@ sub exec_endedit($$)
  }
 
  return devedit_reload({command => 'beginedit', file => $virtual});
+}
+
+# exec_download()
+#
+# Execute a HTTP download of a file
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_download($$)
+{
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = $data->{'virtual'};
+ my $dir            = upper_path($virtual);
+
+ return return error($config->{'errors'}->{'no_download'},$dir,{FILE => $virtual}) if(-d $physical || -l $physical);
+
+ my $filename = file_name($virtual);
+
+ my $output = header(-type => 'application/octet-stream', -attachment => $filename);
+ $output   .= ${ file_read($physical,1) };
+
+ return \$output;
 }
 
 # exec_mkfile()

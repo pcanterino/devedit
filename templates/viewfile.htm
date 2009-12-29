@@ -20,7 +20,10 @@
 </pre>
 </div>
 
-{IF editable}<p><a href="{SCRIPT}?command=beginedit&amp;file={FILE_URL}">Edit this file</a></p>{ELSE}<br>{ENDIF}
+<ul>
+<li><a href="{SCRIPT}?command=download&amp;file={FILE_URL}">Download this file</a></li>{IF editable}
+<li><a href="{SCRIPT}?command=beginedit&amp;file={FILE_URL}">Edit this file</a></li>{ENDIF}
+</ul>
 
 <hr>
 
