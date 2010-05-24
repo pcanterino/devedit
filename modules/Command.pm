@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2009-12-29
+# Last modified: 2010-05-24
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -493,7 +493,15 @@ sub exec_mkfile($$)
   return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
 
   file_create($new_physical) or return error($config->{'errors'}->{'mkfile_failed'},$dir,{FILE => $new_virtual});
-  return devedit_reload({command => 'show', file => $dir});
+  
+  if($data->{'cgi'}->param('edit'))
+  {
+   return devedit_reload({command => 'beginedit', file => $new_virtual});
+  }
+  else
+  {
+   return devedit_reload({command => 'show', file => $dir});
+  }
  }
  else
  {

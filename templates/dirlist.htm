@@ -44,7 +44,7 @@
 <form action="{SCRIPT}">
 <input type="hidden" name="command" value="mkfile">
 <input type="hidden" name="curdir" value="{DIR}">
-<td>{DIR} <input type="text" name="newfile"> <input type="submit" value="Create!"></td>
+<td>{DIR} <input type="text" name="newfile"> <input type="submit" value="Create!"> <input type="checkbox" name="edit" id="edit" value="1"><label for="edit">Open file for editing</label></td>
 </form>
 </tr>
 {IF dir_writeable}
