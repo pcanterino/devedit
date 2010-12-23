@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2006-08-24
+# Last modified: 2010-12-23
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -58,6 +58,13 @@ my $command = $cgi->param('command') || 'show';
 my $file    = $cgi->param('file')    || '/';
 my $curdir  = $cgi->param('curdir')  || '';
 my $newfile = $cgi->param('newfile') || '';
+
+# Check if the command is disabled
+
+if(is_disabled_command($config->{'disable_commands'},$command))
+{
+ abort($config->{'errors'}->{'command_disabled'},'/',{COMMAND => encode_html($command)});
+}
 
 # Create physical and virtual path for the new file
 

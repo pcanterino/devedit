@@ -6,7 +6,7 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-09-30
+# Last modified: 2010-12-23
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -29,6 +29,13 @@ use Text::ParseWords;
 use base qw(Exporter);
 
 @EXPORT = qw(read_config);
+
+# This variable contains some dependencies for the "disable_commands"
+# configuration option.
+# The Hash key defines a command, the value is an Array Reference or String
+# defining the commands that will also be disabled.
+
+my %disable_dependency = ('beginedit' => 'endedit');
 
 # read_config()
 #
@@ -74,14 +81,15 @@ sub read_config($)
 
    my $new_conf = $userconf->{$ENV{'REMOTE_USER'}};
 
-   $config->{'fileroot'}       = $new_conf->{'fileroot'}  if($new_conf->{'fileroot'});
-   $config->{'httproot'}       = $new_conf->{'httproot'}  if($new_conf->{'httproot'});
+   $config->{'fileroot'}         = $new_conf->{'fileroot'}  if($new_conf->{'fileroot'});
+   $config->{'httproot'}         = $new_conf->{'httproot'}  if($new_conf->{'httproot'});
 
-   $config->{'forbidden'}      = $new_conf->{'forbidden'} if(defined $new_conf->{'forbidden'});
+   $config->{'forbidden'}        = $new_conf->{'forbidden'} if(defined $new_conf->{'forbidden'});
+   $config->{'disable_commands'} = $new_conf->{'disable_commands'} if(defined $new_conf->{'disable_commands'});
 
-   $config->{'hide_dot_files'} = $new_conf->{'hide_dot_files'} if(defined $new_conf->{'hide_dot_files'});
+   $config->{'hide_dot_files'}   = $new_conf->{'hide_dot_files'} if(defined $new_conf->{'hide_dot_files'});
 
-   $config->{'user_config'}    = 1;
+   $config->{'user_config'}      = 1;
   }
  }
 
@@ -106,6 +114,36 @@ sub read_config($)
  else
  {
   $config->{'forbidden'} = [];
+ }
+
+ # Parse list of disabled commands (we need some universal code!)
+
+ if($config->{'disable_commands'})
+ {
+  my @commands;
+
+  foreach my $command(parse_line('\s+',0,$config->{'disable_commands'}))
+  {
+   push(@commands,$command);
+
+   if(exists($disable_dependency{$command}) && $disable_dependency{$command})
+   {
+    if(ref($disable_dependency{$command}) eq 'ARRAY')
+    {
+     push(@commands,@{$disable_dependency{$command}});
+    }
+    else
+    {
+     push(@commands,$disable_dependency{$command});
+    }
+   }
+  }
+
+  $config->{'disable_commands'} = \@commands;
+ }
+ else
+ {
+  $config->{'disable_commands'} = [];
  }
 
  return $config;

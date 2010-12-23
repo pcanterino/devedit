@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2008-04-25
+# Last modified: 2010-12-23
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -40,6 +40,8 @@ use base qw(Exporter);
              encode_html
              equal_url
              file_name
+             in_array
+             is_disabled_command
              is_forbidden_file
              mode_string
              multi_string
@@ -265,6 +267,51 @@ sub file_name($)
  }
 
  return $path;
+}
+
+# in_array()
+#
+# Check if a value is in an array
+#
+# Params: 1. Value to find
+#         2. Array
+#
+# Return: Status code (Boolean)
+
+sub in_array($$)
+{
+ my ($string,$array) = @_;
+
+ foreach my $element(@{$array})
+ {
+  return 1 if($string eq $element);
+ }
+
+ #foreach
+
+ return;
+}
+
+# is_disabled_command()
+#
+# Check if a command is disabled
+#
+# Params: 1. Array Reference containing the list
+#         2. Command to check
+#
+# Return: Status code (Boolean)
+
+sub is_disabled_command($$)
+{
+ my ($list,$command) = @_;
+ $command =~ s!/+$!!g;
+
+ foreach my $entry(@$list)
+ {
+  return 1 if(uc($command) eq uc($entry));
+ }
+
+ return;
 }
 
 # is_forbidden_file()
