@@ -308,7 +308,7 @@ sub is_disabled_command($$)
 
  foreach my $entry(@$list)
  {
-  return 1 if(uc($command) eq uc($entry));
+  return 1 if(lc($command) eq lc($entry));
  }
 
  return;

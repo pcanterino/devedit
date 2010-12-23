@@ -94,7 +94,9 @@ forbidden                Specify a list of filenames the user is not allowed to
                          virtual root directory (they must also begin with a
                          slash) and have to be separated by space characters. If
                          a filename contains space characters, you have to put
-                         it into double quotation marks ("/filename").
+                         it into double quotation marks ("/file name").
+
+disable_commands         [Documentation]
 
 userconf_file            Specifies the path to a file which contains
                          user-dependent configuration options (see next section
@@ -119,6 +121,7 @@ options:
 - httproot
 - hide_dot_files
 - forbidden
+- disable_commands
 
 For overriding configuration values you need a special configuration file. The
 path to this file is defined using the "userconf_file" configuration option in
