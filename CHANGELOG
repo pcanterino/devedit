@@ -1,6 +1,28 @@
 Change Log for Dev-Editor
 =========================
 
+Version 3.2 (201x-xx-xx):
+=========================
+
+ Disabling commands:
+ -------------------
+ Added new configuration option "disable_commands" for disabling commands of
+ Dev-Editor.
+ 
+ Start directory:
+ ----------------
+ Added new configuration option "startdir" which defines the default directory
+ instead of "/".
+ 
+ HTTP download:
+ --------------
+ You may now execute a HTTP download of a file.
+ 
+ Small changes:
+ --------------
+ - Added a checkbox for editing a file after creating it.
+
+
 Version 3.1 (2009-05-12):
 =========================
 
