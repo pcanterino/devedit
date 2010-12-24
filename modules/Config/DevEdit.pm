@@ -6,7 +6,7 @@ package Config::DevEdit;
 # Read and parse the configuration files
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2010-12-23
+# Last modified: 2010-12-24
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -35,7 +35,9 @@ use base qw(Exporter);
 # The Hash key defines a command, the value is an Array Reference or String
 # defining the commands that will also be disabled.
 
-my %disable_dependency = ('beginedit' => 'endedit');
+my %disable_dependency = ('beginedit' => 'endedit',
+                          'remove' => 'remove_multi',
+                          '@write' => ['beginedit','endedit','copy','rename','remove','remove_multi','mkdir','mkfile','upload','chprop']);
 
 # read_config()
 #
@@ -124,7 +126,7 @@ sub read_config($)
 
   foreach my $command(parse_line('\s+',0,$config->{'disable_commands'}))
   {
-   push(@commands,$command);
+   push(@commands,$command) unless(substr($command,0,1) eq '@');
 
    if(exists($disable_dependency{$command}) && $disable_dependency{$command})
    {
