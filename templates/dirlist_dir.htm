@@ -1,7 +1,7 @@
-<tr{IF even} style="background-color:#EEEEEE"{ENDIF}>
+<tr{IF even} style="background-color:#DDDDDD"{ENDIF}>
 <td><input type="checkbox" name="files" value="{DIR_NAME}"></td>
 <td align="right" style="white-space:nowrap">[SUBDIR]</td>
 <td style="padding-left:15pt;white-space:nowrap;">{DATE}{IF gmt} (GMT){ENDIF}</td>
-<td style="padding-left:15pt;white-space:nowrap;">{IF !forbidden}{IF readable}<a href="{SCRIPT}?command=show&amp;file={DIR_URL}{IF filter}&amp;filter={FILTER_URL}{ENDIF}">{DIR_NAME}/</a>{ELSE}<span style="color:#C0C0C0" title="Not accessible">{DIR_NAME}/</span>{ENDIF}{ELSE}<span style="color:#C0C0C0" title="File access forbidden by Dev-Editor's configuration">{DIR_NAME}/</span>{ENDIF}</td>
+<td style="padding-left:15pt;white-space:nowrap;">{IF !forbidden}{IF readable}<a href="{SCRIPT}?command=show&amp;file={DIR_URL}{IF filter}&amp;filter={FILTER_URL}{ENDIF}">{DIR_NAME}/</a>{ELSE}<span title="Not accessible">{DIR_NAME}/</span>{ENDIF}{ELSE}<span title="File access forbidden by Dev-Editor's configuration">{DIR_NAME}/</span>{ENDIF}</td>
 <td style="padding-left:15pt;white-space:nowrap;">({IF !forbidden}{IF readable}<a href="{SCRIPT}?command=copy&amp;file={DIR_URL}">Copy</a> | {ENDIF}{IF dir_writeable}<a href="{SCRIPT}?command=rename&amp;file={DIR_URL}">Rename</a> | <a href="{SCRIPT}?command=remove&amp;file={DIR_URL}">Delete</a> |{ENDIF}{IF users} <a href="{SCRIPT}?command=chprop&amp;file={DIR_URL}">Chmod/Chgrp</a> |{ENDIF} {ENDIF}<a href="{URL}" target="_blank">View in Browser</a>)</td>
 </tr>

@@ -287,8 +287,6 @@ sub in_array($$)
   return 1 if($string eq $element);
  }
 
- #foreach
-
  return;
 }
 
