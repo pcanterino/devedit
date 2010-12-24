@@ -44,6 +44,9 @@ httproot                 This is the equivalent HTTP URL to the root directory.
                          It's just used for visual output, so it doesn't need to
                          be correct.
 
+startdir                 Here you may define the default directory Dev-Editor
+                         opens on start.
+
 max_file_size            Here you may define a maximum size for files (Bytes).
                          If the user wants to view or edit a file larger than
                          this defined size, Dev-Editor denies file access (but
@@ -96,7 +99,11 @@ forbidden                Specify a list of filenames the user is not allowed to
                          a filename contains space characters, you have to put
                          it into double quotation marks ("/file name").
 
-disable_commands         [Documentation]
+disable_commands         Specify a list of commands the user is not allowed to
+                         execute. The commands have to be separated by space
+                         characters.
+                         If you add "@write" to the list, all writing commands
+                         (for example edit, copy, rename etc.) are disabled.
 
 userconf_file            Specifies the path to a file which contains
                          user-dependent configuration options (see next section
@@ -119,6 +126,7 @@ options:
 
 - fileroot
 - httproot
+- startdir
 - hide_dot_files
 - forbidden
 - disable_commands

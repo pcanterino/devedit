@@ -8,20 +8,19 @@ Version 3.2 (201x-xx-xx):
  -------------------
  Added new configuration option "disable_commands" for disabling commands of
  Dev-Editor.
- 
+
  Start directory:
  ----------------
  Added new configuration option "startdir" which defines the default directory
  instead of "/".
- 
+
  HTTP download:
  --------------
  You may now execute a HTTP download of a file.
- 
+
  Small changes:
  --------------
  - Added a checkbox for editing a file after creating it.
-
 
 Version 3.1 (2009-05-12):
 =========================
@@ -35,7 +34,7 @@ Version 3.1 (2009-05-12):
  ---------------------------------------------------
  For a better distinction of the objects in directory listing, every second
  object has a grey background now.
- 
+
  Remote name for uploaded files:
  -------------------------------
  When uploading a file, you can now specify a name for the file on the server.
