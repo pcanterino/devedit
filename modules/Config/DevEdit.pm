@@ -85,6 +85,7 @@ sub read_config($)
 
    $config->{'fileroot'}         = $new_conf->{'fileroot'}  if($new_conf->{'fileroot'});
    $config->{'httproot'}         = $new_conf->{'httproot'}  if($new_conf->{'httproot'});
+   $config->{'startdir'}         = $new_conf->{'startdir'}  if($new_conf->{'startdir'});
 
    $config->{'forbidden'}        = $new_conf->{'forbidden'} if(defined $new_conf->{'forbidden'});
    $config->{'disable_commands'} = $new_conf->{'disable_commands'} if(defined $new_conf->{'disable_commands'});

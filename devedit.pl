@@ -6,7 +6,7 @@
 # Dev-Editor's main program
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2010-12-23
+# Last modified: 2010-12-24
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -55,7 +55,7 @@ abort($config->{'errors'}->{'no_root_access'}) unless(-r $config->{'fileroot'} &
 my $cgi = new CGI;
 
 my $command = $cgi->param('command') || 'show';
-my $file    = $cgi->param('file')    || '/';
+my $file    = $cgi->param('file')    || $config->{'startdir'} || '/';
 my $curdir  = $cgi->param('curdir')  || '';
 my $newfile = $cgi->param('newfile') || '';
 
