@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2010-05-24
+# Last modified: 2010-10-26
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -461,7 +461,7 @@ sub exec_download($$)
  my $virtual        = $data->{'virtual'};
  my $dir            = upper_path($virtual);
 
- return return error($config->{'errors'}->{'no_download'},$dir,{FILE => $virtual}) if(-d $physical || -l $physical);
+ return return error($config->{'errors'}->{'no_download'},$dir,{FILE => $virtual}) if((not -r $physical) || (-d $physical || -l $physical));
 
  my $filename = file_name($virtual);
 
