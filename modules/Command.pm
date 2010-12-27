@@ -46,6 +46,7 @@ my %dispatch = ('show'         => \&exec_show,
                 'mkdir'        => \&exec_mkdir,
                 'mkfile'       => \&exec_mkfile,
                 'upload'       => \&exec_upload,
+                'unpack'       => \&exec_unpack,
                 'copy'         => \&exec_copy,
                 'rename'       => \&exec_rename,
                 'remove'       => \&exec_remove,
@@ -211,6 +212,8 @@ sub exec_show($$)
    $ftpl->parse_if_block('too_large',$config->{'max_file_size'} && $stat[7] > $config->{'max_file_size'});
 
    $ftpl->parse_if_block('users',$users && -o $phys_path);
+
+   $ftpl->parse_if_block('archive',$File::Access::has_archive_extract && is_archive($file));
 
    $ftpl->parse_if_block('even',($count % 2) == 0);
 
@@ -493,7 +496,7 @@ sub exec_mkfile($$)
   return error($config->{'errors'}->{'file_exists'},$dir,{FILE => $new_virtual}) if(-e $new_physical);
 
   file_create($new_physical) or return error($config->{'errors'}->{'mkfile_failed'},$dir,{FILE => $new_virtual});
-  
+
   if($data->{'cgi'}->param('edit'))
   {
    return devedit_reload({command => 'beginedit', file => $new_virtual});
@@ -620,6 +623,48 @@ sub exec_upload($$)
 
   $tpl->fillin('DIR',encode_html($virtual));
   $tpl->fillin('DIR_URL',escape($virtual));
+  $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
+  $tpl->fillin('SCRIPT',$script);
+
+  my $output = header(-type => 'text/html');
+  $output   .= $tpl->get_template;
+
+  return \$output;
+ }
+}
+
+# exec_unpack()
+#
+# Unpack an archive
+#
+# Params: 1. Reference to user input hash
+#         2. Reference to config hash
+#
+# Return: Output of the command (Scalar Reference)
+
+sub exec_unpack($$)
+{
+ my ($data,$config) = @_;
+ my $physical       = $data->{'physical'};
+ my $virtual        = $data->{'virtual'};
+ my $dir            = upper_path($virtual);
+ my $new_physical   = $data->{'new_physical'};
+ my $new_virtual    = $data->{'new_virtual'};
+ my $cgi            = $data->{'cgi'};
+
+ if($new_physical)
+ {
+  archive_unpack($physical,$new_physical);
+  return devedit_reload({command => 'show', file => $new_virtual});
+ }
+ else
+ {
+  my $tpl = new Template;
+  $tpl->read_file($config->{'templates'}->{'unpack'});
+
+  $tpl->fillin('FILE',encode_html($virtual));
+  $tpl->fillin('DIR',encode_html($dir));
+  $tpl->fillin('DIR_URL',escape($dir));
   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
 

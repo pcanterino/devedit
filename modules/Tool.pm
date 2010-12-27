@@ -40,12 +40,15 @@ use base qw(Exporter);
              encode_html
              equal_url
              file_name
+             is_archive
              in_array
              is_disabled_command
              is_forbidden_file
              mode_string
              multi_string
              upper_path);
+             
+my @archive_exts = ('.zip', 'tar.gz', 'tar.bz2');
 
 # check_path()
 #
@@ -287,6 +290,27 @@ sub in_array($$)
   return 1 if($string eq $element);
  }
 
+ return;
+}
+
+# is_archive()
+#
+# Check if a file is an archive
+# (currently only by file extension)
+#
+# Params: Archive file name
+#
+# Return: Status code (Boolean)
+
+sub is_archive($)
+{
+ my $file = shift;
+ 
+ foreach my $ext(@archive_exts)
+ {
+  return 1 if(lc(substr($file,length($file)-length($ext),length($ext))) eq lc($ext));
+ }
+ 
  return;
 }
 

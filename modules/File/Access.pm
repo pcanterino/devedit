@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2005-08-01
+# Last modified: 2010-12-27
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -21,7 +21,8 @@ package File::Access;
 use strict;
 
 use vars qw(@EXPORT
-            $has_flock);
+            $has_flock
+            $has_archive_extract);
 
 use Fcntl qw(:DEFAULT
              :flock);
@@ -32,7 +33,8 @@ use File::Copy;
 
 use base qw(Exporter);
 
-@EXPORT = qw(dir_copy
+@EXPORT = qw(archive_unpack
+             dir_copy
              dir_read
              file_create
              file_lock
@@ -49,9 +51,46 @@ use base qw(Exporter);
 
 $has_flock = eval { local $SIG{'__DIE__'}; flock(STDOUT,0); 1 };
 
+# Check if Archive::Extract is available
+
+$has_archive_extract = eval { local $SIG{'__DIE__'}; require Archive::Extract; 1 };
+
 # Predeclaration of dir_copy()
 
 sub dir_copy($$);
+
+# archive_unpack()
+#
+# Unpack an archive
+# (archive type must be supported by Archive::Extract)
+#
+# Params: 1. Archive path
+#         2. Path to extract (optional)
+#
+# Return: - Status code (Boolean)
+#         - undef if Archive::Extract is not available
+
+sub archive_unpack($;$)
+{
+ my ($archive,$path) = @_;
+
+ return undef unless($has_archive_extract);
+
+ return unless(-f $archive);
+ return if($path && not -d $path);
+
+ my $ae = Archive::Extract->new(archive => $archive);
+ return unless($ae);
+
+ if($path)
+ {
+  return $ae->extract(to => $path);
+ }
+ else
+ {
+  return $ae->extract;
+ }
+}
 
 # dir_copy()
 #
