@@ -5,6 +5,35 @@
 <head>
 <title>Directory listing of {DIR}</title>
 <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+<script type="text/javascript">
+function selectAll()
+{
+ if(document.forms[0])
+ {
+  for(var x = 0; x < document.forms[0].length; x++)
+  {
+   if(document.forms[0].elements[x].name == "files" && document.forms[0].elements[x].type == "checkbox")
+   {
+    document.forms[0].elements[x].checked = true
+   }
+  }
+ }
+}
+
+function unselectAll()
+{
+ if(document.forms[0])
+ {
+  for(var x = 0; x < document.forms[0].length; x++)
+  {
+   if(document.forms[0].elements[x].name == "files" && document.forms[0].elements[x].type == "checkbox")
+   {
+    document.forms[0].elements[x].checked = false
+   }
+  }
+ }
+}
+</script>
 </head>
 <body bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
 
@@ -22,6 +51,8 @@
 {DIRLIST}</table>
 
 <hr>
+
+<p><a onclick="selectAll(); return false;" href="#">Select all</a> / <a onclick="unselectAll(); return false;" href="#">Unselect all</a></p>
 
 <p><input type="submit" value="Delete selected files"></p>
 
