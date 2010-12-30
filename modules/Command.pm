@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2010-10-26
+# Last modified: 2010-10-30
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -652,9 +652,17 @@ sub exec_unpack($$)
  my $new_virtual    = $data->{'new_virtual'};
  my $cgi            = $data->{'cgi'};
 
+ return error($config->{'errors'}->{'no_ae'},$dir) unless($File::Access::has_archive_extract);
+ return error($config->{'errors'}->{'no_archive'},$dir,{FILE => encode_html($virtual)}) unless(is_archive($physical));
+ 
  if($new_physical)
  {
-  archive_unpack($physical,$new_physical);
+  return error($config->{'errors'}->{'unpack_no_dir'},$dir,{FILE => encode_html($virtual), NEW_FILE => encode_html($new_virtual)}) if(-l $new_physical || not -d $new_physical);
+ 
+  my $return_unpack = archive_unpack($physical,$new_physical);
+  
+  return error($config->{'errors'}->{'unpack_failed'},$dir,{FILE => encode_html($virtual), AE_ERROR => ''}) unless($return_unpack);
+  
   return devedit_reload({command => 'show', file => $new_virtual});
  }
  else
@@ -1214,6 +1222,8 @@ sub exec_about($$)
 
  $tpl->fillin('PERL_PROG',encode_html($^X));
  $tpl->fillin('PERL_VER', sprintf('%vd',$^V));
+ 
+ $tpl->parse_if_block('PERL_ARCHIVE_EXTRACT',$File::Access::has_archive_extract);
 
  # Information about the server
 
