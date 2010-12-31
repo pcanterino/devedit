@@ -31,7 +31,9 @@
 <p>Transfer mode (see below):<br>
 <input type="radio" name="ascii" id="ascii" value="1"><label for="ascii">ASCII</label> <input type="radio" name="ascii" id="binary" value="0" checked><label for="binary">Binary (default)</label></p>
 
-<p><input type="checkbox" name="overwrite" id="overwrite"><label for="overwrite">Overwrite existing file</label></p>
+<p><input type="checkbox" name="overwrite" id="overwrite"><label for="overwrite">Overwrite existing file</label></p>{IF PERL_ARCHIVE_EXTRACT}
+
+<p><input type="checkbox" name="unpack" id="unpack"><label for="unpack">Unpack file after upload to the current directory</label></p>{ENDIF}
 
 <p><input type="submit" value="Upload file!"></p>
 </form>
@@ -49,6 +51,7 @@
 
 <ul>
 <li>If you specify an other remote name for the uploaded file, all slashes and backslashes will be removed from the entered value.</li>
+<li>If unpacking of a file fails after uploading the file is still there.</li>
 </ul>
 
 <hr>

@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2010-10-30
+# Last modified: 2010-12-31
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -614,6 +614,15 @@ sub exec_upload($$)
   $data =~ s/\015\012|\012|\015/\n/g if($ascii); # Replace line separators if transferring in ASCII mode
   file_save($file_phys,\$data,not $ascii) or return error($config->{'errors'}->{'mkfile_failed'},$virtual,{FILE => $file_virt});
 
+  if($cgi->param('unpack') && $File::Access::has_archive_extract)
+  {
+   return error($config->{'errors'}->{'no_archive'},$virtual,{FILE => encode_html($file_virt)}) unless(is_archive($file_phys));
+
+   my $return_unpack = archive_unpack($file_phys,$physical);
+
+   return error($config->{'errors'}->{'unpack_failed'},$virtual,{FILE => encode_html($file_virt), AE_ERROR => ''}) unless($return_unpack);
+  }
+
   return devedit_reload({command => 'show', file => $virtual});
  }
  else
@@ -625,6 +634,8 @@ sub exec_upload($$)
   $tpl->fillin('DIR_URL',escape($virtual));
   $tpl->fillin('URL',encode_html(equal_url($config->{'httproot'},$virtual)));
   $tpl->fillin('SCRIPT',$script);
+
+  $tpl->parse_if_block('PERL_ARCHIVE_EXTRACT',$File::Access::has_archive_extract);
 
   my $output = header(-type => 'text/html');
   $output   .= $tpl->get_template;
@@ -654,15 +665,15 @@ sub exec_unpack($$)
 
  return error($config->{'errors'}->{'no_ae'},$dir) unless($File::Access::has_archive_extract);
  return error($config->{'errors'}->{'no_archive'},$dir,{FILE => encode_html($virtual)}) unless(is_archive($physical));
- 
+
  if($new_physical)
  {
   return error($config->{'errors'}->{'unpack_no_dir'},$dir,{FILE => encode_html($virtual), NEW_FILE => encode_html($new_virtual)}) if(-l $new_physical || not -d $new_physical);
- 
+
   my $return_unpack = archive_unpack($physical,$new_physical);
-  
+
   return error($config->{'errors'}->{'unpack_failed'},$dir,{FILE => encode_html($virtual), AE_ERROR => ''}) unless($return_unpack);
-  
+
   return devedit_reload({command => 'show', file => $new_virtual});
  }
  else
@@ -1222,7 +1233,7 @@ sub exec_about($$)
 
  $tpl->fillin('PERL_PROG',encode_html($^X));
  $tpl->fillin('PERL_VER', sprintf('%vd',$^V));
- 
+
  $tpl->parse_if_block('PERL_ARCHIVE_EXTRACT',$File::Access::has_archive_extract);
 
  # Information about the server
