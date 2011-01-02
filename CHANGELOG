@@ -4,6 +4,14 @@ Change Log for Dev-Editor
 Version 3.2 (201x-xx-xx):
 =========================
 
+ Unpacking archive files:
+ ------------------------
+ Dev-Editor is now able to unpack some types archive files. You may unpack
+ archive files in directory listing or immediately after uploading it to the
+ server.
+ To achieve this, Dev-Editor relies on the Perl module Archive::Extract (core
+ module since 5.10, I guess).
+
  Disabling commands:
  -------------------
  Added new configuration option "disable_commands" for disabling commands of
@@ -21,6 +29,8 @@ Version 3.2 (201x-xx-xx):
  Small changes:
  --------------
  - Added a checkbox for editing a file after creating it.
+ - Changed the colour scheme in directory listing.
+ - In directory listing, added links for (un-)selecting aa files.
 
 Version 3.1 (2009-05-12):
 =========================
