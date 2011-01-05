@@ -6,7 +6,7 @@ package Tool;
 # Some shared sub routines
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2010-12-23
+# Last modified: 2011-01-05
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -48,7 +48,10 @@ use base qw(Exporter);
              multi_string
              upper_path);
              
-my @archive_exts = ('.zip', 'tar.gz', 'tar.bz2');
+my @archive_exts = ('.zip',     '.tar', '.gz',
+                    '.tar.gz',  '.tgz', '.bz2',
+                    '.tar.bz2', '.tbz', '.tbz2',
+                    '.Z');
 
 # check_path()
 #

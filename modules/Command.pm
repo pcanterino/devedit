@@ -6,7 +6,7 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2010-12-31
+# Last modified: 2011-01-05
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -672,7 +672,7 @@ sub exec_unpack($$)
 
   my $return_unpack = archive_unpack($physical,$new_physical);
 
-  return error($config->{'errors'}->{'unpack_failed'},$dir,{FILE => encode_html($virtual), AE_ERROR => ''}) unless($return_unpack);
+  return error($config->{'errors'}->{'unpack_failed'},$dir,{FILE => encode_html($virtual), AE_ERROR => encode_html($File::Access::archive_extract_error)}) unless($return_unpack);
 
   return devedit_reload({command => 'show', file => $new_virtual});
  }

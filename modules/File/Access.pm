@@ -7,7 +7,7 @@ package File::Access;
 # using only one command
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2010-12-27
+# Last modified: 2011-01-05
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2009 Patrick Canterino
@@ -22,7 +22,8 @@ use strict;
 
 use vars qw(@EXPORT
             $has_flock
-            $has_archive_extract);
+            $has_archive_extract
+            $archive_extract_error);
 
 use Fcntl qw(:DEFAULT
              :flock);
@@ -84,11 +85,27 @@ sub archive_unpack($;$)
 
  if($path)
  {
-  return $ae->extract(to => $path);
+  if($ae->extract(to => $path))
+  {
+   return 1;
+  }
+  else
+  {
+   $archive_extract_error = $ae->error;
+   return;
+  }
  }
  else
  {
-  return $ae->extract;
+  if($ae->extract)
+  {
+   return 1;
+  }
+  else
+  {
+   $archive_extract_error = $ae->error;
+   return;
+  }
  }
 }
 
