@@ -1,4 +1,4 @@
-ReadMe for Dev-Editor 3.1
+ReadMe for Dev-Editor 3.2
 =========================
 
 Description
@@ -103,7 +103,7 @@ disable_commands         Specify a list of commands the user is not allowed to
                          execute. The commands have to be separated by space
                          characters.
                          If you add "@write" to the list, all writing commands
-                         (for example edit, copy, rename etc.) are disabled.
+                         (for example edit, copy, rename etc.) get disabled.
 
 userconf_file            Specifies the path to a file which contains
                          user-dependent configuration options (see next section
@@ -191,7 +191,7 @@ Hard links are not affected by this.
 ------------------------------------------------
 
 (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
-(C) 2003-2009 Patrick Canterino
+(C) 2003-2011 Patrick Canterino
 
 E-Mail: patrick@patshaping.de
 WWW:    http://devedit.sourceforge.net/
