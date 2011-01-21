@@ -9,7 +9,7 @@ package Config::DevEdit;
 # Last modified: 2010-12-24
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
-# Copyright (C) 2003-2009 Patrick Canterino
+# Copyright (C) 2003-2011 Patrick Canterino
 # All Rights Reserved.
 #
 # This file can be distributed and/or modified under the terms of
