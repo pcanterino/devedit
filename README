@@ -9,6 +9,23 @@ terms of the Artistic License, which allows remote changes to files and
 directory structures on a web server. That's useful if you aren't able to access
 the files on your homepage directly, for example if you are on holiday.
 
+Features
+--------
+
+- Browsing through directory structures
+- Viewing text files
+- Editing text files
+- Removing files and directories
+- Moving/renaming files and directories
+- Copying files and directories
+- Creating new files and directories
+- Executing a HTTP download of a file
+- Uploading files to the server via HTTP
+- Changing permissions (chmod) and group (chgrp) of files and directories (on
+  Unix systems)
+- Unpacking some types of archive files (Perl module Archive::Extract is
+  required)
+
 Installation
 ------------
 
@@ -17,7 +34,7 @@ are able to execute scripts (in most cases, this is "cgi-bin"). I suggest to
 create a sub directory for Dev-Editor.
 Then, you have to change the first line of devedit.pl: Just replace
 /usr/bin/perl by the path to your Perl interpreter.
-If you are on a UNIX based system, you have to set devedit.pl as executable
+If you are on a Unix based system, you have to set devedit.pl as executable
 (chmod 755 in most cases).
 You will also need to configure Dev-Editor. See the next section for details.
 

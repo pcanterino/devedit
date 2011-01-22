@@ -10,7 +10,8 @@ Version 3.2 (201x-xx-xx):
  archive files in directory listing or immediately after uploading it to the
  server.
  To achieve this, Dev-Editor relies on the Perl module Archive::Extract (core
- module since 5.10, I guess).
+ module since 5.10, I guess). If Archive::Extract is not available, unpacking
+ of archives is automatically disabled.
 
  Disabling commands:
  -------------------
@@ -30,7 +31,7 @@ Version 3.2 (201x-xx-xx):
  --------------
  - Added a checkbox for editing a file after creating it.
  - Changed the colour scheme in directory listing.
- - In directory listing, added links for (un-)selecting aa files.
+ - In directory listing, added links for (un-)selecting files.
 
 Version 3.1 (2009-05-12):
 =========================
