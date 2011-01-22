@@ -40,14 +40,14 @@ use base qw(Exporter);
              encode_html
              equal_url
              file_name
-             is_archive
              in_array
+             is_archive
              is_disabled_command
              is_forbidden_file
              mode_string
              multi_string
              upper_path);
-             
+
 my @archive_exts = ('.zip',     '.tar', '.gz',
                     '.tar.gz',  '.tgz', '.bz2',
                     '.tar.bz2', '.tbz', '.tbz2',
@@ -308,12 +308,12 @@ sub in_array($$)
 sub is_archive($)
 {
  my $file = shift;
- 
+
  foreach my $ext(@archive_exts)
  {
   return 1 if(lc(substr($file,length($file)-length($ext),length($ext))) eq lc($ext));
  }
- 
+
  return;
 }
 
