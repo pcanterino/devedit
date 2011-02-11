@@ -10,8 +10,8 @@ Version 3.2 (201x-xx-xx):
  archive files in directory listing or immediately after uploading it to the
  server.
  To achieve this, Dev-Editor relies on the Perl module Archive::Extract (core
- module since 5.10, I guess). If Archive::Extract is not available, unpacking
- of archives is automatically disabled.
+ module since Perl 5.10, I guess). If Archive::Extract is not available,
+ unpacking of archives is automatically disabled.
 
  Disabling commands:
  -------------------

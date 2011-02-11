@@ -24,7 +24,7 @@ Features
 - Changing permissions (chmod) and group (chgrp) of files and directories (on
   Unix systems)
 - Unpacking some types of archive files (Perl module Archive::Extract is
-  required)
+  required - core module since Perl 5.10, I guess)
 
 Installation
 ------------
