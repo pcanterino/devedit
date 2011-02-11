@@ -5,7 +5,7 @@ Description
 -----------
 
 Dev-Editor is a simple CGI based editor written in Perl and licensed under the
-terms of the Artistic License, which allows remote changes to files and
+terms of the Artistic License 2.0, which allows remote changes to files and
 directory structures on a web server. That's useful if you aren't able to access
 the files on your homepage directly, for example if you are on holiday.
 
