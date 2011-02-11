@@ -6,14 +6,14 @@ package Command;
 # Execute Dev-Editor's commands
 #
 # Author:        Patrick Canterino <patrick@patshaping.de>
-# Last modified: 2011-01-05
+# Last modified: 2011-02-11
 #
 # Copyright (C) 1999-2000 Roland Bluethgen, Frank Schoenmann
 # Copyright (C) 2003-2011 Patrick Canterino
 # All Rights Reserved.
 #
 # This file can be distributed and/or modified under the terms of
-# of the Artistic License 1.0 (see also the LICENSE file found at
+# of the Artistic License 2.0 (see also the LICENSE file found at
 # the top level of the Dev-Editor distribution).
 #
 
