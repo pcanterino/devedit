@@ -27,6 +27,10 @@ Version 3.2 (201x-xx-xx):
  --------------
  You may now execute a HTTP download of a file.
 
+ New software license:
+ ---------------------
+ Dev-Editor is now licensed under the terms of the Artistic License 2.0.
+
  Small changes:
  --------------
  - Added a checkbox for editing a file after creating it.
