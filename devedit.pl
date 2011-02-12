@@ -30,7 +30,7 @@ use Command;
 use Output;
 use Tool;
 
-$VERSION = '3.2-dev';
+$VERSION = '3.2';
 
 # Path to configuration file
 # Change if necessary!
