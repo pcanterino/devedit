@@ -1,7 +1,7 @@
 #!C:/Programme/Perl/bin/perl.exe -w
 
 #
-# Dev-Editor 3.1
+# Dev-Editor 3.2
 #
 # Dev-Editor's main program
 #
